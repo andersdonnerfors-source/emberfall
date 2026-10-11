@@ -288,7 +288,8 @@ function rr(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);
 function ell(c,x,y,rx,ry){c.beginPath();c.ellipse(x,y,Math.max(.1,rx),Math.max(.1,ry),0,0,TAU)}
 function circ(c,x,y,r){c.beginPath();c.arc(x,y,Math.max(.1,r),0,TAU)}
 function shade(h,p){const n=parseInt(h.slice(1),16),f=1+p/100;const r=clamp(Math.round((n>>16)*f),0,255),g=clamp(Math.round((n>>8&255)*f),0,255),b=clamp(Math.round((n&255)*f),0,255);return'#'+((1<<24)|(r<<16)|(g<<8)|b).toString(16).slice(1)}
-function hash(x,y){let h=(Math.imul(x|0,374761393)+Math.imul(y|0,668265263))|0;h=Math.imul(h^(h>>>13),1274126177);return((h^(h>>>16))>>>0)/4294967296}
+let WSEED=0;// the current world's seed (0 = the original world)
+function hash(x,y){let h=(Math.imul(x|0,374761393)+Math.imul(y|0,668265263)+Math.imul(WSEED,1442695041))|0;h=Math.imul(h^(h>>>13),1274126177);return((h^(h>>>16))>>>0)/4294967296}
 function vnoise(x,y){const xi=Math.floor(x),yi=Math.floor(y),xf=x-xi,yf=y-yi,s=t=>t*t*(3-2*t);const a=hash(xi,yi),b=hash(xi+1,yi),c=hash(xi,yi+1),d=hash(xi+1,yi+1),u=s(xf),v=s(yf);return a+(b-a)*u+(c-a)*v+(a-b-c+d)*u*v}
 function store(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
 function fetchStore(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}}
@@ -297,7 +298,7 @@ function fetchStore(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){r
 // The game is made of zones: the big overworld, shop interiors, dungeons and caves. Each zone has its own
 // tile map; the active one is swapped into the globals below (map, tvar, bio, MW, MH, decor, buildings…).
 const TILE=48,TILT=0.72,OW=632,WS=OW/200;// the world is ~10x the area of the first version; old layout coordinates are scaled by WS
-const wsc=p=>Object.assign({},p,{x:Math.round(p.x*WS),y:Math.round(p.y*WS)});
+const wsc=p=>Object.assign({},p,{x:Math.round(p.x*WS),y:Math.round(p.y*WS),_bx:p.x,_by:p.y});// _bx/_by: place on the original plan
 const T={GRASS:0,TREE:1,WATER:2,PATH:3,STONE:4,WALL:5,HOUSE:6,DIRT:7,BRIDGE:8,BOG:9,PLANK:10,CAVE:11,ROCK:12};
 const BLOCK=new Set([T.TREE,T.WATER,T.WALL,T.HOUSE,T.ROCK]);
 const FLYBLOCK=new Set([T.TREE,T.WALL,T.HOUSE,T.ROCK]);// a dragon flies over water
@@ -308,7 +309,7 @@ const BIOME_NAME=['Emberfall Meadows','The Frostfells','The Sunscar Desert','The
 let MW=OW,MH=OW,map=new Uint8Array(MW*MH),tvar=new Float32Array(MW*MH),bio=new Uint8Array(MW*MH),decor=[],buildings=[],zone=null;
 const zones={};
 function biomeOf(x,y){const dx=x-VC.x,dy=y-VC.y,d=Math.hypot(dx,dy),n=vnoise(x/14/WS+200,y/14/WS+200);if(d<(34+n*12)*WS)return B.MEADOW;
-  const a=Math.atan2(dy,dx)*180/Math.PI+(n-.5)*34;if(a>-150&&a<=-40)return B.SNOW;if(a>-40&&a<=50)return B.DESERT;if(a>50&&a<=118)return B.FOREST;return B.SWAMP}
+  const a=Math.atan2(dy,dx)*180/Math.PI+(n-.5)*34;for(const b of[1,2,3])if(inWedge(a,WEDGE[b]))return b;return B.SWAMP}
 function biomeAtW(wx,wy){const x=Math.floor(wx/TILE),y=Math.floor(wy/TILE);if(x<0||y<0||x>=MW||y>=MH)return zone&&zone.kind!=='over'?zone.biome:B.MEADOW;return bio[y*MW+x]}
 function setT(x,y,t){if(x>=0&&y>=0&&x<MW&&y<MH)map[y*MW+x]=t}
 function getT(x,y){if(x<0||y<0||x>=MW||y>=MH)return zone&&zone.kind==='over'?T.TREE:T.WALL;return map[y*MW+x]}
@@ -383,7 +384,7 @@ function genOverworld(){MW=MH=OW;map=new Uint8Array(MW*MH);tvar=new Float32Array
   for(let dy=-8;dy<=8;dy++)for(let dx=-8;dx<=8;dx++){const d=Math.hypot(dx,dy);if(d<6.6)setT(BARROW.x+dx,BARROW.y+dy,T.STONE);else if(d<7.8)setT(BARROW.x+dx,BARROW.y+dy,T.WALL)}
   const R=(a,b)=>road(a,b);
   for(const c of CITIES)if(c.id!=='emberfall')R(VC,c);
-  R(VC,CAMP);R(VC,DEN);R(VC,TROLL);R(CITIES[3],BARROW);R(VC,wsc({x:100,y:193}));R(VC,wsc({x:7,y:96}));R(VC,wsc({x:193,y:104}));R(CITIES[1],wsc({x:78,y:7}));
+  R(VC,CAMP);R(VC,DEN);R(VC,TROLL);R(CITIES[3],BARROW);R(VC,wtx(100,193));R(VC,wtx(7,96));R(VC,wtx(193,104));R(CITIES[1],wtx(78,7));
   R(DEN,ENTRANCES[0]);R(CITIES[1],ENTRANCES[1]);R(CITIES[2],ENTRANCES[2]);R(CAMP,ENTRANCES[3]);R(CITIES[3],ENTRANCES[4]);
   decor=[];buildings=[];const doors=[],lights=[];
   for(const c of CITIES){for(let y=-3;y<=3;y++)for(let x=-3;x<=3;x++)if(Math.hypot(x,y)<3.6)setT(c.x+x,c.y+y,T.PATH);
@@ -398,9 +399,10 @@ function genOverworld(){MW=MH=OW;map=new Uint8Array(MW*MH);tvar=new Float32Array
   decor.push({k:'fire',x:(CAMP.x+.5)*TILE,y:(CAMP.y+.5)*TILE});
   for(const[dx,dy,c]of[[-3,-3,'#7a3b26'],[3,-3,'#6a5a3a'],[-4,2,'#5a4a2a'],[3,3,'#7a3b26'],[0,-5,'#6a5a3a']])decor.push({k:'tent',x:(CAMP.x+dx+.5)*TILE,y:(CAMP.y+dy+.5)*TILE,c});
   for(let i=0;i<9;i++){const a=i/9*TAU+.3,r=4.2+hash(i,9)*1.5;decor.push({k:'grave',x:(BARROW.x+.5+Math.cos(a)*r)*TILE,y:(BARROW.y+.5+Math.sin(a)*r)*TILE,v:hash(i,4)})}
+  const ga=Math.atan2(CITIES[3].y-BARROW.y,CITIES[3].x-BARROW.x),gate=[];for(let r=6;r<=8.6;r+=.5)for(let w=-1.5;w<=1.5;w+=.5){const gx=Math.round(BARROW.x+Math.cos(ga)*r-Math.sin(ga)*w),gy=Math.round(BARROW.y+Math.sin(ga)*r+Math.cos(ga)*w);if(getT(gx,gy)===T.WALL&&!gate.includes(gy*MW+gx))gate.push(gy*MW+gx)}
   decor.push({k:'mound',x:(BARROW.x+.5)*TILE,y:(BARROW.y-1.5)*TILE});decor.push({k:'cave',x:(TROLL.x+.5)*TILE,y:(TROLL.y-3.5)*TILE});
   for(let i=0;i<7;i++){const a=i/7*TAU,r=3+hash(i,77)*2.5;decor.push({k:'bones',x:(DEN.x+.5+Math.cos(a)*r)*TILE,y:(DEN.y+.5+Math.sin(a)*r)*TILE})}
-  return{id:'over',kind:'over',name:'The Westmark',MW,MH,map,tvar,bio,decor,buildings,doors,lights,npcs:[],dark:false,spawn:true}}
+  return{id:'over',kind:'over',name:'The Westmark',MW,MH,map,tvar,bio,decor,buildings,doors,lights,npcs:[],dark:false,spawn:true,barrowGate:gate}}
 
 // ---- Shop interiors
 function genInterior(b){MW=14;MH=10;map=new Uint8Array(MW*MH).fill(T.WALL);tvar=new Float32Array(MW*MH);bio=new Uint8Array(MW*MH).fill(B.INDOOR);
@@ -421,7 +423,7 @@ function genInterior(b){MW=14;MH=10;map=new Uint8Array(MW*MH).fill(T.WALL);tvar=
     start:{x:7.5*TILE,y:7.6*TILE},dark:false,warm:true,spawn:false,shopB:b}}
 
 // ---- Dungeons: a fixed chain of rooms and corridors, with bosses in the last rooms
-function genDungeon(e){const def=DUNGEONS[e.id],R=mulberry32(def.seed);MW=MH=72;map=new Uint8Array(MW*MH).fill(T.WALL);tvar=new Float32Array(MW*MH);bio=new Uint8Array(MW*MH).fill(B.DUNGEON);
+function genDungeon(e){const def=DUNGEONS[e.id],R=mulberry32(def.seed^WSEED);MW=MH=72;map=new Uint8Array(MW*MH).fill(T.WALL);tvar=new Float32Array(MW*MH);bio=new Uint8Array(MW*MH).fill(B.DUNGEON);
   for(let i=0;i<MW*MH;i++)tvar[i]=hash(i,def.seed);
   const rooms=[];let cx=9,cy=36;const nR=def.rooms;
   const carve=(x0,y0,x1,y1)=>{for(let y=Math.min(y0,y1);y<=Math.max(y0,y1);y++)for(let x=Math.min(x0,x1);x<=Math.max(x0,x1);x++)if(x>1&&y>1&&x<MW-2&&y<MH-2)map[y*MW+x]=T.STONE};
@@ -441,7 +443,7 @@ function genDungeon(e){const def=DUNGEONS[e.id],R=mulberry32(def.seed);MW=MH=72;
     start:{x:(first.x+2.6)*TILE,y:(first.cy+.5)*TILE}}}
 
 // ---- Caves: open caverns lit by glowing crystals and fungi
-function genCave(e){const def=CAVES[e.id],R=mulberry32(def.seed);MW=MH=90;let m=new Uint8Array(MW*MH);
+function genCave(e){const def=CAVES[e.id],R=mulberry32(def.seed^WSEED);MW=MH=90;let m=new Uint8Array(MW*MH);
   for(let y=0;y<MH;y++)for(let x=0;x<MW;x++)m[y*MW+x]=(x<2||y<2||x>MW-3||y>MH-3||R()<.44)?1:0;
   for(let it=0;it<5;it++){const n=new Uint8Array(MW*MH);for(let y=1;y<MH-1;y++)for(let x=1;x<MW-1;x++){let c=0;for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++)c+=m[(y+dy)*MW+x+dx];n[y*MW+x]=c>=5?1:0}
     for(let x=0;x<MW;x++){n[x]=1;n[(MH-1)*MW+x]=1}for(let y=0;y<MH;y++){n[y*MW]=1;n[y*MW+MW-1]=1}m=n}
@@ -456,6 +458,39 @@ function genCave(e){const def=CAVES[e.id],R=mulberry32(def.seed);MW=MH=90;let m=
     else if(h<.06)dec.push({k:'stalag',x:(x+.5)*TILE,y:(y+.6)*TILE,v:hash(x,y)})}
   return{id:e.id,kind:'cave',name:e.name,biome:B.CAVE,MW,MH,map,tvar,bio,decor:dec,buildings:[],lights,dark:true,darkA:.88,spawn:{pool:def.pool,lvl:e.lvl},def,ent:e,
     doors:[{x:(sx-1.5)*TILE,y:(sy+.5)*TILE,to:'over',tx:(e.x+.5)*TILE,ty:(e.y+1.6)*TILE,label:'Back to the surface'}],npcs:[],start:{x:(sx+1)*TILE,y:(sy+.5)*TILE}}}
+// ================= World seeds: every hero has a world of their own =================
+// The four regions (Frostfells, Sunscar, Gloomwood, Mirefen) sit in wedges around Emberfall. A world seed shuffles
+// their order, turns the whole map and varies each wedge's size. Every fixed place (cities, dungeons, camps, quest
+// sites, signposts) keeps its region and distance, so the story still flows outward from Emberfall.
+// Seed 0 is the original hand-made layout (heroes made before seeds keep their world).
+const OLD_WEDGE={1:[-150,110],2:[-40,90],3:[50,68],4:[118,92]};// region: [start angle, width] in degrees (screen y points down)
+let WEDGE=OLD_WEDGE;
+function inWedge(a,w){return((a-w[0])%360+360)%360<w[1]}
+function wedgeOfOld(a){for(const b of[1,2,3,4])if(inWedge(a,OLD_WEDGE[b]))return b;return 4}
+// Moves a point given on the original 200-tile plan into this world's layout (returns tile coordinates).
+function wtx(bx,by){const dx=bx-100,dy=by-100,d=Math.hypot(dx,dy);if(d<.01)return{x:Math.round(100*WS),y:Math.round(100*WS)};
+  const a=Math.atan2(dy,dx)*180/Math.PI,b=wedgeOfOld(a),o=OLD_WEDGE[b],n=WEDGE[b],f=(((a-o[0])%360+360)%360)/o[1],na=(n[0]+f*n[1])*Math.PI/180,j=WSEED?1+(hash(Math.round(bx),Math.round(by)*7)-.5)*.12:1;
+  return{x:Math.round((100+Math.cos(na)*d*j)*WS),y:Math.round((100+Math.sin(na)*d*j)*WS)}}
+function layoutWorld(seed){WSEED=seed|0;
+  if(!WSEED)WEDGE=OLD_WEDGE;
+  else{const r=mulberry32(WSEED*7919+13),order=[1,2,3,4].sort(()=>r()-.5),w={1:110,2:90,3:68,4:92};let tot=0;for(const b of order){w[b]*=.85+r()*.3;tot+=w[b]}
+    let a=r()*360;WEDGE={};for(const b of order){const ww=w[b]*360/tot;WEDGE[b]=[a,ww];a+=ww}}
+  const seen=new Set(),places=[CAMP,BARROW,DEN,TROLL,...CITIES,...ENTRANCES,...QUESTS.map(q=>q.site).filter(Boolean)];
+  for(const o of places){if(seen.has(o))continue;seen.add(o);Object.assign(o,wtx(o._bx,o._by))}
+  for(const q of QUESTS){q._t=q._t||{text:q.text,wait:q.wait,done:q.done,goal:q.goal};for(const k in q._t)q[k]=fillDir(q._t[k])}
+  for(const s of SIGNS){s._t=s._t||s.t;s.t=fillDir(s._t)}for(const r of RUMORS){r._t=r._t||r.t;r.t=fillDir(r._t)}}
+// Direction words in texts follow the layout: {forest} becomes "south" in one world and "north-east" in another.
+function dirWord(a){return['east','south-east','south','south-west','west','north-west','north','north-east'][Math.round(((a%360)+360)%360/45)%8]}
+function angTo(from,to){return Math.atan2(to.y-from.y,to.x-from.x)*180/Math.PI}
+function fillDir(s){const ent=id=>ENTRANCES.find(e=>e.id===id),city=id=>CITIES.find(c=>c.id===id),mid=b=>WEDGE[b][0]+WEDGE[b][1]/2;
+  const T={snow:mid(1),desert:mid(2),forest:mid(3),swamp:mid(4),barrow:angTo(VC,BARROW),troll:angTo(VC,TROLL),dfrost:angTo(VC,ent('d_frost')),glimmer:angTo(VC,ent('c_glimmer')),
+    frosthold:angTo(VC,city('frosthold')),sunreach:angTo(VC,city('sunreach')),mirewatch:angTo(VC,city('mirewatch')),fungal:angTo(city('mirewatch'),ent('c_fungal'))};
+  return s.replace(/\{(\w+)\}/g,(m,k)=>{const a=T[k.toLowerCase()];if(a==null)return m;const w=dirWord(a);return k[0]===k[0].toUpperCase()?w[0].toUpperCase()+w.slice(1):w})}
+// Builds the overworld for a seed (only when it differs from the one already built).
+let builtSeed=null;
+function ensureWorld(seed){seed=seed|0;if(builtSeed===seed&&zones.over)return;layoutWorld(seed);for(const k in zones)delete zones[k];
+  zones.over=genOverworld();addHints(zones.over);addInnkeepers(zones.over);useZone(zones.over);zones.over.terrain=genTerrain();useZone(zones.over);builtSeed=seed}
+function newWorldSeed(){return 1+Math.floor(Math.random()*2147483646)}
 // ================= Data =================
 const CLASSES={
   paladin:{name:'Paladin',icon:'🛡️',desc:'A holy knight. Tough and steady, fights up close and heals.',hp:150,mana:90,armor:22,speed:165,dmg:15,hat:'helm',weapon:'sword',shield:true},
@@ -663,29 +698,29 @@ const QUESTS=[
   {title:'Wolves at the Door',goal:'Slay 6 grey wolves in the meadows around Emberfall',need:6,target:['wolf'],rec:1,reward:{xp:100,potions:2,rar:1},
    text:'Traveller, you come at an ill hour. Three nights ago the Lamp of Emberfall went dark, the old light that has kept our valley safe for a thousand years. Since then the grey wolves have grown bold and hungry. They prowl right up to our fences. Thin their numbers, and we will talk more.',
    wait:'The wolves still howl at night. They roam the meadows all around the village.',done:'Fewer howls tonight. You have a steady hand. Now hear the rest of it: the Lamp did not simply go out. Someone shattered it.'},
-  {title:'Webs in the Gloomwood',goal:'Slay 8 gloom spiders in the Gloomwood to the south',need:8,target:['spider'],site:wsc({x:117,y:150}),rec:3,reward:{xp:250,potions:2,rar:1},
-   text:'Our woodcutters will not go south any more. In the Gloomwood, webs now hang between the trees like grey curtains, and the spiders grow fat and bold. The forest has turned sick since the Lamp broke. Burn back the spiders and look for the cause.',
-   wait:'The Gloomwood still crawls with spiders. Follow the south road.',done:'You saw it too? A cold glow, deep in the woods, near the old wolf den. I fear I know what it is. Sit, and I will tell you.'},
+  {title:'Webs in the Gloomwood',goal:'Slay 8 gloom spiders in the Gloomwood to the {forest}',need:8,target:['spider'],site:wsc({x:117,y:150}),rec:3,reward:{xp:250,potions:2,rar:1},
+   text:'Our woodcutters will not go {forest} any more. In the Gloomwood, webs now hang between the trees like grey curtains, and the spiders grow fat and bold. The forest has turned sick since the Lamp broke. Burn back the spiders and look for the cause.',
+   wait:'The Gloomwood still crawls with spiders. Follow the {forest} road.',done:'You saw it too? A cold glow, deep in the woods, near the old wolf den. I fear I know what it is. Sit, and I will tell you.'},
   {title:'Old Greyfang',goal:'Slay Old Greyfang in his den in the Gloomwood',need:1,target:['greyfang'],site:DEN,boss:'greyfang',rec:6,reward:{xp:500,potions:2,rar:2},
    text:'When the Lamp was shattered, its three Ember Shards were scattered, and each was given to a fell creature to guard. One is lodged in the hide of Old Greyfang, a wolf as large as a pony and grey as ash. The shard has made him cruel and the forest sick. His den lies in the heart of the Gloomwood. Bring me that shard.',
-   wait:'Greyfang still lives. His den lies at the end of the south road, among the bones.',done:'The first Ember Shard! Feel how it hums, warm again in your hand. One shard of three. The second went north, into the Frostfells.'},
-  {title:'The Frozen Road',goal:'Slay 8 creatures of the Frostfells to the north',need:8,target:['frostwolf','goblin','icetroll'],site:wsc({x:100,y:42}),rec:6,reward:{xp:700,potions:2,rar:1},
-   text:'Snow has fallen in the Frostfells out of season, and goblins have come down from the high passes with frost wolves at their heels. Clear the north road so we can learn where the second shard is hidden. Dress warmly. The frost wolves bite cold.',
-   wait:'The north road is still not safe. Keep thinning the Frostfells creatures.',done:'The road is open, and the scouts have found it: a goblin war-camp, and in it a warlord who wears a glowing stone on a chain.'},
+   wait:'Greyfang still lives. His den lies at the end of the {forest} road, among the bones.',done:'The first Ember Shard! Feel how it hums, warm again in your hand. One shard of three. The second went {snow}, into the Frostfells.'},
+  {title:'The Frozen Road',goal:'Slay 8 creatures of the Frostfells to the {snow}',need:8,target:['frostwolf','goblin','icetroll'],site:wsc({x:100,y:42}),rec:6,reward:{xp:700,potions:2,rar:1},
+   text:'Snow has fallen in the Frostfells out of season, and goblins have come down from the high passes with frost wolves at their heels. Clear the {snow} road so we can learn where the second shard is hidden. Dress warmly. The frost wolves bite cold.',
+   wait:'The {snow} road is still not safe. Keep thinning the Frostfells creatures.',done:'The road is open, and the scouts have found it: a goblin war-camp, and in it a warlord who wears a glowing stone on a chain.'},
   {title:'Skarg the Warlord',goal:'Defeat Skarg the Goblin Warlord in his camp in the Frostfells',need:1,target:['skarg'],site:CAMP,boss:'skarg',rec:9,reward:{xp:1100,potions:2,rar:2},
    text:'Skarg, they call him. He wears the second Ember Shard as a trophy and spins two great axes for sport. When he is hurt he calls his goblins to him, and when you come close he whirls like a storm. Strike, then step back. Bring me that shard.',
-   wait:'Skarg still holds the second shard in his camp to the north.',done:'Two shards of three! The Lamp is beginning to answer: I saw it glimmer last night. The last shard went east, beyond the Sunscar Desert.'},
-  {title:'Sand and Bone',goal:'Slay 8 creatures of the Sunscar Desert to the east',need:8,target:['scorpion','raider','wurm'],site:wsc({x:162,y:108}),rec:9,reward:{xp:1500,potions:2,rar:1},
-   text:'East of here the land turns to sand and bone: the Sunscar Desert. Scorpions the size of dogs, wurms that rise from the dunes, and raiders who shoot from afar. Fight your way across. The canyon caves lie beyond.',
-   wait:'The Sunscar still blocks the way east. Keep fighting across the sands.',done:'You crossed the Sunscar. Then you are ready for the worst of the three guardians.'},
-  {title:'Mossback',goal:'Defeat Mossback the Troll at the canyon caves in the east',need:1,target:['mossback'],site:TROLL,boss:'mossback',rec:12,reward:{xp:2100,potions:2,rar:2},
+   wait:'Skarg still holds the second shard in his camp to the {snow}.',done:'Two shards of three! The Lamp is beginning to answer: I saw it glimmer last night. The last shard went {desert}, beyond the Sunscar Desert.'},
+  {title:'Sand and Bone',goal:'Slay 8 creatures of the Sunscar Desert to the {desert}',need:8,target:['scorpion','raider','wurm'],site:wsc({x:162,y:108}),rec:9,reward:{xp:1500,potions:2,rar:1},
+   text:'{Desert} of here the land turns to sand and bone: the Sunscar Desert. Scorpions the size of dogs, wurms that rise from the dunes, and raiders who shoot from afar. Fight your way across. The canyon caves lie beyond.',
+   wait:'The Sunscar still blocks the way {desert}. Keep fighting across the sands.',done:'You crossed the Sunscar. Then you are ready for the worst of the three guardians.'},
+  {title:'Mossback',goal:'Defeat Mossback the Troll at the canyon caves to the {troll}',need:1,target:['mossback'],site:TROLL,boss:'mossback',rec:12,reward:{xp:2100,potions:2,rar:2},
    text:'In the canyon caves sleeps a troll older than our village. Mossback, for the moss grows on his back like a hillside. The last shard sits in his belly, and it has woken him. He hurls boulders at anyone who comes near, and when wounded he rages. Watch the ground. Keep moving.',
-   wait:'Mossback still guards the last shard in the eastern caves. Mind the boulders.',done:'All three Ember Shards! I will work them back into the Lamp tonight. But the Barrow King will feel it, and he will not sit idle.'},
-  {title:'Into the Mirefen',goal:'Slay 10 creatures of the Mirefen Bog to the west',need:10,target:['beetle','mosquito','lurker','webweaver'],site:wsc({x:32,y:132}),rec:12,reward:{xp:2700,potions:2,rar:2},
+   wait:'Mossback still guards the last shard in the {troll}ern caves. Mind the boulders.',done:'All three Ember Shards! I will work them back into the Lamp tonight. But the Barrow King will feel it, and he will not sit idle.'},
+  {title:'Into the Mirefen',goal:'Slay 10 creatures of the Mirefen Bog to the {swamp}',need:10,target:['beetle','mosquito','lurker','webweaver'],site:wsc({x:32,y:132}),rec:12,reward:{xp:2700,potions:2,rar:2},
    text:'While I mend the Lamp, the King sends his creatures out of the Mirefen Bog to stop me: beetles with shells like shields, swarms of bloodflies, and lurkers that rise from the mud. The bog lies between us and the barrow-downs. Clear the way, and mind the mud, it slows the feet.',
-   wait:'The Mirefen still swarms. Clear a path through the bog to the west.',done:'It is done. The Lamp of Emberfall burns again! Its light has broken the ward on the barrow. Now, at last, he can be reached.'},
-  {title:'The Barrow King',goal:'End the Barrow King in the barrow-downs to the south-west',need:1,target:['barrowking'],site:BARROW,boss:'barrowking',rec:15,reward:{xp:4000,potions:2,rar:3},
-   text:'Far to the south-west lie the barrow-downs, where kings of a forgotten age were laid to rest. One of them does not rest. He shattered our Lamp and woke the land against us. He calls the dead to his side, and his cold magic fills the air. Go now, with the Lamp\'s light at your back. End the Barrow King.',
+   wait:'The Mirefen still swarms. Clear a path through the bog to the {swamp}.',done:'It is done. The Lamp of Emberfall burns again! Its light has broken the ward on the barrow. Now, at last, he can be reached.'},
+  {title:'The Barrow King',goal:'End the Barrow King in the barrow-downs to the {barrow}',need:1,target:['barrowking'],site:BARROW,boss:'barrowking',rec:15,reward:{xp:4000,potions:2,rar:3},
+   text:'Far to the {barrow} lie the barrow-downs, where kings of a forgotten age were laid to rest. One of them does not rest. He shattered our Lamp and woke the land against us. He calls the dead to his side, and his cold magic fills the air. Go now, with the Lamp\'s light at your back. End the Barrow King.',
    wait:'The cold still creeps from the barrow-downs. The King awaits.',done:'The downs are silent and the Lamp shines over the whole valley. Songs will be sung of you in Emberfall for a long, long time.'},
 ];
 
@@ -919,7 +954,7 @@ function calcStats(p){const c=CLASSES[p.cls],L=p.level-1,A=p.attr,ms=mainStat(p)
 function createPlayer(d){if((d.ws||200)!==OW){const f=OW/(d.ws||200);if(d.x)d.x*=f;if(d.y)d.y*=f;if(d.explored)delete d.explored.over;d.ws=OW}
   const p={isPlayer:true,side:'player',name:d.name,cls:d.cls,look:d.look,level:d.level||1,xp:d.xp||0,gold:d.gold||0,
   gear:Object.assign({weapon:starterWeapon(d.cls),offhand:starterOffhand(d.cls)},d.gear||{}),bag:d.bag||[],attr:d.attr||{},points:d.points||0,talents:d.talents||{},tpoints:d.tpoints||0,spec:d.spec||null,shop:d.shop||null,skills:d.skills||{},prof:d.prof||{},mats:Object.assign({hide:0,silk:0,ore:0,dust:0,essence:0},d.mats||{}),mounts:d.mounts||[],mount:d.mount||null,light:d.light||0,bagSize:d.bagSize||20,lootBonus:d.lootBonus||0,bagName:d.bagName||null,home:d.home||'emberfall',explored:d.explored||{},kills:d.kills||0,deaths:d.deaths||0,playT:d.playT||0,
-  sup:d.sup||{hp1:3},buffs:d.buffs||{},
+  sup:d.sup||{hp1:3},buffs:d.buffs||{},seed:d.seed||0,
   x:d.x||(VC.x+.5)*TILE,y:d.y||(VC.y+2.5)*TILE,r:13,walk:0,aim:0,cds:[0,0,0,0,0,0],cdMax:[1,1,1,1,1,1],potCd:0,lastHurt:-99,h:52,
   input:{mx:0,my:0,ax:0,ay:0,fire:false,abil:[false,false,false,false,false,false]}};
   // Old saves: a single potion count becomes healing potions of your level's tier.
@@ -1110,7 +1145,10 @@ function spawnSite(boss){const ok=(x,y)=>free(x,y,16);const ring=(type,c,n,r,lvl
     mossback:()=>{const c=tw(TROLL);spawnEnemy('mossback',c.x,c.y-40,12,{persist:true});ring('scorpion',c,3,180,11);sfx('roar');toast('The ground trembles. Something huge is waking…')},
     barrowking:()=>{const c=tw(BARROW);spawnEnemy('barrowking',c.x,c.y,15,{persist:true});ring('wight',c,4,150,13);sfx('roar');toast('A cold voice echoes from the barrow…')}};
   if(S2[boss])S2[boss]()}
-function questTick(){const p=players[0];if(!p||quest.state!=='active'||zone.id!=='over')return;const q=QUESTS[quest.idx];if(!q||!q.boss||flags['site'+quest.idx])return;
+// Once the Lamp burns again (the Barrow King quest is reached), the ward breaks and the barrow gate opens.
+function updateBarrowGate(){const z=zones.over;if(!z||z.gateOpen||quest.idx<8||!z.barrowGate)return;z.gateOpen=true;for(const i of z.barrowGate)z.map[i]=T.PATH;
+  if(z.terrain)for(const i of z.barrowGate)z.terrain.chunks.delete(Math.floor(i%z.MW/TCH)+','+Math.floor(i/z.MW/TCH));if(zone===z&&rt>5)toast('Far away, the ward on the barrow-downs shatters. The way to the Barrow King is open.','gold')}
+function questTick(){updateBarrowGate();const p=players[0];if(!p||quest.state!=='active'||zone.id!=='over')return;const q=QUESTS[quest.idx];if(!q||!q.boss||flags['site'+quest.idx])return;
   if(Math.hypot(p.x/TILE-q.site.x,p.y/TILE-q.site.y)<22){flags['site'+quest.idx]=true;spawnSite(q.boss)}}
 
 // ================= Input =================
@@ -1528,7 +1566,7 @@ function closeDialog(){dialogOpen=false;$('dialog').classList.add('hidden')}
 
 // ================= Save =================
 const SAVE_KEY='emberfall-save-v1';
-function save(){const p=players[0];if(!p||state!=='play')return;storeExplored(p);Account.write(heroId,{p:{name:p.name,loc:zone.id==='over'?locName(p.x/TILE,p.y/TILE):zone.name,cls:p.cls,look:p.look,level:p.level,xp:p.xp,gold:p.gold,sup:p.sup,buffs:p.buffs,gear:p.gear,bag:p.bag,attr:p.attr,points:p.points,talents:p.talents,tpoints:p.tpoints,spec:p.spec,shop:p.shop,skills:p.skills,prof:p.prof,mats:p.mats,mounts:p.mounts,mount:p.mount,light:p.light,bagSize:p.bagSize,lootBonus:p.lootBonus,bagName:p.bagName,home:p.home,explored:p.explored,ws:OW,kills:p.kills,deaths:p.deaths,playT:p.playT,x:p.dead||zone.id!=='over'?0:p.x,y:p.dead||zone.id!=='over'?0:p.y},quest})}
+function save(){const p=players[0];if(!p||state!=='play')return;storeExplored(p);Account.write(heroId,{p:{name:p.name,loc:zone.id==='over'?locName(p.x/TILE,p.y/TILE):zone.name,cls:p.cls,look:p.look,level:p.level,xp:p.xp,gold:p.gold,sup:p.sup,buffs:p.buffs,gear:p.gear,bag:p.bag,attr:p.attr,points:p.points,talents:p.talents,tpoints:p.tpoints,spec:p.spec,shop:p.shop,skills:p.skills,prof:p.prof,mats:p.mats,mounts:p.mounts,mount:p.mount,light:p.light,bagSize:p.bagSize,lootBonus:p.lootBonus,bagName:p.bagName,home:p.home,explored:p.explored,ws:OW,seed:p.seed,kills:p.kills,deaths:p.deaths,playT:p.playT,x:p.dead||zone.id!=='over'?0:p.x,y:p.dead||zone.id!=='over'?0:p.y},quest})}
 
 // ================= Screens =================
 const LOOKS={skin:['#f6d5b8','#f1c9a5','#d9a47a','#b47a52','#8a5a3a','#5e3d26'],hair:['#1e1510','#4a2e1a','#6b4423','#c9a25a','#e8d8b0','#d8d4cc','#8a2d1c','#3a4a6a'],
@@ -1552,11 +1590,11 @@ function buildCreator(){$('nameIn').value=pick(NAMES);renderLooks();
 function drawPreview(){const c=$('prev').getContext('2d');c.clearRect(0,0,260,280);c.fillStyle='rgba(0,0,0,.35)';ell(c,130,236,44,13);c.fill();
   const o=playerLook({cls:cr.cls,look:cr.look});o.s=2.6;o.aim=Math.sin(rt*.8)*.6;o.aimS=o.aim;o.walk=rt*4;drawHumanoid(c,130,236,o)}
 function show(id){for(const s of['login','title','creator','death','pause'])$(s).classList.toggle('hidden',s!==id)}
-function resetWorld(){for(const d of zones.over.decor)delete d.next;for(const k in zones)if(k!=='over')delete zones[k];zones.over.fog=null;zones.over.cells=null;zones.over.corpses=[];for(const b of zones.over.buildings)b.stock=null;zones.over.enemies=[];zones.over.drops=[];useZone(zones.over);enemies=[];allies=[];projs=[];areas=[];parts=[];texts=[];drops=[];fx=[];players=[];flags={};time=0}
-function startGame(data,isNew,id){heroId=id||Account.newId();resetWorld();closeLoot();quest=data.quest||{idx:0,state:'offer',prog:0};const p=createPlayer(data.p);p.id=0;players=[p];
+function resetWorld(){if(zones.over&&zones.over.gateOpen){for(const i of zones.over.barrowGate)zones.over.map[i]=T.WALL;zones.over.gateOpen=false;zones.over.terrain.chunks.clear()}for(const d of zones.over.decor)delete d.next;for(const k in zones)if(k!=='over')delete zones[k];zones.over.fog=null;zones.over.cells=null;zones.over.corpses=[];for(const b of zones.over.buildings)b.stock=null;zones.over.enemies=[];zones.over.drops=[];useZone(zones.over);enemies=[];allies=[];projs=[];areas=[];parts=[];texts=[];drops=[];fx=[];players=[];flags={};time=0}
+function startGame(data,isNew,id){heroId=id||Account.newId();ensureWorld(data.p.seed||0);resetWorld();closeLoot();quest=data.quest||{idx:0,state:'offer',prog:0};const p=createPlayer(data.p);p.id=0;players=[p];
   state='play';show(null);$('hud').classList.remove('hidden');buildAbar(p);updateQuestUI();invOpen=dialogOpen=pauseOpen=talOpen=shopOpen=storyOpen=false;for(const id of['inv','tal','shop','dialog','intro','victory'])$(id).classList.add('hidden');
   if(isNew)showStory('intro',true);save()}
-function beginGame(){const name=($('nameIn').value||'').trim().slice(0,16)||pick(NAMES);startGame({p:{name,cls:cr.cls,look:Object.assign({},cr.look)}},true)}
+function beginGame(){const name=($('nameIn').value||'').trim().slice(0,16)||pick(NAMES);startGame({p:{name,cls:cr.cls,look:Object.assign({},cr.look),seed:newWorldSeed()}},true)}
 function newHero(){if(state!=='play'&&SEL.heroes.length>=MAX_HEROES){toast(`You can have ${MAX_HEROES} heroes. Delete one to make room.`,'danger');return}if(state==='play')save();
   pauseOpen=false;invOpen=talOpen=shopOpen=dialogOpen=storyOpen=false;for(const id of['inv','tal','shop','dialog','intro','victory'])$(id).classList.add('hidden');$('hud').classList.add('hidden');state='creator';players=[];show('creator');buildCreator()}
 $('btnNew').onclick=newHero;$('btnNew2').onclick=newHero;
@@ -1888,10 +1926,10 @@ function restock(p){p.shop={t:Date.now(),lvl:p.level,items:Array.from({length:6}
 // Signposts along the roads and a bard in every city drop vague clues about what lies ahead,
 // so the player explores instead of following an arrow everywhere.
 const SIGNS=[
-  {x:101,y:120,t:'South ⟶ The Gloomwood.\nWebs drift on the wind there, and the old wolf den is full of bones. Mind the fang.'},
-  {x:99,y:82,t:'North ⟶ Frosthold.\nPast the town the snow never melts, and something old sleeps under the ice in the far north-west.'},
-  {x:120,y:102,t:'East ⟶ Sunreach.\nThe sun burns hottest over the tombs of forgotten kings.'},
-  {x:82,y:99,t:'West ⟶ Mirewatch.\nThe bog glows at night. Some say the light comes from below the roots.'},
+  {x:101,y:120,t:'{Forest} ⟶ The Gloomwood.\nWebs drift on the wind there, and the old wolf den is full of bones. Mind the fang.'},
+  {x:99,y:82,t:'{Frosthold} ⟶ Frosthold.\nPast the town the snow never melts, and something old sleeps under the ice in the far {dfrost}.'},
+  {x:120,y:102,t:'{Sunreach} ⟶ Sunreach.\nThe sun burns hottest over the tombs of forgotten kings.'},
+  {x:82,y:99,t:'{Mirewatch} ⟶ Mirewatch.\nThe bog glows at night. Some say the light comes from below the roots.'},
   {x:111,y:52,t:'Turn back, traveller.\nDrums in the high pass. Goblins do not share their camp.'},
   {x:128,y:32,t:'The miners dug too deep.\nNow the stones sing, and shine blue in the dark.'},
   {x:52,y:140,t:'Here lie the old kings. Let them sleep.\n(Someone has scratched underneath: "they don\'t")'},
@@ -1902,15 +1940,15 @@ const SIGNS=[
   {x:105,y:96,t:'Emberfall stable ⟶\nCows and horses for hire. Ride, don\'t walk.'},
   {x:165,y:118,t:'Canyon caves ahead.\nThe ground shakes when the old troll turns in his sleep.'}];
 const RUMORS=[
-  {l:[1,5],t:'They say a wolf the size of a pony lairs where the south road ends. Grey as ash, and twice as mean.'},
+  {l:[1,5],t:'They say a wolf the size of a pony lairs where the {forest} road ends. Grey as ash, and twice as mean.'},
   {l:[3,9],t:'Woodcutters swear there\'s a hollow under the Gloomwood, thick with silk. Treasure too, if you live long enough to find it.'},
   {l:[1,8],t:'Caves and crypts are black as pitch. A torch from any General Store is worth its weight in gold.'},
   {l:[3,12],t:'Old Garrick at the Emberfall stable sells cows you can ride. Laugh all you like, it beats walking.'},
-  {l:[6,13],t:'Frosthold\'s smith says the dwarf halls in the far north-west are full of ice, wolves and a frozen king.'},
-  {l:[7,14],t:'Miners up north found a cave where the rocks glow blue. Most of them came back. Most.'},
+  {l:[6,13],t:'Frosthold\'s smith says the dwarf halls in the far {dfrost} are full of ice, wolves and a frozen king.'},
+  {l:[7,14],t:'Miners to the {glimmer} found a cave where the rocks glow blue. Most of them came back. Most.'},
   {l:[9,17],t:'Out past Sunreach, among the dunes, there\'s a tomb with three thrones. The Sun King keeps his gold close.'},
   {l:[10,20],t:'The Sunreach stable breeds giant running birds, and, they whisper, a dragon or two for a king\'s ransom.'},
-  {l:[11,18],t:'West of Mirewatch the bog\'s roots hide hollows full of glowing mushrooms. Breathe shallow down there.'},
+  {l:[11,18],t:'{Fungal} of Mirewatch the bog\'s roots hide hollows full of glowing mushrooms. Breathe shallow down there.'},
   {l:[1,20],t:'Each craft has its master in one city only. Steel is taught in Emberfall, leather up in Frosthold, and the art of enchanting in sunny Sunreach.'},
   {l:[1,20],t:'A crafter is only as good as their silk and hide. The finest grades come from the biggest beasts.'},
   {l:[12,20],t:'Go far enough past any road and the land turns wild. The edges of the world crawl with giants: spiders as big as carts, wolves as dark as night.'},
@@ -1919,7 +1957,7 @@ const RUMORS=[
 const BARD_NAMES={emberfall:'Wren the Bard',frosthold:'Old Haldor',sunreach:'Samira the Storyteller',mirewatch:'Fenwick the Wanderer'};
 function snapToRoad(x,y){let best=null,bd=1e9;for(let dy=-7;dy<=7;dy++)for(let dx=-7;dx<=7;dx++){if(getT(x+dx,y+dy)!==T.PATH)continue;const d=Math.hypot(dx,dy);if(d<bd){bd=d;best={x:x+dx,y:y+dy}}}
   if(!best)return{x,y};for(const[ox,oy]of[[1,0],[-1,0],[0,1],[0,-1]])if(getT(best.x+ox,best.y+oy)===T.GRASS)return{x:best.x+ox,y:best.y+oy};return best}
-function addHints(z){z.signs=SIGNS.map(s=>{const q=snapToRoad(Math.round(s.x*WS),Math.round(s.y*WS));return{x:(q.x+.5)*TILE,y:(q.y+.5)*TILE,t:s.t}});for(const s of z.signs)z.decor.push({k:'sign',x:s.x,y:s.y});
+function addHints(z){z.signs=SIGNS.map(s=>{const t=wtx(s.x,s.y),q=snapToRoad(t.x,t.y);return{x:(q.x+.5)*TILE,y:(q.y+.5)*TILE,t:s.t}});for(const s of z.signs)z.decor.push({k:'sign',x:s.x,y:s.y});
   for(const c of CITIES)z.npcs.push({kind:'bard',x:(c.x+3.5)*TILE,y:(c.y+2.2)*TILE,name:BARD_NAMES[c.id],look:{skin:'#e3c3a0',hair:'#6b4423',cloth:'#6a2a5a'}})}
 function showNote(title,who,text){dialogOpen=true;mouse.l=false;$('dialog').classList.remove('hidden');$('dTitle').textContent=title;$('dWho').textContent=who;$('dText').innerHTML=text.replace(/\n/g,'<br>');$('dGoal').textContent='';
   const btns=$('dBtns');btns.innerHTML='';const b=document.createElement('button');b.className='btn primary';b.textContent='Farewell';b.onclick=closeDialog;btns.appendChild(b);sfx('click')}
@@ -2345,7 +2383,9 @@ function updateHearth(p,dt,moving){if(!(p.hearthCast>0))return;if(moving){p.hear
   if(p.hearthCast<=0){p.hearthCast=0;p.hearthCd=time+HEARTH_CD;const s=homeSpot(p);burst(p.x,p.y,'#9fd8ff',30,160);if(zone.id!=='over')enterZone('over',s.x,s.y);else{p.x=s.x;p.y=s.y;for(const a of allies){a.x=s.x+rand(-30,30);a.y=s.y+rand(-20,20)}}
     burst(p.x,p.y,'#9fd8ff',30,160);sfx('spec');toast('You arrive home in '+homeCity(p).name+'.','gold')}}
 // Dying costs 10% of the current level's experience (and can drop you a level) plus 10% of your weapon skill.
-function deathPenalty(p){const need=xpNeed(p.level);let pct=p.xp/need-.1,msg='You lost 10% experience';
+// Dying costs half a level of experience (you can drop a level) and 10% of your weapon skill.
+const DEATH_XP=.5;
+function deathPenalty(p){const need=xpNeed(p.level);let pct=p.xp/need-DEATH_XP,msg=`You lost ${DEATH_XP*100}% of a level's experience`;
   if(pct<0&&p.level>1){p.level--;pct+=1;msg=`You dropped to level ${p.level}`;levelDownPoints(p)}
   p.xp=Math.max(0,Math.round(Math.max(0,pct)*xpNeed(p.level)));
   const wt=wtypeOf(p),s=skillOf(p,wt);if(s>1){const loss=Math.max(1,Math.round(s*.1));p.skills[wt]=Math.max(1,s-loss);msg+=` and ${loss} ${SKILL_NAME[wt]} skill`}
@@ -2552,7 +2592,7 @@ function drawCampfire(c,x,y,sc,dt){const s=sc*.9;
   if(Math.random()<dt*28)SEL.embers.push({x:x+rand(-8,8)*s,y:y-10*s,vx:rand(-12,12),vy:-rand(40,90),life:rand(1.2,2.6),max:2.6});
   for(const e of SEL.embers){e.life-=dt;e.x+=(e.vx+Math.sin(rt*2+e.max*9)*14)*dt;e.y+=e.vy*dt;c.globalAlpha=Math.max(0,e.life/e.max);c.drawImage(glowSprite('#ffb050'),e.x-4,e.y-4,8,8)}
   SEL.embers=SEL.embers.filter(e=>e.life>0);c.restore();c.globalAlpha=1}
-zones.over=genOverworld();addHints(zones.over);addInnkeepers(zones.over);useZone(zones.over);zones.over.terrain=genTerrain();useZone(zones.over);
+ensureWorld(0);
 buildSprites();buildZoneSprites();startScreens();$('profClose').onclick=()=>toggleProf(false);requestAnimationFrame(frame);
 </script>
 </body>

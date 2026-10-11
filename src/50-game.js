@@ -37,7 +37,7 @@ function calcStats(p){const c=CLASSES[p.cls],L=p.level-1,A=p.attr,ms=mainStat(p)
 function createPlayer(d){if((d.ws||200)!==OW){const f=OW/(d.ws||200);if(d.x)d.x*=f;if(d.y)d.y*=f;if(d.explored)delete d.explored.over;d.ws=OW}
   const p={isPlayer:true,side:'player',name:d.name,cls:d.cls,look:d.look,level:d.level||1,xp:d.xp||0,gold:d.gold||0,
   gear:Object.assign({weapon:starterWeapon(d.cls),offhand:starterOffhand(d.cls)},d.gear||{}),bag:d.bag||[],attr:d.attr||{},points:d.points||0,talents:d.talents||{},tpoints:d.tpoints||0,spec:d.spec||null,shop:d.shop||null,skills:d.skills||{},prof:d.prof||{},mats:Object.assign({hide:0,silk:0,ore:0,dust:0,essence:0},d.mats||{}),mounts:d.mounts||[],mount:d.mount||null,light:d.light||0,bagSize:d.bagSize||20,lootBonus:d.lootBonus||0,bagName:d.bagName||null,home:d.home||'emberfall',explored:d.explored||{},kills:d.kills||0,deaths:d.deaths||0,playT:d.playT||0,
-  sup:d.sup||{hp1:3},buffs:d.buffs||{},
+  sup:d.sup||{hp1:3},buffs:d.buffs||{},seed:d.seed||0,
   x:d.x||(VC.x+.5)*TILE,y:d.y||(VC.y+2.5)*TILE,r:13,walk:0,aim:0,cds:[0,0,0,0,0,0],cdMax:[1,1,1,1,1,1],potCd:0,lastHurt:-99,h:52,
   input:{mx:0,my:0,ax:0,ay:0,fire:false,abil:[false,false,false,false,false,false]}};
   // Old saves: a single potion count becomes healing potions of your level's tier.
@@ -228,7 +228,10 @@ function spawnSite(boss){const ok=(x,y)=>free(x,y,16);const ring=(type,c,n,r,lvl
     mossback:()=>{const c=tw(TROLL);spawnEnemy('mossback',c.x,c.y-40,12,{persist:true});ring('scorpion',c,3,180,11);sfx('roar');toast('The ground trembles. Something huge is waking…')},
     barrowking:()=>{const c=tw(BARROW);spawnEnemy('barrowking',c.x,c.y,15,{persist:true});ring('wight',c,4,150,13);sfx('roar');toast('A cold voice echoes from the barrow…')}};
   if(S2[boss])S2[boss]()}
-function questTick(){const p=players[0];if(!p||quest.state!=='active'||zone.id!=='over')return;const q=QUESTS[quest.idx];if(!q||!q.boss||flags['site'+quest.idx])return;
+// Once the Lamp burns again (the Barrow King quest is reached), the ward breaks and the barrow gate opens.
+function updateBarrowGate(){const z=zones.over;if(!z||z.gateOpen||quest.idx<8||!z.barrowGate)return;z.gateOpen=true;for(const i of z.barrowGate)z.map[i]=T.PATH;
+  if(z.terrain)for(const i of z.barrowGate)z.terrain.chunks.delete(Math.floor(i%z.MW/TCH)+','+Math.floor(i/z.MW/TCH));if(zone===z&&rt>5)toast('Far away, the ward on the barrow-downs shatters. The way to the Barrow King is open.','gold')}
+function questTick(){updateBarrowGate();const p=players[0];if(!p||quest.state!=='active'||zone.id!=='over')return;const q=QUESTS[quest.idx];if(!q||!q.boss||flags['site'+quest.idx])return;
   if(Math.hypot(p.x/TILE-q.site.x,p.y/TILE-q.site.y)<22){flags['site'+quest.idx]=true;spawnSite(q.boss)}}
 
 // ================= Input =================
@@ -646,7 +649,7 @@ function closeDialog(){dialogOpen=false;$('dialog').classList.add('hidden')}
 
 // ================= Save =================
 const SAVE_KEY='emberfall-save-v1';
-function save(){const p=players[0];if(!p||state!=='play')return;storeExplored(p);Account.write(heroId,{p:{name:p.name,loc:zone.id==='over'?locName(p.x/TILE,p.y/TILE):zone.name,cls:p.cls,look:p.look,level:p.level,xp:p.xp,gold:p.gold,sup:p.sup,buffs:p.buffs,gear:p.gear,bag:p.bag,attr:p.attr,points:p.points,talents:p.talents,tpoints:p.tpoints,spec:p.spec,shop:p.shop,skills:p.skills,prof:p.prof,mats:p.mats,mounts:p.mounts,mount:p.mount,light:p.light,bagSize:p.bagSize,lootBonus:p.lootBonus,bagName:p.bagName,home:p.home,explored:p.explored,ws:OW,kills:p.kills,deaths:p.deaths,playT:p.playT,x:p.dead||zone.id!=='over'?0:p.x,y:p.dead||zone.id!=='over'?0:p.y},quest})}
+function save(){const p=players[0];if(!p||state!=='play')return;storeExplored(p);Account.write(heroId,{p:{name:p.name,loc:zone.id==='over'?locName(p.x/TILE,p.y/TILE):zone.name,cls:p.cls,look:p.look,level:p.level,xp:p.xp,gold:p.gold,sup:p.sup,buffs:p.buffs,gear:p.gear,bag:p.bag,attr:p.attr,points:p.points,talents:p.talents,tpoints:p.tpoints,spec:p.spec,shop:p.shop,skills:p.skills,prof:p.prof,mats:p.mats,mounts:p.mounts,mount:p.mount,light:p.light,bagSize:p.bagSize,lootBonus:p.lootBonus,bagName:p.bagName,home:p.home,explored:p.explored,ws:OW,seed:p.seed,kills:p.kills,deaths:p.deaths,playT:p.playT,x:p.dead||zone.id!=='over'?0:p.x,y:p.dead||zone.id!=='over'?0:p.y},quest})}
 
 // ================= Screens =================
 const LOOKS={skin:['#f6d5b8','#f1c9a5','#d9a47a','#b47a52','#8a5a3a','#5e3d26'],hair:['#1e1510','#4a2e1a','#6b4423','#c9a25a','#e8d8b0','#d8d4cc','#8a2d1c','#3a4a6a'],
@@ -670,11 +673,11 @@ function buildCreator(){$('nameIn').value=pick(NAMES);renderLooks();
 function drawPreview(){const c=$('prev').getContext('2d');c.clearRect(0,0,260,280);c.fillStyle='rgba(0,0,0,.35)';ell(c,130,236,44,13);c.fill();
   const o=playerLook({cls:cr.cls,look:cr.look});o.s=2.6;o.aim=Math.sin(rt*.8)*.6;o.aimS=o.aim;o.walk=rt*4;drawHumanoid(c,130,236,o)}
 function show(id){for(const s of['login','title','creator','death','pause'])$(s).classList.toggle('hidden',s!==id)}
-function resetWorld(){for(const d of zones.over.decor)delete d.next;for(const k in zones)if(k!=='over')delete zones[k];zones.over.fog=null;zones.over.cells=null;zones.over.corpses=[];for(const b of zones.over.buildings)b.stock=null;zones.over.enemies=[];zones.over.drops=[];useZone(zones.over);enemies=[];allies=[];projs=[];areas=[];parts=[];texts=[];drops=[];fx=[];players=[];flags={};time=0}
-function startGame(data,isNew,id){heroId=id||Account.newId();resetWorld();closeLoot();quest=data.quest||{idx:0,state:'offer',prog:0};const p=createPlayer(data.p);p.id=0;players=[p];
+function resetWorld(){if(zones.over&&zones.over.gateOpen){for(const i of zones.over.barrowGate)zones.over.map[i]=T.WALL;zones.over.gateOpen=false;zones.over.terrain.chunks.clear()}for(const d of zones.over.decor)delete d.next;for(const k in zones)if(k!=='over')delete zones[k];zones.over.fog=null;zones.over.cells=null;zones.over.corpses=[];for(const b of zones.over.buildings)b.stock=null;zones.over.enemies=[];zones.over.drops=[];useZone(zones.over);enemies=[];allies=[];projs=[];areas=[];parts=[];texts=[];drops=[];fx=[];players=[];flags={};time=0}
+function startGame(data,isNew,id){heroId=id||Account.newId();ensureWorld(data.p.seed||0);resetWorld();closeLoot();quest=data.quest||{idx:0,state:'offer',prog:0};const p=createPlayer(data.p);p.id=0;players=[p];
   state='play';show(null);$('hud').classList.remove('hidden');buildAbar(p);updateQuestUI();invOpen=dialogOpen=pauseOpen=talOpen=shopOpen=storyOpen=false;for(const id of['inv','tal','shop','dialog','intro','victory'])$(id).classList.add('hidden');
   if(isNew)showStory('intro',true);save()}
-function beginGame(){const name=($('nameIn').value||'').trim().slice(0,16)||pick(NAMES);startGame({p:{name,cls:cr.cls,look:Object.assign({},cr.look)}},true)}
+function beginGame(){const name=($('nameIn').value||'').trim().slice(0,16)||pick(NAMES);startGame({p:{name,cls:cr.cls,look:Object.assign({},cr.look),seed:newWorldSeed()}},true)}
 function newHero(){if(state!=='play'&&SEL.heroes.length>=MAX_HEROES){toast(`You can have ${MAX_HEROES} heroes. Delete one to make room.`,'danger');return}if(state==='play')save();
   pauseOpen=false;invOpen=talOpen=shopOpen=dialogOpen=storyOpen=false;for(const id of['inv','tal','shop','dialog','intro','victory'])$(id).classList.add('hidden');$('hud').classList.add('hidden');state='creator';players=[];show('creator');buildCreator()}
 $('btnNew').onclick=newHero;$('btnNew2').onclick=newHero;

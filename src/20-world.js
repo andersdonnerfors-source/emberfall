@@ -2,7 +2,7 @@
 // The game is made of zones: the big overworld, shop interiors, dungeons and caves. Each zone has its own
 // tile map; the active one is swapped into the globals below (map, tvar, bio, MW, MH, decor, buildings…).
 const TILE=48,TILT=0.72,OW=632,WS=OW/200;// the world is ~10x the area of the first version; old layout coordinates are scaled by WS
-const wsc=p=>Object.assign({},p,{x:Math.round(p.x*WS),y:Math.round(p.y*WS)});
+const wsc=p=>Object.assign({},p,{x:Math.round(p.x*WS),y:Math.round(p.y*WS),_bx:p.x,_by:p.y});// _bx/_by: place on the original plan
 const T={GRASS:0,TREE:1,WATER:2,PATH:3,STONE:4,WALL:5,HOUSE:6,DIRT:7,BRIDGE:8,BOG:9,PLANK:10,CAVE:11,ROCK:12};
 const BLOCK=new Set([T.TREE,T.WATER,T.WALL,T.HOUSE,T.ROCK]);
 const FLYBLOCK=new Set([T.TREE,T.WALL,T.HOUSE,T.ROCK]);// a dragon flies over water
@@ -13,7 +13,7 @@ const BIOME_NAME=['Emberfall Meadows','The Frostfells','The Sunscar Desert','The
 let MW=OW,MH=OW,map=new Uint8Array(MW*MH),tvar=new Float32Array(MW*MH),bio=new Uint8Array(MW*MH),decor=[],buildings=[],zone=null;
 const zones={};
 function biomeOf(x,y){const dx=x-VC.x,dy=y-VC.y,d=Math.hypot(dx,dy),n=vnoise(x/14/WS+200,y/14/WS+200);if(d<(34+n*12)*WS)return B.MEADOW;
-  const a=Math.atan2(dy,dx)*180/Math.PI+(n-.5)*34;if(a>-150&&a<=-40)return B.SNOW;if(a>-40&&a<=50)return B.DESERT;if(a>50&&a<=118)return B.FOREST;return B.SWAMP}
+  const a=Math.atan2(dy,dx)*180/Math.PI+(n-.5)*34;for(const b of[1,2,3])if(inWedge(a,WEDGE[b]))return b;return B.SWAMP}
 function biomeAtW(wx,wy){const x=Math.floor(wx/TILE),y=Math.floor(wy/TILE);if(x<0||y<0||x>=MW||y>=MH)return zone&&zone.kind!=='over'?zone.biome:B.MEADOW;return bio[y*MW+x]}
 function setT(x,y,t){if(x>=0&&y>=0&&x<MW&&y<MH)map[y*MW+x]=t}
 function getT(x,y){if(x<0||y<0||x>=MW||y>=MH)return zone&&zone.kind==='over'?T.TREE:T.WALL;return map[y*MW+x]}
@@ -88,7 +88,7 @@ function genOverworld(){MW=MH=OW;map=new Uint8Array(MW*MH);tvar=new Float32Array
   for(let dy=-8;dy<=8;dy++)for(let dx=-8;dx<=8;dx++){const d=Math.hypot(dx,dy);if(d<6.6)setT(BARROW.x+dx,BARROW.y+dy,T.STONE);else if(d<7.8)setT(BARROW.x+dx,BARROW.y+dy,T.WALL)}
   const R=(a,b)=>road(a,b);
   for(const c of CITIES)if(c.id!=='emberfall')R(VC,c);
-  R(VC,CAMP);R(VC,DEN);R(VC,TROLL);R(CITIES[3],BARROW);R(VC,wsc({x:100,y:193}));R(VC,wsc({x:7,y:96}));R(VC,wsc({x:193,y:104}));R(CITIES[1],wsc({x:78,y:7}));
+  R(VC,CAMP);R(VC,DEN);R(VC,TROLL);R(CITIES[3],BARROW);R(VC,wtx(100,193));R(VC,wtx(7,96));R(VC,wtx(193,104));R(CITIES[1],wtx(78,7));
   R(DEN,ENTRANCES[0]);R(CITIES[1],ENTRANCES[1]);R(CITIES[2],ENTRANCES[2]);R(CAMP,ENTRANCES[3]);R(CITIES[3],ENTRANCES[4]);
   decor=[];buildings=[];const doors=[],lights=[];
   for(const c of CITIES){for(let y=-3;y<=3;y++)for(let x=-3;x<=3;x++)if(Math.hypot(x,y)<3.6)setT(c.x+x,c.y+y,T.PATH);
@@ -103,9 +103,10 @@ function genOverworld(){MW=MH=OW;map=new Uint8Array(MW*MH);tvar=new Float32Array
   decor.push({k:'fire',x:(CAMP.x+.5)*TILE,y:(CAMP.y+.5)*TILE});
   for(const[dx,dy,c]of[[-3,-3,'#7a3b26'],[3,-3,'#6a5a3a'],[-4,2,'#5a4a2a'],[3,3,'#7a3b26'],[0,-5,'#6a5a3a']])decor.push({k:'tent',x:(CAMP.x+dx+.5)*TILE,y:(CAMP.y+dy+.5)*TILE,c});
   for(let i=0;i<9;i++){const a=i/9*TAU+.3,r=4.2+hash(i,9)*1.5;decor.push({k:'grave',x:(BARROW.x+.5+Math.cos(a)*r)*TILE,y:(BARROW.y+.5+Math.sin(a)*r)*TILE,v:hash(i,4)})}
+  const ga=Math.atan2(CITIES[3].y-BARROW.y,CITIES[3].x-BARROW.x),gate=[];for(let r=6;r<=8.6;r+=.5)for(let w=-1.5;w<=1.5;w+=.5){const gx=Math.round(BARROW.x+Math.cos(ga)*r-Math.sin(ga)*w),gy=Math.round(BARROW.y+Math.sin(ga)*r+Math.cos(ga)*w);if(getT(gx,gy)===T.WALL&&!gate.includes(gy*MW+gx))gate.push(gy*MW+gx)}
   decor.push({k:'mound',x:(BARROW.x+.5)*TILE,y:(BARROW.y-1.5)*TILE});decor.push({k:'cave',x:(TROLL.x+.5)*TILE,y:(TROLL.y-3.5)*TILE});
   for(let i=0;i<7;i++){const a=i/7*TAU,r=3+hash(i,77)*2.5;decor.push({k:'bones',x:(DEN.x+.5+Math.cos(a)*r)*TILE,y:(DEN.y+.5+Math.sin(a)*r)*TILE})}
-  return{id:'over',kind:'over',name:'The Westmark',MW,MH,map,tvar,bio,decor,buildings,doors,lights,npcs:[],dark:false,spawn:true}}
+  return{id:'over',kind:'over',name:'The Westmark',MW,MH,map,tvar,bio,decor,buildings,doors,lights,npcs:[],dark:false,spawn:true,barrowGate:gate}}
 
 // ---- Shop interiors
 function genInterior(b){MW=14;MH=10;map=new Uint8Array(MW*MH).fill(T.WALL);tvar=new Float32Array(MW*MH);bio=new Uint8Array(MW*MH).fill(B.INDOOR);
@@ -126,7 +127,7 @@ function genInterior(b){MW=14;MH=10;map=new Uint8Array(MW*MH).fill(T.WALL);tvar=
     start:{x:7.5*TILE,y:7.6*TILE},dark:false,warm:true,spawn:false,shopB:b}}
 
 // ---- Dungeons: a fixed chain of rooms and corridors, with bosses in the last rooms
-function genDungeon(e){const def=DUNGEONS[e.id],R=mulberry32(def.seed);MW=MH=72;map=new Uint8Array(MW*MH).fill(T.WALL);tvar=new Float32Array(MW*MH);bio=new Uint8Array(MW*MH).fill(B.DUNGEON);
+function genDungeon(e){const def=DUNGEONS[e.id],R=mulberry32(def.seed^WSEED);MW=MH=72;map=new Uint8Array(MW*MH).fill(T.WALL);tvar=new Float32Array(MW*MH);bio=new Uint8Array(MW*MH).fill(B.DUNGEON);
   for(let i=0;i<MW*MH;i++)tvar[i]=hash(i,def.seed);
   const rooms=[];let cx=9,cy=36;const nR=def.rooms;
   const carve=(x0,y0,x1,y1)=>{for(let y=Math.min(y0,y1);y<=Math.max(y0,y1);y++)for(let x=Math.min(x0,x1);x<=Math.max(x0,x1);x++)if(x>1&&y>1&&x<MW-2&&y<MH-2)map[y*MW+x]=T.STONE};
@@ -146,7 +147,7 @@ function genDungeon(e){const def=DUNGEONS[e.id],R=mulberry32(def.seed);MW=MH=72;
     start:{x:(first.x+2.6)*TILE,y:(first.cy+.5)*TILE}}}
 
 // ---- Caves: open caverns lit by glowing crystals and fungi
-function genCave(e){const def=CAVES[e.id],R=mulberry32(def.seed);MW=MH=90;let m=new Uint8Array(MW*MH);
+function genCave(e){const def=CAVES[e.id],R=mulberry32(def.seed^WSEED);MW=MH=90;let m=new Uint8Array(MW*MH);
   for(let y=0;y<MH;y++)for(let x=0;x<MW;x++)m[y*MW+x]=(x<2||y<2||x>MW-3||y>MH-3||R()<.44)?1:0;
   for(let it=0;it<5;it++){const n=new Uint8Array(MW*MH);for(let y=1;y<MH-1;y++)for(let x=1;x<MW-1;x++){let c=0;for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++)c+=m[(y+dy)*MW+x+dx];n[y*MW+x]=c>=5?1:0}
     for(let x=0;x<MW;x++){n[x]=1;n[(MH-1)*MW+x]=1}for(let y=0;y<MH;y++){n[y*MW]=1;n[y*MW+MW-1]=1}m=n}

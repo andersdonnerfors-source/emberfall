@@ -14,7 +14,9 @@ function updateHearth(p,dt,moving){if(!(p.hearthCast>0))return;if(moving){p.hear
   if(p.hearthCast<=0){p.hearthCast=0;p.hearthCd=time+HEARTH_CD;const s=homeSpot(p);burst(p.x,p.y,'#9fd8ff',30,160);if(zone.id!=='over')enterZone('over',s.x,s.y);else{p.x=s.x;p.y=s.y;for(const a of allies){a.x=s.x+rand(-30,30);a.y=s.y+rand(-20,20)}}
     burst(p.x,p.y,'#9fd8ff',30,160);sfx('spec');toast('You arrive home in '+homeCity(p).name+'.','gold')}}
 // Dying costs 10% of the current level's experience (and can drop you a level) plus 10% of your weapon skill.
-function deathPenalty(p){const need=xpNeed(p.level);let pct=p.xp/need-.1,msg='You lost 10% experience';
+// Dying costs half a level of experience (you can drop a level) and 10% of your weapon skill.
+const DEATH_XP=.5;
+function deathPenalty(p){const need=xpNeed(p.level);let pct=p.xp/need-DEATH_XP,msg=`You lost ${DEATH_XP*100}% of a level's experience`;
   if(pct<0&&p.level>1){p.level--;pct+=1;msg=`You dropped to level ${p.level}`;levelDownPoints(p)}
   p.xp=Math.max(0,Math.round(Math.max(0,pct)*xpNeed(p.level)));
   const wt=wtypeOf(p),s=skillOf(p,wt);if(s>1){const loss=Math.max(1,Math.round(s*.1));p.skills[wt]=Math.max(1,s-loss);msg+=` and ${loss} ${SKILL_NAME[wt]} skill`}

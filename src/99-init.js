@@ -1,2 +1,2 @@
-zones.over=genOverworld();addHints(zones.over);addInnkeepers(zones.over);useZone(zones.over);zones.over.terrain=genTerrain();useZone(zones.over);
+ensureWorld(0);
 buildSprites();buildZoneSprites();startScreens();$('profClose').onclick=()=>toggleProf(false);requestAnimationFrame(frame);
