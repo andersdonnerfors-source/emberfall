@@ -646,7 +646,7 @@ function closeDialog(){dialogOpen=false;$('dialog').classList.add('hidden')}
 
 // ================= Save =================
 const SAVE_KEY='emberfall-save-v1';
-function save(){const p=players[0];if(!p||state!=='play')return;storeExplored(p);writeHero({p:{name:p.name,cls:p.cls,look:p.look,level:p.level,xp:p.xp,gold:p.gold,sup:p.sup,buffs:p.buffs,gear:p.gear,bag:p.bag,attr:p.attr,points:p.points,talents:p.talents,tpoints:p.tpoints,spec:p.spec,shop:p.shop,skills:p.skills,prof:p.prof,mats:p.mats,mounts:p.mounts,mount:p.mount,light:p.light,bagSize:p.bagSize,lootBonus:p.lootBonus,bagName:p.bagName,home:p.home,explored:p.explored,ws:OW,kills:p.kills,deaths:p.deaths,playT:p.playT,x:p.dead||zone.id!=='over'?0:p.x,y:p.dead||zone.id!=='over'?0:p.y},quest})}
+function save(){const p=players[0];if(!p||state!=='play')return;storeExplored(p);Account.write(heroId,{p:{name:p.name,loc:zone.id==='over'?locName(p.x/TILE,p.y/TILE):zone.name,cls:p.cls,look:p.look,level:p.level,xp:p.xp,gold:p.gold,sup:p.sup,buffs:p.buffs,gear:p.gear,bag:p.bag,attr:p.attr,points:p.points,talents:p.talents,tpoints:p.tpoints,spec:p.spec,shop:p.shop,skills:p.skills,prof:p.prof,mats:p.mats,mounts:p.mounts,mount:p.mount,light:p.light,bagSize:p.bagSize,lootBonus:p.lootBonus,bagName:p.bagName,home:p.home,explored:p.explored,ws:OW,kills:p.kills,deaths:p.deaths,playT:p.playT,x:p.dead||zone.id!=='over'?0:p.x,y:p.dead||zone.id!=='over'?0:p.y},quest})}
 
 // ================= Screens =================
 const LOOKS={skin:['#f6d5b8','#f1c9a5','#d9a47a','#b47a52','#8a5a3a','#5e3d26'],hair:['#1e1510','#4a2e1a','#6b4423','#c9a25a','#e8d8b0','#d8d4cc','#8a2d1c','#3a4a6a'],
@@ -669,17 +669,17 @@ function buildCreator(){$('nameIn').value=pick(NAMES);renderLooks();
     d.onclick=()=>{cr.cls=k;for(const x of cl.children)x.classList.remove('on');d.classList.add('on')};cl.appendChild(d)}}
 function drawPreview(){const c=$('prev').getContext('2d');c.clearRect(0,0,260,280);c.fillStyle='rgba(0,0,0,.35)';ell(c,130,236,44,13);c.fill();
   const o=playerLook({cls:cr.cls,look:cr.look});o.s=2.6;o.aim=Math.sin(rt*.8)*.6;o.aimS=o.aim;o.walk=rt*4;drawHumanoid(c,130,236,o)}
-function show(id){for(const s of['title','creator','death','pause'])$(s).classList.toggle('hidden',s!==id)}
+function show(id){for(const s of['login','title','creator','death','pause'])$(s).classList.toggle('hidden',s!==id)}
 function resetWorld(){for(const d of zones.over.decor)delete d.next;for(const k in zones)if(k!=='over')delete zones[k];zones.over.fog=null;zones.over.cells=null;zones.over.corpses=[];for(const b of zones.over.buildings)b.stock=null;zones.over.enemies=[];zones.over.drops=[];useZone(zones.over);enemies=[];allies=[];projs=[];areas=[];parts=[];texts=[];drops=[];fx=[];players=[];flags={};time=0}
-function startGame(data,isNew,id){heroId=id||null;resetWorld();closeLoot();quest=data.quest||{idx:0,state:'offer',prog:0};const p=createPlayer(data.p);p.id=0;players=[p];
+function startGame(data,isNew,id){heroId=id||Account.newId();resetWorld();closeLoot();quest=data.quest||{idx:0,state:'offer',prog:0};const p=createPlayer(data.p);p.id=0;players=[p];
   state='play';show(null);$('hud').classList.remove('hidden');buildAbar(p);updateQuestUI();invOpen=dialogOpen=pauseOpen=talOpen=shopOpen=storyOpen=false;for(const id of['inv','tal','shop','dialog','intro','victory'])$(id).classList.add('hidden');
   if(isNew)showStory('intro',true);save()}
 function beginGame(){const name=($('nameIn').value||'').trim().slice(0,16)||pick(NAMES);startGame({p:{name,cls:cr.cls,look:Object.assign({},cr.look)}},true)}
-function newHero(){if(allSaves().heroes.length>=MAX_HEROES&&!confirm('You have '+MAX_HEROES+' heroes. Starting a new one is fine, but consider deleting an old hero on the start screen.'))return;if(state==='play')save();
+function newHero(){if(state!=='play'&&SEL.heroes.length>=MAX_HEROES){toast(`You can have ${MAX_HEROES} heroes. Delete one to make room.`,'danger');return}if(state==='play')save();
   pauseOpen=false;invOpen=talOpen=shopOpen=dialogOpen=storyOpen=false;for(const id of['inv','tal','shop','dialog','intro','victory'])$(id).classList.add('hidden');$('hud').classList.add('hidden');state='creator';players=[];show('creator');buildCreator()}
 $('btnNew').onclick=newHero;$('btnNew2').onclick=newHero;
 $('btnSaveG').onclick=()=>{save();toast('Game saved','gold')};$('btnQuit').onclick=saveAndQuit;
-$('btnBack').onclick=()=>{state='title';show('title');refreshTitle()};
+$('btnBack').onclick=()=>openSelect();
 $('btnBegin').onclick=beginGame;$('btnResume').onclick=togglePause;$('invClose').onclick=()=>toggleInv(false);
 $('pts').onclick=()=>{const p=players[0];if(p&&p.points<=0&&p.tpoints>0)toggleTal(true);else toggleInv(true)};
 $('talClose').onclick=()=>toggleTal(false);$('shopClose').onclick=closeShop;
@@ -692,11 +692,8 @@ $('btnSet').onclick=()=>openOverlay('settings','title');$('btnSet2').onclick=()=
 $('btnSetClose').onclick=()=>{saveAudio();closeOverlay('settings')};$('btnHowClose').onclick=()=>closeOverlay('howto');
 $('volSfx').oninput=e=>{Snd.vol.sfx=+e.target.value;applyVol();sfx('hit')};$('volMus').oninput=e=>{Snd.vol.music=+e.target.value;applyVol()};$('volMute').onchange=e=>{Snd.vol.muted=e.target.checked;applyVol()};
 $('btnRand').onclick=randomLook;
-// Some previews (like a file opened inside another app) block browser storage, so nothing can be saved there. Say so clearly.
+// Some previews (like a file opened inside another app) block browser storage, so nothing can be saved there.
 function storageOK(){try{localStorage.setItem('emberfall-test','1');localStorage.removeItem('emberfall-test');return true}catch(e){return false}}
-function refreshTitle(){const el=$('heroList');el.innerHTML='';if(!storageOK())el.innerHTML='<div class="panel" style="padding:10px 14px;margin:10px 0;color:#ffb08a;max-width:420px;text-align:center">Saving is blocked in this window, so heroes cannot be saved or loaded here. Open the game with <b>Play Emberfall</b> in the emberfall folder (it opens in your web browser).</div>';const hs=allSaves().heroes.sort((a,b)=>b.t-a.t);
-  for(const h of hs){const d=h.data.p,row=document.createElement('div');row.className='herorow';const b=document.createElement('button');b.className='btn';b.innerHTML=`Continue: <b>${d.name}</b> · level ${d.level} ${CLASSES[d.cls].name}${d.spec?' ('+TAL[d.cls].specs[d.spec].name+')':''}`;b.onclick=()=>startGame(h.data,false,h.id);
-    const x=document.createElement('button');x.className='x';x.textContent='✕';x.title='Delete this hero';x.onclick=()=>{if(confirm('Delete '+d.name+' forever?'))deleteHero(h.id)};row.appendChild(b);row.appendChild(x);el.appendChild(row)}}
 
 // ================= Loop =================
 let last=performance.now();
@@ -708,5 +705,5 @@ function frameStep(now){const dt=Math.min(.05,(now-last)/1000);last=now;rt+=dt;
   if(state==='play'&&p){tx=p.x-W/2;ty=p.y-H/2/TILT}else{tx=(VC.x+.5)*TILE+Math.cos(rt*.06)*380-W/2;ty=(VC.y+.5)*TILE+Math.sin(rt*.06)*300-H/2/TILT}
   const zw=MW*TILE,zh=MH*TILE;camX=zw<W?(zw-W)/2:clamp(tx,0,zw-W);camY=zh<H/TILT?(zh-H/TILT)/2:clamp(ty,0,zh-H/TILT);
   if(shake>0){camX+=rand(-shake,shake);camY+=rand(-shake,shake);shake=Math.max(0,shake-dt*30)}
-  if(state==='play')cvs.style.cursor=signUnderMouse()||corpseUnderMouse()?'pointer':'crosshair';musicTick(dt);render();if(state==='play'){updateHud();drawInvPreview()}if(state==='creator')drawPreview();
+  if(state==='play')cvs.style.cursor=signUnderMouse()||corpseUnderMouse()?'pointer':'crosshair';musicTick(dt);if(state==='title'||state==='login')drawSelectScene(dt);else render();if(state==='play'){updateHud();drawInvPreview()}if(state==='creator')drawPreview();
 }

@@ -14,7 +14,34 @@ canvas#game{display:block;width:100vw;height:100vh;cursor:crosshair}
 .muted{color:var(--muted);font-size:13px}
 h2{margin:0 0 10px;color:var(--gold);font-weight:normal;letter-spacing:.05em}
 .screen{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;background:radial-gradient(ellipse at center,rgba(10,8,6,.3),rgba(10,8,6,.88));z-index:20;padding:16px}
-#title h1{font-size:clamp(46px,9vw,110px);letter-spacing:.12em;margin:0;color:var(--gold);text-shadow:0 0 30px rgba(232,140,60,.55),0 4px 0 #3a2410}
+#title,#login{background:none;display:block;padding:0}
+.logo{position:absolute;left:clamp(16px,4vw,56px);top:clamp(14px,4vh,44px);font-size:clamp(38px,6vw,78px);letter-spacing:.14em;color:var(--gold);text-shadow:0 0 30px rgba(232,140,60,.55),0 4px 0 #3a2410;line-height:1}
+.logo small{display:block;font-size:clamp(12px,1.4vw,16px);letter-spacing:.2em;color:var(--muted);font-style:italic;text-shadow:none;margin-top:8px}
+#selPanel{position:absolute;right:clamp(12px,3vw,40px);top:50%;transform:translateY(-50%);width:min(340px,42vw);max-height:84vh;display:flex;flex-direction:column;padding:16px;background:rgba(14,11,9,.82);backdrop-filter:blur(3px)}
+.selhead{display:flex;align-items:baseline;justify-content:space-between}.selhead h2{margin:0 0 10px}
+#heroList{overflow:auto;display:flex;flex-direction:column;gap:8px;padding:2px}
+.herocard{display:flex;gap:12px;align-items:center;padding:10px 12px;border:2px solid #3a2e1e;border-radius:9px;background:rgba(0,0,0,.35);cursor:pointer;transition:border-color .15s,background .15s}
+.herocard:hover{border-color:#8a6a3a}.herocard.on{border-color:var(--gold);background:linear-gradient(90deg,rgba(232,150,60,.18),rgba(0,0,0,.3));box-shadow:0 0 16px rgba(232,150,60,.25)}
+.hc-ic{font-size:28px;width:38px;text-align:center}.hc-tx{display:flex;flex-direction:column;min-width:0}.hc-tx b{font-weight:normal;font-size:18px;color:#f3e2b0}
+.hc-tx span{font-size:13px;color:var(--text)}.hc-tx small{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.selempty{color:var(--muted);text-align:center;padding:22px 8px;font-style:italic;line-height:1.5}
+#selBottom{position:absolute;left:36%;bottom:clamp(14px,4vh,40px);transform:translateX(-50%);display:flex;gap:10px;align-items:center}
+.btn.big{font-size:22px;padding:13px 44px;letter-spacing:.08em}.btn:disabled{opacity:.4;cursor:default}
+.btn.danger{background:linear-gradient(#7a2a1e,#4a1a10);border-color:#c84a3a}
+#selBottom #btnDel{min-width:0;font-size:14px;padding:9px 16px}
+#selMenu{position:absolute;left:clamp(16px,4vw,56px);bottom:clamp(12px,3vh,28px);display:flex;flex-direction:column;align-items:flex-start;gap:2px}
+#acctLabel{font-size:12px;color:var(--muted);margin-bottom:4px;font-family:system-ui,sans-serif}
+.linkbtn{background:none;border:none;color:var(--text);font-family:inherit;font-size:15px;cursor:pointer;padding:3px 0;opacity:.8}.linkbtn:hover{opacity:1;color:var(--gold)}
+.loginbox{position:absolute;right:clamp(12px,6vw,90px);top:50%;transform:translateY(-50%);width:min(360px,90vw);padding:22px 24px;background:rgba(14,11,9,.85);backdrop-filter:blur(3px)}
+.loginbox label{display:block;margin:12px 0 5px;color:var(--muted);font-size:13px;letter-spacing:.05em;text-transform:uppercase}
+.loginbox input,#cfInput{width:100%;box-sizing:border-box;padding:10px;background:#15110d;color:var(--text);border:1px solid var(--line);border-radius:6px;font-family:inherit;font-size:16px}
+.loginbox .row{display:flex;gap:8px;margin-top:14px}.loginbox .row .btn{flex:1;min-width:0;margin:0;padding:10px 8px;font-size:15px}
+#loginForm.off{opacity:.35;pointer-events:none}#loginNote{margin-top:10px;line-height:1.45}
+#loginMsg{margin-top:10px;font-size:14px;color:#cfe8b8;min-height:1em}#loginMsg.err{color:#ff9a8a}
+.or{display:flex;align-items:center;gap:10px;margin:16px 0 12px;color:var(--muted);font-size:13px}.or:before,.or:after{content:'';flex:1;border-top:1px solid var(--line)}
+#confirm{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center}
+.cfbox{width:min(420px,92vw);padding:20px 22px}.cfbox p{line-height:1.5}.cfbox .row{display:flex;gap:8px;margin-top:14px;justify-content:flex-end}.cfbox .btn{min-width:0}
+@media (max-width:700px){#selPanel{top:auto;bottom:90px;transform:none;width:auto;left:12px;max-height:40vh}#selBottom{left:50%}.logo{font-size:34px}}
 .sub{color:var(--muted);font-style:italic;margin:6px 0 34px;letter-spacing:.08em;text-align:center}
 .btn{background:linear-gradient(#5a4122,#3a2a16);color:var(--text);border:2px solid var(--line);border-radius:8px;padding:11px 26px;font-size:17px;cursor:pointer;margin:6px;min-width:200px;font-family:inherit}
 .btn:hover{border-color:var(--gold);color:#fff}
@@ -121,7 +148,7 @@ h2{margin:0 0 10px;color:var(--gold);font-weight:normal;letter-spacing:.05em}
 #worldmap{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:26;padding:14px 16px;max-width:96vw;max-height:96vh;overflow:auto}#wmap{display:block;width:min(640px,88vw,78vh);height:auto;border:1px solid var(--line);border-radius:6px}#mini{cursor:pointer}
 #loot{position:fixed;right:230px;top:50%;transform:translateY(-50%);z-index:24;width:280px;padding:12px 14px}
 #loot h2{font-size:18px}.lrow2{display:flex;align-items:center;gap:10px;padding:6px 8px;border:1px solid rgba(107,85,50,.4);border-radius:6px;margin-bottom:5px;cursor:pointer;font-size:14px;background:rgba(0,0,0,.25)}.lrow2:hover{border-color:var(--gold)}.li{font-size:20px;width:24px;text-align:center}
-#heroList{display:flex;flex-direction:column;align-items:center}.herorow{display:flex;align-items:center;gap:4px}.herorow .btn{min-width:320px}
+
 @media (max-width:700px){#loot{right:auto;left:50%;top:auto;bottom:90px;transform:translateX(-50%)}}
 .up{color:#8fe06a}.down{color:#e86a5a}
 #dialog{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);z-index:25;width:min(640px,94vw);padding:18px 22px}
@@ -152,14 +179,36 @@ h2{margin:0 0 10px;color:var(--gold);font-weight:normal;letter-spacing:.05em}
 </div>
 <div id="toasts"></div>
 
-<div id="title" class="screen">
-  <h1>EMBERFALL</h1>
-  <div class="sub">A tale of the Westmark · working title</div>
-  <button class="btn primary" id="btnNew">New hero</button>
-  <div id="heroList"></div>
-  <button class="btn" id="btnHow">How to play</button>
-  <button class="btn" id="btnSet">Settings</button>
+<div id="login" class="screen hidden">
+  <div class="logo">EMBERFALL<small>A tale of the Westmark</small></div>
+  <div class="loginbox panel">
+    <h2>Enter the Westmark</h2>
+    <div id="loginForm">
+      <label>Email</label><input id="loginEmail" type="email" autocomplete="username">
+      <label>Password</label><input id="loginPw" type="password" autocomplete="current-password">
+      <div class="row"><button class="btn primary" id="btnSignIn">Sign in</button><button class="btn" id="btnSignUp">Create account</button></div>
+      <button class="linkbtn" id="btnForgot">Forgot your password?</button>
+    </div>
+    <div id="loginNote" class="muted"></div><div id="loginMsg"></div>
+    <div class="or"><span>or</span></div>
+    <button class="btn" id="btnOffline" style="width:100%;margin:0">Play offline on this computer</button>
+  </div>
 </div>
+
+<div id="title" class="screen hidden">
+  <div class="logo">EMBERFALL<small>A tale of the Westmark</small></div>
+  <div id="selPanel" class="panel">
+    <div class="selhead"><h2>Your heroes</h2><span class="muted" id="selCount"></span></div>
+    <div id="heroList"></div>
+    <button class="btn" id="btnImport" style="width:100%;margin:8px 0 0">Bring in heroes from this computer</button>
+    <button class="btn primary" id="btnNew" style="width:100%;margin:10px 0 0">Create new hero</button>
+  </div>
+  <div id="selBottom"><button class="btn" id="btnDel">Delete</button><button class="btn primary big" id="btnPlay">Play</button></div>
+  <div id="selMenu"><span id="acctLabel"></span><button class="linkbtn" id="btnAcct">Sign out</button><button class="linkbtn" id="btnHow">How to play</button><button class="linkbtn" id="btnSet">Settings</button></div>
+</div>
+
+<div id="confirm" class="hidden"><div class="panel cfbox"><h2 id="cfTitle"></h2><p id="cfText"></p><input id="cfInput" autocomplete="off" spellcheck="false">
+  <div class="row"><button class="btn" id="cfNo">Keep</button><button class="btn danger" id="cfOk">Delete forever</button></div></div></div>
 
 <div id="creator" class="screen hidden">
   <div class="wrap panel">
@@ -1479,7 +1528,7 @@ function closeDialog(){dialogOpen=false;$('dialog').classList.add('hidden')}
 
 // ================= Save =================
 const SAVE_KEY='emberfall-save-v1';
-function save(){const p=players[0];if(!p||state!=='play')return;storeExplored(p);writeHero({p:{name:p.name,cls:p.cls,look:p.look,level:p.level,xp:p.xp,gold:p.gold,sup:p.sup,buffs:p.buffs,gear:p.gear,bag:p.bag,attr:p.attr,points:p.points,talents:p.talents,tpoints:p.tpoints,spec:p.spec,shop:p.shop,skills:p.skills,prof:p.prof,mats:p.mats,mounts:p.mounts,mount:p.mount,light:p.light,bagSize:p.bagSize,lootBonus:p.lootBonus,bagName:p.bagName,home:p.home,explored:p.explored,ws:OW,kills:p.kills,deaths:p.deaths,playT:p.playT,x:p.dead||zone.id!=='over'?0:p.x,y:p.dead||zone.id!=='over'?0:p.y},quest})}
+function save(){const p=players[0];if(!p||state!=='play')return;storeExplored(p);Account.write(heroId,{p:{name:p.name,loc:zone.id==='over'?locName(p.x/TILE,p.y/TILE):zone.name,cls:p.cls,look:p.look,level:p.level,xp:p.xp,gold:p.gold,sup:p.sup,buffs:p.buffs,gear:p.gear,bag:p.bag,attr:p.attr,points:p.points,talents:p.talents,tpoints:p.tpoints,spec:p.spec,shop:p.shop,skills:p.skills,prof:p.prof,mats:p.mats,mounts:p.mounts,mount:p.mount,light:p.light,bagSize:p.bagSize,lootBonus:p.lootBonus,bagName:p.bagName,home:p.home,explored:p.explored,ws:OW,kills:p.kills,deaths:p.deaths,playT:p.playT,x:p.dead||zone.id!=='over'?0:p.x,y:p.dead||zone.id!=='over'?0:p.y},quest})}
 
 // ================= Screens =================
 const LOOKS={skin:['#f6d5b8','#f1c9a5','#d9a47a','#b47a52','#8a5a3a','#5e3d26'],hair:['#1e1510','#4a2e1a','#6b4423','#c9a25a','#e8d8b0','#d8d4cc','#8a2d1c','#3a4a6a'],
@@ -1502,17 +1551,17 @@ function buildCreator(){$('nameIn').value=pick(NAMES);renderLooks();
     d.onclick=()=>{cr.cls=k;for(const x of cl.children)x.classList.remove('on');d.classList.add('on')};cl.appendChild(d)}}
 function drawPreview(){const c=$('prev').getContext('2d');c.clearRect(0,0,260,280);c.fillStyle='rgba(0,0,0,.35)';ell(c,130,236,44,13);c.fill();
   const o=playerLook({cls:cr.cls,look:cr.look});o.s=2.6;o.aim=Math.sin(rt*.8)*.6;o.aimS=o.aim;o.walk=rt*4;drawHumanoid(c,130,236,o)}
-function show(id){for(const s of['title','creator','death','pause'])$(s).classList.toggle('hidden',s!==id)}
+function show(id){for(const s of['login','title','creator','death','pause'])$(s).classList.toggle('hidden',s!==id)}
 function resetWorld(){for(const d of zones.over.decor)delete d.next;for(const k in zones)if(k!=='over')delete zones[k];zones.over.fog=null;zones.over.cells=null;zones.over.corpses=[];for(const b of zones.over.buildings)b.stock=null;zones.over.enemies=[];zones.over.drops=[];useZone(zones.over);enemies=[];allies=[];projs=[];areas=[];parts=[];texts=[];drops=[];fx=[];players=[];flags={};time=0}
-function startGame(data,isNew,id){heroId=id||null;resetWorld();closeLoot();quest=data.quest||{idx:0,state:'offer',prog:0};const p=createPlayer(data.p);p.id=0;players=[p];
+function startGame(data,isNew,id){heroId=id||Account.newId();resetWorld();closeLoot();quest=data.quest||{idx:0,state:'offer',prog:0};const p=createPlayer(data.p);p.id=0;players=[p];
   state='play';show(null);$('hud').classList.remove('hidden');buildAbar(p);updateQuestUI();invOpen=dialogOpen=pauseOpen=talOpen=shopOpen=storyOpen=false;for(const id of['inv','tal','shop','dialog','intro','victory'])$(id).classList.add('hidden');
   if(isNew)showStory('intro',true);save()}
 function beginGame(){const name=($('nameIn').value||'').trim().slice(0,16)||pick(NAMES);startGame({p:{name,cls:cr.cls,look:Object.assign({},cr.look)}},true)}
-function newHero(){if(allSaves().heroes.length>=MAX_HEROES&&!confirm('You have '+MAX_HEROES+' heroes. Starting a new one is fine, but consider deleting an old hero on the start screen.'))return;if(state==='play')save();
+function newHero(){if(state!=='play'&&SEL.heroes.length>=MAX_HEROES){toast(`You can have ${MAX_HEROES} heroes. Delete one to make room.`,'danger');return}if(state==='play')save();
   pauseOpen=false;invOpen=talOpen=shopOpen=dialogOpen=storyOpen=false;for(const id of['inv','tal','shop','dialog','intro','victory'])$(id).classList.add('hidden');$('hud').classList.add('hidden');state='creator';players=[];show('creator');buildCreator()}
 $('btnNew').onclick=newHero;$('btnNew2').onclick=newHero;
 $('btnSaveG').onclick=()=>{save();toast('Game saved','gold')};$('btnQuit').onclick=saveAndQuit;
-$('btnBack').onclick=()=>{state='title';show('title');refreshTitle()};
+$('btnBack').onclick=()=>openSelect();
 $('btnBegin').onclick=beginGame;$('btnResume').onclick=togglePause;$('invClose').onclick=()=>toggleInv(false);
 $('pts').onclick=()=>{const p=players[0];if(p&&p.points<=0&&p.tpoints>0)toggleTal(true);else toggleInv(true)};
 $('talClose').onclick=()=>toggleTal(false);$('shopClose').onclick=closeShop;
@@ -1525,11 +1574,8 @@ $('btnSet').onclick=()=>openOverlay('settings','title');$('btnSet2').onclick=()=
 $('btnSetClose').onclick=()=>{saveAudio();closeOverlay('settings')};$('btnHowClose').onclick=()=>closeOverlay('howto');
 $('volSfx').oninput=e=>{Snd.vol.sfx=+e.target.value;applyVol();sfx('hit')};$('volMus').oninput=e=>{Snd.vol.music=+e.target.value;applyVol()};$('volMute').onchange=e=>{Snd.vol.muted=e.target.checked;applyVol()};
 $('btnRand').onclick=randomLook;
-// Some previews (like a file opened inside another app) block browser storage, so nothing can be saved there. Say so clearly.
+// Some previews (like a file opened inside another app) block browser storage, so nothing can be saved there.
 function storageOK(){try{localStorage.setItem('emberfall-test','1');localStorage.removeItem('emberfall-test');return true}catch(e){return false}}
-function refreshTitle(){const el=$('heroList');el.innerHTML='';if(!storageOK())el.innerHTML='<div class="panel" style="padding:10px 14px;margin:10px 0;color:#ffb08a;max-width:420px;text-align:center">Saving is blocked in this window, so heroes cannot be saved or loaded here. Open the game with <b>Play Emberfall</b> in the emberfall folder (it opens in your web browser).</div>';const hs=allSaves().heroes.sort((a,b)=>b.t-a.t);
-  for(const h of hs){const d=h.data.p,row=document.createElement('div');row.className='herorow';const b=document.createElement('button');b.className='btn';b.innerHTML=`Continue: <b>${d.name}</b> · level ${d.level} ${CLASSES[d.cls].name}${d.spec?' ('+TAL[d.cls].specs[d.spec].name+')':''}`;b.onclick=()=>startGame(h.data,false,h.id);
-    const x=document.createElement('button');x.className='x';x.textContent='✕';x.title='Delete this hero';x.onclick=()=>{if(confirm('Delete '+d.name+' forever?'))deleteHero(h.id)};row.appendChild(b);row.appendChild(x);el.appendChild(row)}}
 
 // ================= Loop =================
 let last=performance.now();
@@ -1541,7 +1587,7 @@ function frameStep(now){const dt=Math.min(.05,(now-last)/1000);last=now;rt+=dt;
   if(state==='play'&&p){tx=p.x-W/2;ty=p.y-H/2/TILT}else{tx=(VC.x+.5)*TILE+Math.cos(rt*.06)*380-W/2;ty=(VC.y+.5)*TILE+Math.sin(rt*.06)*300-H/2/TILT}
   const zw=MW*TILE,zh=MH*TILE;camX=zw<W?(zw-W)/2:clamp(tx,0,zw-W);camY=zh<H/TILT?(zh-H/TILT)/2:clamp(ty,0,zh-H/TILT);
   if(shake>0){camX+=rand(-shake,shake);camY+=rand(-shake,shake);shake=Math.max(0,shake-dt*30)}
-  if(state==='play')cvs.style.cursor=signUnderMouse()||corpseUnderMouse()?'pointer':'crosshair';musicTick(dt);render();if(state==='play'){updateHud();drawInvPreview()}if(state==='creator')drawPreview();
+  if(state==='play')cvs.style.cursor=signUnderMouse()||corpseUnderMouse()?'pointer':'crosshair';musicTick(dt);if(state==='title'||state==='login')drawSelectScene(dt);else render();if(state==='play'){updateHud();drawInvPreview()}if(state==='creator')drawPreview();
 }
 // ================= Stats helpers =================
 function mainStat(p){return p.spec==='holy'?'int':MAIN_STAT[p.cls]}
@@ -2235,9 +2281,9 @@ function spawner(dt){spawnT-=dt;if(spawnT>0)return;spawnT=.5;if(!zone.spawn)retu
 // ================= Hero save slots =================
 const SAVES_KEY='emberfall-saves-v2',MAX_HEROES=6;let heroId=null;
 function allSaves(){const s=fetchStore(SAVES_KEY)||{heroes:[]};if(!s.migrated){const old=fetchStore(SAVE_KEY);if(old&&old.p)s.heroes.push({id:'h'+Date.now(),t:Date.now(),data:old});s.migrated=true;store(SAVES_KEY,s)}return s}
-function writeHero(data){const s=allSaves();if(!heroId)heroId='h'+Date.now();const i=s.heroes.findIndex(h=>h.id===heroId),e={id:heroId,t:Date.now(),data};if(i>=0)s.heroes[i]=e;else s.heroes.push(e);store(SAVES_KEY,s)}
-function deleteHero(id){const s=allSaves();s.heroes=s.heroes.filter(h=>h.id!==id);store(SAVES_KEY,s);refreshTitle()}
-function saveAndQuit(){save();toast('Game saved');pauseOpen=false;closeLoot();state='title';players=[];$('hud').classList.add('hidden');for(const id of['inv','tal','shop','dialog','prof','pause'])$(id).classList.add('hidden');invOpen=talOpen=shopOpen=dialogOpen=profOpen=false;useZone(zones.over);enemies=[];show('title');refreshTitle()}
+function writeHero(data){const s=allSaves();if(!heroId)heroId='h'+Date.now();if(!storageOK())return;const i=s.heroes.findIndex(h=>h.id===heroId),e={id:heroId,t:Date.now(),data};if(i>=0)s.heroes[i]=e;else s.heroes.push(e);store(SAVES_KEY,s)}
+function deleteHero(id){const s=allSaves();s.heroes=s.heroes.filter(h=>h.id!==id);store(SAVES_KEY,s)}
+function saveAndQuit(){save();toast('Game saved');pauseOpen=false;closeLoot();state='title';players=[];$('hud').classList.add('hidden');for(const id of['inv','tal','shop','dialog','prof','pause'])$(id).classList.add('hidden');invOpen=talOpen=shopOpen=dialogOpen=profOpen=false;useZone(zones.over);enemies=[];Account.flush();openSelect()}
 $('lootClose').onclick=closeLoot;$('lootAll').onclick=takeAll;
 // ================= Spell and combat effects =================
 // Magic particles glow (drawn additively from cached soft sprites), spells leave trails, hits spark,
@@ -2372,8 +2418,142 @@ function drawMini(){const c=$('mini').getContext('2d'),p=players[0];c.imageSmoot
     else{const a=Math.atan2(ty-100,tx-100);c.fillStyle='#ffd84a';c.save();c.translate(100+Math.cos(a)*88,100+Math.sin(a)*84);c.rotate(a);c.beginPath();c.moveTo(7,0);c.lineTo(-5,-5);c.lineTo(-5,5);c.fill();c.restore()}}
   c.save();c.translate(X(p.x),Y(p.y));c.rotate(Math.atan2(Math.sin(p.aim),Math.cos(p.aim)));c.fillStyle='#fff';c.beginPath();c.moveTo(6,0);c.lineTo(-4,-4);c.lineTo(-4,4);c.closePath();c.fill();c.strokeStyle='#000';c.lineWidth=1;c.stroke();c.restore();
   c.font='10px Georgia';c.fillStyle='rgba(0,0,0,.65)';c.fillRect(0,186,200,14);c.fillStyle='#e8dcb8';c.fillText(zone.kind==='over'?BIOME_NAME[biomeAtW(p.x,p.y)]:zone.name,100,197)}
+// ================= Accounts and hero storage =================
+// Online: heroes are stored in Supabase, and database rules (supabase-setup.sql) make sure each player can only
+// read, change and delete their own heroes. Offline: heroes stay in this browser, as before.
+// To switch online, fill in the two values from Supabase → Project Settings → API. The anon key is meant to be public.
+const SUPA_URL='';
+const SUPA_ANON_KEY='';
+const ONLINE_READY=!!(SUPA_URL&&SUPA_ANON_KEY);
+const SUPA_LIB='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js';
+const MODE_KEY='emberfall-mode';
+const Account={mode:null,user:null,sb:null,cache:[],dirty:null,lastPush:0,
+  async client(){if(this.sb)return this.sb;if(!window.supabase)await new Promise((ok,fail)=>{const s=document.createElement('script');s.src=SUPA_LIB;s.onload=ok;s.onerror=()=>fail(new Error('Could not reach the login service. Check your internet connection.'));document.head.appendChild(s)});
+    this.sb=window.supabase.createClient(SUPA_URL,SUPA_ANON_KEY);return this.sb},
+  // Resume a remembered login (online) or offline choice. Returns true if we can go straight to the heroes.
+  async resume(){const m=fetchStore(MODE_KEY);if(m==='offline'){this.mode='offline';return true}
+    if(m==='online'&&ONLINE_READY){try{const sb=await this.client(),{data}=await sb.auth.getSession();if(data.session){this.mode='online';this.user=data.session.user;return true}}catch(e){}}return false},
+  playOffline(){this.mode='offline';this.user=null;store(MODE_KEY,'offline')},
+  async signIn(email,pw){const sb=await this.client(),{data,error}=await sb.auth.signInWithPassword({email,password:pw});if(error)throw error;this.mode='online';this.user=data.user;store(MODE_KEY,'online')},
+  async signUp(email,pw){const sb=await this.client(),{data,error}=await sb.auth.signUp({email,password:pw});if(error)throw error;
+    if(data.session){this.mode='online';this.user=data.user;store(MODE_KEY,'online');return'in'}return'confirm'},
+  async resetPassword(email){const sb=await this.client(),{error}=await sb.auth.resetPasswordForEmail(email);if(error)throw error},
+  async signOut(){if(this.mode==='online'){await this.flush();try{await (await this.client()).auth.signOut()}catch(e){}}this.mode=null;this.user=null;this.cache=[];store(MODE_KEY,null)},
+  label(){return this.mode==='online'?(this.user&&this.user.email||'Signed in'):'Offline · heroes are saved on this computer'},
+  // ---- heroes: list, save, delete (same shape both ways: {id,t,data})
+  async list(){if(this.mode!=='online'){this.cache=allSaves().heroes.sort((a,b)=>b.t-a.t);return this.cache}
+    const sb=await this.client(),{data,error}=await sb.from('heroes').select('id,data,updated_at').order('updated_at',{ascending:false});if(error)throw error;
+    this.cache=data.map(r=>({id:r.id,t:Date.parse(r.updated_at),data:r.data}));return this.cache},
+  newId(){return this.mode==='online'&&crypto.randomUUID?crypto.randomUUID():'h'+Date.now()},
+  // Called by save(): offline writes at once; online keeps a local copy and sends to the server at most every 20 s.
+  write(id,data){if(this.mode!=='online'){writeHero(data);return}const e=this.cache.find(h=>h.id===id);if(e){e.data=data;e.t=Date.now()}else this.cache.unshift({id,t:Date.now(),data});
+    this.dirty={id,data};if(Date.now()-this.lastPush>20000)this.flush()},
+  async flush(){if(this.mode!=='online'||!this.dirty)return;const{id,data}=this.dirty;this.dirty=null;this.lastPush=Date.now();
+    try{const sb=await this.client(),{error}=await sb.from('heroes').upsert({id,name:data.p.name,data,updated_at:new Date().toISOString()});if(error)throw error}
+    catch(e){this.dirty=this.dirty||{id,data};toast('Could not save online: '+e.message,'danger')}},
+  async remove(id){if(this.mode!=='online'){deleteHero(id);return}const sb=await this.client(),{error}=await sb.from('heroes').delete().eq('id',id);if(error)throw error;this.cache=this.cache.filter(h=>h.id!==id)},
+  // Heroes made offline on this computer can be moved into the account once.
+  async importOffline(){const local=allSaves().heroes;let n=0;for(const h of local){if(this.cache.length>=MAX_HEROES)break;const id=this.newId();
+    const sb=await this.client(),{error}=await sb.from('heroes').insert({id,name:h.data.p.name,data:h.data});if(error){toast(error.message,'danger');break}n++}return n}};
+addEventListener('beforeunload',()=>{if(Account.dirty)Account.flush()});
+setInterval(()=>{if(Account.dirty&&Date.now()-Account.lastPush>20000)Account.flush()},5000);
+
+// ================= Login window =================
+function showLogin(){state='login';show('login');const on=ONLINE_READY;$('loginForm').classList.toggle('off',!on);
+  $('loginNote').innerHTML=on?'':'Online accounts open soon. Until then you can play offline: your heroes are saved in this browser on this computer.';$('loginMsg').textContent='';}
+function loginBusy(b,msg){for(const id of['btnSignIn','btnSignUp'])$(id).disabled=b;$('loginMsg').className=msg&&msg.err?'err':'';$('loginMsg').textContent=msg?msg.t:''}
+async function doLogin(kind){const email=$('loginEmail').value.trim(),pw=$('loginPw').value;
+  if(!email||!pw){loginBusy(false,{t:'Enter your email and password.',err:1});return}if(kind==='up'&&pw.length<8){loginBusy(false,{t:'Use at least 8 characters for the password.',err:1});return}
+  loginBusy(true,{t:kind==='up'?'Creating your account…':'Signing in…'});
+  try{if(kind==='up'){const r=await Account.signUp(email,pw);if(r==='confirm'){loginBusy(false,{t:'Almost there: check your email and click the confirmation link, then sign in here.'});return}}else await Account.signIn(email,pw);
+    $('loginPw').value='';loginBusy(false);openSelect()}
+  catch(e){loginBusy(false,{t:e.message||'Something went wrong.',err:1})}}
+$('btnSignIn').onclick=()=>doLogin('in');$('btnSignUp').onclick=()=>doLogin('up');
+$('loginPw').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin('in')});
+$('btnOffline').onclick=()=>{Account.playOffline();openSelect()};
+$('btnForgot').onclick=async()=>{const email=$('loginEmail').value.trim();if(!email){loginBusy(false,{t:'Type your email first.',err:1});return}
+  try{await Account.resetPassword(email);loginBusy(false,{t:'If that account exists, a reset link is on its way to your email.'})}catch(e){loginBusy(false,{t:e.message,err:1})}};
+async function startScreens(){if(await Account.resume())openSelect();else showLogin()}
+// ================= Character select =================
+// A night camp under the stars: your heroes gather around a fire, the chosen one steps into the light.
+// The list on the right shows each hero's name, level, class and where they last stood.
+const SEL={idx:0,heroes:[],embers:[],stars:null,hits:[],busy:false};
+const LAST_KEY='emberfall-last';
+function heroLoc(d){const p=d.p;if(p.loc)return p.loc;if(!p.x)return homeCityName(p);const f=OW/(p.ws||200);return locName(p.x*f/TILE,p.y*f/TILE)}
+function homeCityName(p){const c=CITIES.find(c=>c.id===(p.home||'emberfall'));return c?c.name:'Emberfall'}
+function locName(tx,ty){for(const c of CITIES)if(Math.hypot(tx-c.x,ty-c.y)<c.r+2)return c.name;const b=biomeOf(Math.floor(tx),Math.floor(ty));
+  if(Math.hypot(tx-BARROW.x,ty-BARROW.y)<12)return'The Barrow-downs';return isDeep(tx,ty,b)?'Deep Wilds · '+BIOME_NAME[b].replace(/^The /,''):BIOME_NAME[b]}
+function selHero(i){const h=SEL.heroes[i];if(!h)return null;const d=h.data.p;return{cls:d.cls,look:d.look,gear:Object.assign({weapon:starterWeapon(d.cls),offhand:starterOffhand(d.cls)},d.gear||{}),bagSize:d.bagSize||20,level:d.level||1,spec:d.spec}}
+async function openSelect(){state='title';show('title');$('acctLabel').textContent=Account.mode==='offline'&&!storageOK()?'Saving is blocked in this window. Open the game with Play Emberfall.':Account.label();$('btnAcct').textContent=Account.mode==='online'?'Sign out':'Sign in';
+  $('heroList').innerHTML='<div class="muted" style="padding:20px;text-align:center">Gathering your heroes…</div>';
+  try{SEL.heroes=await Account.list()}catch(e){SEL.heroes=[];toast('Could not load heroes: '+e.message,'danger')}
+  const last=fetchStore(LAST_KEY);SEL.idx=Math.max(0,SEL.heroes.findIndex(h=>h.id===last));renderSelect()}
+function refreshTitle(){if(state==='title')openSelect()}
+function renderSelect(){const el=$('heroList');el.innerHTML='';const hs=SEL.heroes;
+  if(!hs.length)el.innerHTML='<div class="selempty">No heroes yet.<br>The fire is lit and waiting.<br><br>Create your first hero to begin.</div>';
+  hs.forEach((h,i)=>{const d=h.data.p,c=CLASSES[d.cls],spec=d.spec&&TAL[d.cls].specs[d.spec],row=document.createElement('div');row.className='herocard'+(i===SEL.idx?' on':'');
+    row.innerHTML=`<div class="hc-ic">${c.icon}</div><div class="hc-tx"><b>${escapeHtml(d.name)}</b><span>Level ${d.level||1} ${c.name}${spec?' · '+spec.name:''}</span><small>📍 ${escapeHtml(heroLoc(h.data))}</small></div>`;
+    row.onclick=()=>{SEL.idx=i;sfx('click');renderSelect()};row.ondblclick=()=>playSelected();el.appendChild(row)});
+  const full=hs.length>=MAX_HEROES;$('btnNew').disabled=full;$('btnNew').title=full?`You can have ${MAX_HEROES} heroes. Delete one to make room.`:'';
+  $('btnPlay').disabled=!hs.length;$('btnDel').disabled=!hs.length;$('selCount').textContent=`${hs.length} / ${MAX_HEROES}`;
+  $('btnImport').classList.toggle('hidden',!(Account.mode==='online'&&allSaves().heroes.length&&hs.length<MAX_HEROES))}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function playSelected(){const h=SEL.heroes[SEL.idx];if(!h)return;store(LAST_KEY,h.id);startGame(h.data,false,h.id)}
+// Deleting asks you to type the hero's name, so it never happens by accident.
+function askDelete(){const h=SEL.heroes[SEL.idx];if(!h)return;const name=h.data.p.name;$('confirm').classList.remove('hidden');$('cfTitle').textContent='Delete '+name+'?';
+  $('cfText').innerHTML=`This removes <b>${escapeHtml(name)}</b> and all their gear forever. Type the hero's name to confirm.`;const inp=$('cfInput');inp.value='';inp.focus();$('cfOk').disabled=true;
+  inp.oninput=()=>{$('cfOk').disabled=inp.value.trim()!==name};
+  $('cfOk').onclick=async()=>{if(inp.value.trim()!==name)return;$('confirm').classList.add('hidden');try{await Account.remove(h.id);sfx('death');toast(name+' has been laid to rest.')}catch(e){toast('Could not delete: '+e.message,'danger')}openSelect()};
+  $('cfNo').onclick=()=>$('confirm').classList.add('hidden')}
+$('btnPlay').onclick=playSelected;$('btnDel').onclick=askDelete;
+$('btnAcct').onclick=async()=>{await Account.signOut();showLogin()};
+$('btnImport').onclick=async()=>{const n=await Account.importOffline();toast(n?`Moved ${n} offline hero${n>1?'es':''} into your account.`:'Nothing was moved.','gold');openSelect()};
+addEventListener('keydown',e=>{if(state!=='title'||!$('confirm').classList.contains('hidden'))return;const n=SEL.heroes.length;if(!n)return;
+  if(e.code==='ArrowDown'||e.code==='ArrowUp'){SEL.idx=(SEL.idx+(e.code==='ArrowDown'?1:n-1))%n;renderSelect()}if(e.code==='Enter')playSelected()});
+cvs.addEventListener('mousedown',e=>{if(state!=='title')return;for(const h of SEL.hits)if(e.clientX>h.x&&e.clientX<h.x+h.w&&e.clientY>h.y&&e.clientY<h.y+h.h){SEL.idx=h.i;sfx('click');renderSelect();return}});
+
+// ---- The camp scene
+function selStars(){const r=mulberry32(77),s=[];for(let i=0;i<170;i++)s.push({x:r(),y:Math.pow(r(),1.6)*.6,z:r()*1.6+.4,ph:r()*TAU,sp:.6+r()*2});return s}
+function ridge(c,base,amp,freq,seed,col,drift){c.fillStyle=col;c.beginPath();c.moveTo(0,H);for(let x=0;x<=W+20;x+=16){const n=vnoise((x+drift)/freq+seed,seed*.37);c.lineTo(x,base-n*amp)}c.lineTo(W,H);c.closePath();c.fill()}
+function drawSelectScene(dt){const c=ctx;SEL.stars=SEL.stars||selStars();const gy=H*.74,fx=W*.36,fy=H*.84,sc=clamp(H/250,2,3.6);
+  // sky, stars and moon
+  let g=c.createLinearGradient(0,0,0,gy);g.addColorStop(0,'#05060f');g.addColorStop(.55,'#161230');g.addColorStop(.85,'#3b1f2a');g.addColorStop(1,'#5a2a1e');c.fillStyle=g;c.fillRect(0,0,W,H);
+  for(const s of SEL.stars){c.globalAlpha=.25+.6*Math.abs(Math.sin(rt*s.sp+s.ph));c.fillStyle='#f4ecff';c.fillRect(s.x*W,s.y*gy,s.z,s.z)}c.globalAlpha=1;
+  const mx=W*.74,my=H*.17;c.save();c.globalCompositeOperation='lighter';c.drawImage(glowSprite('#9fb4ff'),mx-120,my-120,240,240);c.restore();c.fillStyle='#e8ecf8';circ(c,mx,my,26);c.fill();c.fillStyle='rgba(150,160,190,.35)';circ(c,mx-8,my-5,6);c.fill();circ(c,mx+9,my+7,4);c.fill();
+  // mountains, then the ruined tower on the ridge
+  ridge(c,gy-60,170,260,3,'#1e1830',rt*2);ridge(c,gy-20,110,170,9,'#151224',rt*4);
+  {const tx=W*.12,ty=gy-40;c.fillStyle='#0d0b16';c.beginPath();c.moveTo(tx-26,ty+40);c.lineTo(tx-20,ty-150);c.lineTo(tx-8,ty-162);c.lineTo(tx+2,ty-150);c.lineTo(tx+10,ty-170);c.lineTo(tx+22,ty-150);c.lineTo(tx+28,ty+40);c.fill();
+    const l=.6+.4*Math.sin(rt*3.1)*Math.sin(rt*1.7);c.save();c.globalCompositeOperation='lighter';c.globalAlpha=l;c.drawImage(glowSprite('#ffb060'),tx-30,ty-120,60,60);c.restore();c.fillStyle=`rgba(255,190,110,${.6+.4*l})`;c.fillRect(tx-3,ty-96,6,9)}
+  ridge(c,gy+10,50,120,15,'#0e0b12',0);
+  // ground and firelight
+  g=c.createLinearGradient(0,gy,0,H);g.addColorStop(0,'#120d0c');g.addColorStop(1,'#070505');c.fillStyle=g;c.fillRect(0,gy+10,W,H);
+  const fl=.85+.15*Math.sin(rt*13)*Math.sin(rt*7.3);c.save();c.globalCompositeOperation='lighter';g=c.createRadialGradient(fx,fy,0,fx,fy,W*.42*fl);g.addColorStop(0,'rgba(255,140,60,.5)');g.addColorStop(.35,'rgba(200,80,30,.16)');g.addColorStop(1,'rgba(0,0,0,0)');
+  c.fillStyle=g;c.save();c.translate(fx,fy);c.scale(1,.42);circ(c,0,0,W*.42*fl);c.fill();c.restore();c.restore();
+  // heroes around the fire: the chosen one stands in front, the others wait in the half-dark
+  SEL.hits=[];const hs=SEL.heroes,spots=[[-.12,-.03],[-.21,-.06],[.2,-.07],[-.05,-.1],[.11,-.11]];let k=0;const order=[];
+  hs.forEach((h,i)=>{if(i!==SEL.idx)order.push([i,spots[k++%spots.length]])});
+  for(const[i,[ox,oy]]of order.sort((a,b)=>a[1][1]-b[1][1])){const p=selHero(i),hx=fx+ox*W,hy=fy+oy*H,o=playerLook(p);o.s=sc*.58;o.aim=hx<fx?0:Math.PI;o.aimS=o.aim;o.walk=0;o.moving=false;o.ph=i;
+    c.filter='brightness(0.42) saturate(0.6)';softShadow(c,hx,hy,24*o.s,7*o.s);drawHumanoid(c,hx,hy,o);c.filter='none';SEL.hits.push({x:hx-14*o.s,y:hy-56*o.s,w:28*o.s,h:58*o.s,i})}
+  drawCampfire(c,fx,fy,sc,dt);
+  if(hs[SEL.idx]){const p=selHero(SEL.idx),hx=fx+W*.1,hy=fy+H*.035,o=playerLook(p);o.s=sc;o.aim=Math.PI*.92;o.aimS=o.aim;o.walk=0;o.moving=false;
+    softShadow(c,hx,hy,26*sc,8*sc);drawHumanoid(c,hx,hy,o);c.save();c.globalCompositeOperation='lighter';c.globalAlpha=.18*fl;c.drawImage(glowSprite('#ff9a50'),hx-40*sc,hy-60*sc,50*sc,70*sc);c.restore();
+    SEL.hits.push({x:hx-14*sc,y:hy-56*sc,w:28*sc,h:58*sc,i:SEL.idx});
+    const d=hs[SEL.idx].data.p;c.textAlign='center';c.font=`${Math.round(16+sc*3)}px Georgia`;c.fillStyle='rgba(0,0,0,.6)';c.fillText(d.name,hx+1,hy-60*sc+1);c.fillStyle='#f3e2b0';c.fillText(d.name,hx,hy-60*sc)}
+  // drifting mist and a dark frame
+  c.save();c.globalAlpha=.08;c.fillStyle='#b8b8d0';for(let i=0;i<4;i++){const x=((rt*12*(i+1)+i*W/3)%(W+600))-300;c.beginPath();c.ellipse(x,gy+30+i*22,320,26,0,0,TAU);c.fill()}c.restore();
+  g=c.createRadialGradient(W*.4,H*.6,Math.min(W,H)*.3,W*.5,H*.5,Math.max(W,H)*.8);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.75)');c.fillStyle=g;c.fillRect(0,0,W,H)}
+function drawCampfire(c,x,y,sc,dt){const s=sc*.9;
+  c.fillStyle='#3a3530';for(let i=0;i<8;i++){const a=i/8*TAU;c.beginPath();c.ellipse(x+Math.cos(a)*16*s,y+Math.sin(a)*6*s,4.5*s,3*s,0,0,TAU);c.fill()}
+  c.strokeStyle='#4a2e18';c.lineWidth=4*s;c.lineCap='round';c.beginPath();c.moveTo(x-12*s,y+2*s);c.lineTo(x+10*s,y-5*s);c.moveTo(x+12*s,y+2*s);c.lineTo(x-10*s,y-5*s);c.stroke();
+  c.save();c.globalCompositeOperation='lighter';for(let i=0;i<5;i++){const t=rt*(5+i)+i*1.7,h=(22+8*Math.sin(t))*s*(1-i*.12),w=(9-i)*s,ox=Math.sin(t*1.3)*2*s;
+    const g=c.createRadialGradient(x+ox,y-h*.35,0,x+ox,y-h*.35,h*.7);g.addColorStop(0,i<2?'rgba(255,240,180,.9)':'rgba(255,160,60,.6)');g.addColorStop(1,'rgba(255,60,0,0)');c.fillStyle=g;
+    c.beginPath();c.moveTo(x+ox-w,y-2*s);c.quadraticCurveTo(x+ox-w*.6,y-h*.6,x+ox+Math.sin(t*2)*3*s,y-h);c.quadraticCurveTo(x+ox+w*.6,y-h*.6,x+ox+w,y-2*s);c.fill()}
+  c.drawImage(glowSprite('#ff8a30'),x-60*s,y-70*s,120*s,100*s);
+  if(Math.random()<dt*28)SEL.embers.push({x:x+rand(-8,8)*s,y:y-10*s,vx:rand(-12,12),vy:-rand(40,90),life:rand(1.2,2.6),max:2.6});
+  for(const e of SEL.embers){e.life-=dt;e.x+=(e.vx+Math.sin(rt*2+e.max*9)*14)*dt;e.y+=e.vy*dt;c.globalAlpha=Math.max(0,e.life/e.max);c.drawImage(glowSprite('#ffb050'),e.x-4,e.y-4,8,8)}
+  SEL.embers=SEL.embers.filter(e=>e.life>0);c.restore();c.globalAlpha=1}
 zones.over=genOverworld();addHints(zones.over);addInnkeepers(zones.over);useZone(zones.over);zones.over.terrain=genTerrain();useZone(zones.over);
-buildSprites();buildZoneSprites();refreshTitle();$('profClose').onclick=()=>toggleProf(false);requestAnimationFrame(frame);
+buildSprites();buildZoneSprites();startScreens();$('profClose').onclick=()=>toggleProf(false);requestAnimationFrame(frame);
 </script>
 </body>
 </html>

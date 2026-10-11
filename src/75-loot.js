@@ -64,7 +64,7 @@ function spawner(dt){spawnT-=dt;if(spawnT>0)return;spawnT=.5;if(!zone.spawn)retu
 // ================= Hero save slots =================
 const SAVES_KEY='emberfall-saves-v2',MAX_HEROES=6;let heroId=null;
 function allSaves(){const s=fetchStore(SAVES_KEY)||{heroes:[]};if(!s.migrated){const old=fetchStore(SAVE_KEY);if(old&&old.p)s.heroes.push({id:'h'+Date.now(),t:Date.now(),data:old});s.migrated=true;store(SAVES_KEY,s)}return s}
-function writeHero(data){const s=allSaves();if(!heroId)heroId='h'+Date.now();const i=s.heroes.findIndex(h=>h.id===heroId),e={id:heroId,t:Date.now(),data};if(i>=0)s.heroes[i]=e;else s.heroes.push(e);store(SAVES_KEY,s)}
-function deleteHero(id){const s=allSaves();s.heroes=s.heroes.filter(h=>h.id!==id);store(SAVES_KEY,s);refreshTitle()}
-function saveAndQuit(){save();toast('Game saved');pauseOpen=false;closeLoot();state='title';players=[];$('hud').classList.add('hidden');for(const id of['inv','tal','shop','dialog','prof','pause'])$(id).classList.add('hidden');invOpen=talOpen=shopOpen=dialogOpen=profOpen=false;useZone(zones.over);enemies=[];show('title');refreshTitle()}
+function writeHero(data){const s=allSaves();if(!heroId)heroId='h'+Date.now();if(!storageOK())return;const i=s.heroes.findIndex(h=>h.id===heroId),e={id:heroId,t:Date.now(),data};if(i>=0)s.heroes[i]=e;else s.heroes.push(e);store(SAVES_KEY,s)}
+function deleteHero(id){const s=allSaves();s.heroes=s.heroes.filter(h=>h.id!==id);store(SAVES_KEY,s)}
+function saveAndQuit(){save();toast('Game saved');pauseOpen=false;closeLoot();state='title';players=[];$('hud').classList.add('hidden');for(const id of['inv','tal','shop','dialog','prof','pause'])$(id).classList.add('hidden');invOpen=talOpen=shopOpen=dialogOpen=profOpen=false;useZone(zones.over);enemies=[];Account.flush();openSelect()}
 $('lootClose').onclick=closeLoot;$('lootAll').onclick=takeAll;

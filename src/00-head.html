@@ -14,7 +14,34 @@ canvas#game{display:block;width:100vw;height:100vh;cursor:crosshair}
 .muted{color:var(--muted);font-size:13px}
 h2{margin:0 0 10px;color:var(--gold);font-weight:normal;letter-spacing:.05em}
 .screen{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;background:radial-gradient(ellipse at center,rgba(10,8,6,.3),rgba(10,8,6,.88));z-index:20;padding:16px}
-#title h1{font-size:clamp(46px,9vw,110px);letter-spacing:.12em;margin:0;color:var(--gold);text-shadow:0 0 30px rgba(232,140,60,.55),0 4px 0 #3a2410}
+#title,#login{background:none;display:block;padding:0}
+.logo{position:absolute;left:clamp(16px,4vw,56px);top:clamp(14px,4vh,44px);font-size:clamp(38px,6vw,78px);letter-spacing:.14em;color:var(--gold);text-shadow:0 0 30px rgba(232,140,60,.55),0 4px 0 #3a2410;line-height:1}
+.logo small{display:block;font-size:clamp(12px,1.4vw,16px);letter-spacing:.2em;color:var(--muted);font-style:italic;text-shadow:none;margin-top:8px}
+#selPanel{position:absolute;right:clamp(12px,3vw,40px);top:50%;transform:translateY(-50%);width:min(340px,42vw);max-height:84vh;display:flex;flex-direction:column;padding:16px;background:rgba(14,11,9,.82);backdrop-filter:blur(3px)}
+.selhead{display:flex;align-items:baseline;justify-content:space-between}.selhead h2{margin:0 0 10px}
+#heroList{overflow:auto;display:flex;flex-direction:column;gap:8px;padding:2px}
+.herocard{display:flex;gap:12px;align-items:center;padding:10px 12px;border:2px solid #3a2e1e;border-radius:9px;background:rgba(0,0,0,.35);cursor:pointer;transition:border-color .15s,background .15s}
+.herocard:hover{border-color:#8a6a3a}.herocard.on{border-color:var(--gold);background:linear-gradient(90deg,rgba(232,150,60,.18),rgba(0,0,0,.3));box-shadow:0 0 16px rgba(232,150,60,.25)}
+.hc-ic{font-size:28px;width:38px;text-align:center}.hc-tx{display:flex;flex-direction:column;min-width:0}.hc-tx b{font-weight:normal;font-size:18px;color:#f3e2b0}
+.hc-tx span{font-size:13px;color:var(--text)}.hc-tx small{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.selempty{color:var(--muted);text-align:center;padding:22px 8px;font-style:italic;line-height:1.5}
+#selBottom{position:absolute;left:36%;bottom:clamp(14px,4vh,40px);transform:translateX(-50%);display:flex;gap:10px;align-items:center}
+.btn.big{font-size:22px;padding:13px 44px;letter-spacing:.08em}.btn:disabled{opacity:.4;cursor:default}
+.btn.danger{background:linear-gradient(#7a2a1e,#4a1a10);border-color:#c84a3a}
+#selBottom #btnDel{min-width:0;font-size:14px;padding:9px 16px}
+#selMenu{position:absolute;left:clamp(16px,4vw,56px);bottom:clamp(12px,3vh,28px);display:flex;flex-direction:column;align-items:flex-start;gap:2px}
+#acctLabel{font-size:12px;color:var(--muted);margin-bottom:4px;font-family:system-ui,sans-serif}
+.linkbtn{background:none;border:none;color:var(--text);font-family:inherit;font-size:15px;cursor:pointer;padding:3px 0;opacity:.8}.linkbtn:hover{opacity:1;color:var(--gold)}
+.loginbox{position:absolute;right:clamp(12px,6vw,90px);top:50%;transform:translateY(-50%);width:min(360px,90vw);padding:22px 24px;background:rgba(14,11,9,.85);backdrop-filter:blur(3px)}
+.loginbox label{display:block;margin:12px 0 5px;color:var(--muted);font-size:13px;letter-spacing:.05em;text-transform:uppercase}
+.loginbox input,#cfInput{width:100%;box-sizing:border-box;padding:10px;background:#15110d;color:var(--text);border:1px solid var(--line);border-radius:6px;font-family:inherit;font-size:16px}
+.loginbox .row{display:flex;gap:8px;margin-top:14px}.loginbox .row .btn{flex:1;min-width:0;margin:0;padding:10px 8px;font-size:15px}
+#loginForm.off{opacity:.35;pointer-events:none}#loginNote{margin-top:10px;line-height:1.45}
+#loginMsg{margin-top:10px;font-size:14px;color:#cfe8b8;min-height:1em}#loginMsg.err{color:#ff9a8a}
+.or{display:flex;align-items:center;gap:10px;margin:16px 0 12px;color:var(--muted);font-size:13px}.or:before,.or:after{content:'';flex:1;border-top:1px solid var(--line)}
+#confirm{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center}
+.cfbox{width:min(420px,92vw);padding:20px 22px}.cfbox p{line-height:1.5}.cfbox .row{display:flex;gap:8px;margin-top:14px;justify-content:flex-end}.cfbox .btn{min-width:0}
+@media (max-width:700px){#selPanel{top:auto;bottom:90px;transform:none;width:auto;left:12px;max-height:40vh}#selBottom{left:50%}.logo{font-size:34px}}
 .sub{color:var(--muted);font-style:italic;margin:6px 0 34px;letter-spacing:.08em;text-align:center}
 .btn{background:linear-gradient(#5a4122,#3a2a16);color:var(--text);border:2px solid var(--line);border-radius:8px;padding:11px 26px;font-size:17px;cursor:pointer;margin:6px;min-width:200px;font-family:inherit}
 .btn:hover{border-color:var(--gold);color:#fff}
@@ -121,7 +148,7 @@ h2{margin:0 0 10px;color:var(--gold);font-weight:normal;letter-spacing:.05em}
 #worldmap{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:26;padding:14px 16px;max-width:96vw;max-height:96vh;overflow:auto}#wmap{display:block;width:min(640px,88vw,78vh);height:auto;border:1px solid var(--line);border-radius:6px}#mini{cursor:pointer}
 #loot{position:fixed;right:230px;top:50%;transform:translateY(-50%);z-index:24;width:280px;padding:12px 14px}
 #loot h2{font-size:18px}.lrow2{display:flex;align-items:center;gap:10px;padding:6px 8px;border:1px solid rgba(107,85,50,.4);border-radius:6px;margin-bottom:5px;cursor:pointer;font-size:14px;background:rgba(0,0,0,.25)}.lrow2:hover{border-color:var(--gold)}.li{font-size:20px;width:24px;text-align:center}
-#heroList{display:flex;flex-direction:column;align-items:center}.herorow{display:flex;align-items:center;gap:4px}.herorow .btn{min-width:320px}
+
 @media (max-width:700px){#loot{right:auto;left:50%;top:auto;bottom:90px;transform:translateX(-50%)}}
 .up{color:#8fe06a}.down{color:#e86a5a}
 #dialog{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);z-index:25;width:min(640px,94vw);padding:18px 22px}
@@ -152,14 +179,36 @@ h2{margin:0 0 10px;color:var(--gold);font-weight:normal;letter-spacing:.05em}
 </div>
 <div id="toasts"></div>
 
-<div id="title" class="screen">
-  <h1>EMBERFALL</h1>
-  <div class="sub">A tale of the Westmark · working title</div>
-  <button class="btn primary" id="btnNew">New hero</button>
-  <div id="heroList"></div>
-  <button class="btn" id="btnHow">How to play</button>
-  <button class="btn" id="btnSet">Settings</button>
+<div id="login" class="screen hidden">
+  <div class="logo">EMBERFALL<small>A tale of the Westmark</small></div>
+  <div class="loginbox panel">
+    <h2>Enter the Westmark</h2>
+    <div id="loginForm">
+      <label>Email</label><input id="loginEmail" type="email" autocomplete="username">
+      <label>Password</label><input id="loginPw" type="password" autocomplete="current-password">
+      <div class="row"><button class="btn primary" id="btnSignIn">Sign in</button><button class="btn" id="btnSignUp">Create account</button></div>
+      <button class="linkbtn" id="btnForgot">Forgot your password?</button>
+    </div>
+    <div id="loginNote" class="muted"></div><div id="loginMsg"></div>
+    <div class="or"><span>or</span></div>
+    <button class="btn" id="btnOffline" style="width:100%;margin:0">Play offline on this computer</button>
+  </div>
 </div>
+
+<div id="title" class="screen hidden">
+  <div class="logo">EMBERFALL<small>A tale of the Westmark</small></div>
+  <div id="selPanel" class="panel">
+    <div class="selhead"><h2>Your heroes</h2><span class="muted" id="selCount"></span></div>
+    <div id="heroList"></div>
+    <button class="btn" id="btnImport" style="width:100%;margin:8px 0 0">Bring in heroes from this computer</button>
+    <button class="btn primary" id="btnNew" style="width:100%;margin:10px 0 0">Create new hero</button>
+  </div>
+  <div id="selBottom"><button class="btn" id="btnDel">Delete</button><button class="btn primary big" id="btnPlay">Play</button></div>
+  <div id="selMenu"><span id="acctLabel"></span><button class="linkbtn" id="btnAcct">Sign out</button><button class="linkbtn" id="btnHow">How to play</button><button class="linkbtn" id="btnSet">Settings</button></div>
+</div>
+
+<div id="confirm" class="hidden"><div class="panel cfbox"><h2 id="cfTitle"></h2><p id="cfText"></p><input id="cfInput" autocomplete="off" spellcheck="false">
+  <div class="row"><button class="btn" id="cfNo">Keep</button><button class="btn danger" id="cfOk">Delete forever</button></div></div></div>
 
 <div id="creator" class="screen hidden">
   <div class="wrap panel">
