@@ -161,7 +161,8 @@ function enemyDrops(e){const b=e.boss;const drop=(kind,extra)=>drops.push(Object
   const pot=()=>drop('sup',{sup:(Math.random()<.65?'hp':'mp')+potTier(e.lvl),amount:1});if(Math.random()<(b?1:.05))pot();if(b)pot();
   const cls=players[0]?players[0].cls:'paladin';
   const lb=1+(players[0]?players[0].lootBonus||0:0);
-  if(b&&zone.kind!=='dungeon'){drop('item',{item:genItem(e.lvl+1,e.type==='barrowking'?3:2,cls)});drop('item',{item:genItem(e.lvl,1,cls)})}
+  // Quest bosses: one boss roll (epic or better at most 18%, the Barrow King 50%) plus one bonus item that is never above rare.
+  if(b&&zone.kind!=='dungeon'){drop('item',{item:genItem(e.lvl+1,0,cls,null,e.type==='barrowking'?RAR_W.finalBoss:RAR_W.boss)});drop('item',{item:genItem(e.lvl,0,cls,null,RAR_W.bonus)})}
   else if(!b&&Math.random()<.1*lb)drop('item',{item:genItem(e.lvl,0,cls)})}
 function pickupDrops(){for(const d of drops){if(d.dead)continue;for(const p of players){if(p.dead||Math.hypot(p.x-d.x,p.y-d.y)>38)continue;
   if(d.kind==='gold'){sfx('gold');p.gold+=d.amount;floatText(d.x,d.y,'+'+d.amount+' gold','#ffd84a',13);d.dead=true}

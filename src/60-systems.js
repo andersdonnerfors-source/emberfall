@@ -83,12 +83,12 @@ function genSpecItem(p,slot,rar,ilvl,prefix){const want=SPEC_STATS[p.spec||p.cls
   return{id:Math.random().toString(36).slice(2),name,slot,rar,lvl:ilvl,stats,wt}}
 // Each dungeon boss rolls on a table built for YOUR class and specialization. The legendary piece is the rare prize.
 function bossLootTable(p,def,bi){const last=bi===def.bosses.length-1,ilvl=def.lvl[1]+2+bi,tg=def.tag;
-  return[{w:12,rar:4,make:()=>genSpecItem(p,last?'weapon':pick(['weapon','armor']),4,ilvl+1,tg[2])},
-    {w:19,rar:3,make:()=>genSpecItem(p,'weapon',3,ilvl,tg[0])},{w:19,rar:3,make:()=>genSpecItem(p,pick(['armor','helm','offhand','legs']),3,ilvl,tg[1])},
-    {w:17,rar:2,make:()=>genSpecItem(p,pick(['ring','cape']),2,ilvl,tg[3])},{w:17,rar:2,make:()=>genSpecItem(p,pick(['helm','boots']),2,ilvl)},{w:16,rar:2,make:()=>genSpecItem(p,pick(['armor','legs']),2,ilvl)}]}
+  return[{w:10,rar:4,make:()=>genSpecItem(p,last?'weapon':pick(['weapon','armor']),4,ilvl+1,tg[2])},
+    {w:15,rar:3,make:()=>genSpecItem(p,'weapon',3,ilvl,tg[0])},{w:15,rar:3,make:()=>genSpecItem(p,pick(['armor','helm','offhand','legs']),3,ilvl,tg[1])},
+    {w:20,rar:2,make:()=>genSpecItem(p,pick(['ring','cape']),2,ilvl,tg[3])},{w:20,rar:2,make:()=>genSpecItem(p,pick(['helm','boots']),2,ilvl)},{w:20,rar:2,make:()=>genSpecItem(p,pick(['armor','legs']),2,ilvl)}]}
 function rollTable(tb){const tot=tb.reduce((s,e)=>s+e.w,0);let r=Math.random()*tot;for(const e of tb){r-=e.w;if(r<=0)return e}return tb[tb.length-1]}
 function dungeonLoot(t){const p=players[0];if(!p||!zone.def)return;const def=zone.def,bi=t.dungeonBoss||0,tb=bossLootTable(p,def,bi),n=bi===def.bosses.length-1?2:1;
-  for(let i=0;i<n;i++){const it=rollTable(tb).make();drops.push({kind:'item',item:it,x:t.x+rand(-30,30),y:t.y+rand(-20,20),t:rand(0,6)});if(it.rar===4){toast('LEGENDARY: '+it.name+'!','gold');sfx('spec')}}
+  for(let i=0;i<n;i++){const it=rollTable(i?tb.filter(e=>e.rar<=2):tb).make();drops.push({kind:'item',item:it,x:t.x+rand(-30,30),y:t.y+rand(-20,20),t:rand(0,6)});if(it.rar===4){toast('LEGENDARY: '+it.name+'!','gold');sfx('spec')}}
   drops.push({kind:'mat',mat:'essence',amount:1+bi,x:t.x,y:t.y+20,t:0})}
 function matDrop(t){const p=players[0];if(!p)return;const m=MOB_MAT[t.type];const lb=1+(p.lootBonus||0);
   if(m&&(t.boss||Math.random()<.35*lb))drops.push({kind:'mat',mat:m,amount:t.boss?2+Math.floor(Math.random()*3):1,x:t.x+rand(-20,20),y:t.y+rand(-14,14),t:rand(0,6)});
@@ -132,7 +132,7 @@ function renderProf(){const p=players[0];if(!p)return;$('matsRow').innerHTML=Obj
 
 // ================= Shops =================
 let curShop=null;
-function shopItems(type,p){const slots=SHOPS[type].sells.filter(s=>SLOTS.includes(s));if(!slots.length)return[];return Array.from({length:6},(_,i)=>genItem(p.level+(i<2?1:0),i<2?2:i<4?1:0,p.cls,pick(slots)))}
+function shopItems(type,p){const slots=SHOPS[type].sells.filter(s=>SLOTS.includes(s));if(!slots.length)return[];return Array.from({length:6},(_,i)=>genItem(p.level+(i<2?1:0),i<2?2:i<4?1:0,p.cls,pick(slots),RAR_W.shop))}
 function openShop(type,b){const p=players[0],def=SHOPS[type];let st;
   if(type==='tilda'){if(!p.shop||Date.now()-p.shop.t>300000||p.shop.lvl<p.level-1)restock(p);st=p.shop}
   else{if(!b.stock||Date.now()-b.stock.t>300000||b.stock.lvl<p.level-1)b.stock={t:Date.now(),lvl:p.level,items:shopItems(type,p)};st=b.stock}
@@ -177,4 +177,4 @@ function caveSpawner(){const p=players[0];if(!p||p.dead)return;for(const e of en
   for(let tries=0;tries<14;tries++){const a=rand(0,TAU),d=rand(560,900),x=p.x+Math.cos(a)*d,y=p.y+Math.sin(a)*d;if(!free(x,y,16))continue;
     const type=pick(sp.pool),lvl=sp.lvl[0]+Math.floor(Math.random()*(sp.lvl[1]-sp.lvl[0]+1)),n=type==='bat'||type==='sporeling'?3:ETYPES[type].big?1:(Math.random()<.5?2:1);
     for(let k=0;k<n;k++){const ex=x+rand(-40,40),ey=y+rand(-40,40);if(free(ex,ey,ETYPES[type].r))spawnEnemy(type,ex,ey,lvl)}break}}
-function restock(p){p.shop={t:Date.now(),lvl:p.level,items:Array.from({length:6},(_,i)=>genItem(p.level,i<2?1:0,p.cls))}}
+function restock(p){p.shop={t:Date.now(),lvl:p.level,items:Array.from({length:6},(_,i)=>genItem(p.level,i<2?1:0,p.cls,null,RAR_W.shop))}}

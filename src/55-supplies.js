@@ -21,7 +21,10 @@ function rollStats(slot,rar,lvl,cls,want,vr){const R=RAR[rar],main=MAIN_STAT[cls
   const order=(want||[]).filter(k=>k!==first);
   while(Object.keys(stats).length<n){const w=order.length>0,k=w?order.shift():pick(pool);if(stats[k])continue;add(k,w?.7:.6)}
   return stats}
-function genItem(lvl,minRar,cls,fslot){cls=cls||'paladin';let r=Math.random(),rar=r<.55?0:r<.83?1:r<.96?2:3;rar=Math.max(rar,minRar||0);const slot=fslot||pick(SLOTS);
+// Chance per item, by rarity (common, magic, rare, epic, legendary). Each step up is several times rarer.
+const RAR_W={mob:[62,28,8.5,1.4,.1],shop:[60,30,10,0,0],boss:[0,40,42,16,2],finalBoss:[0,0,50,40,10],bonus:[30,50,20,0,0]};
+function rollRar(w,minRar){let tot=0;for(let i=minRar||0;i<5;i++)tot+=w[i];let r=Math.random()*tot;for(let i=minRar||0;i<5;i++){r-=w[i];if(r<=0&&w[i]>0)return i}return Math.max(minRar||0,w.findIndex(x=>x>0))}
+function genItem(lvl,minRar,cls,fslot,w){cls=cls||'paladin';const rar=rollRar(w||RAR_W.mob,minRar);const slot=fslot||pick(SLOTS);
   const wo=slot==='weapon'?pick(WEAPONS[cls]):null,base=wo?wo[1]:baseFor(cls,slot);
   const name=(rar>0||Math.random()<.5?pick(PREF)+' ':'')+base+(rar>=2?' '+pick(SUFF):'');
   return{id:Math.random().toString(36).slice(2),name,slot,rar,lvl,stats:rollStats(slot,rar,lvl,cls,null,[.8,1.2]),wt:wo?wo[0]:undefined}}

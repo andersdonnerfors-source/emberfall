@@ -1093,7 +1093,8 @@ function enemyDrops(e){const b=e.boss;const drop=(kind,extra)=>drops.push(Object
   const pot=()=>drop('sup',{sup:(Math.random()<.65?'hp':'mp')+potTier(e.lvl),amount:1});if(Math.random()<(b?1:.05))pot();if(b)pot();
   const cls=players[0]?players[0].cls:'paladin';
   const lb=1+(players[0]?players[0].lootBonus||0:0);
-  if(b&&zone.kind!=='dungeon'){drop('item',{item:genItem(e.lvl+1,e.type==='barrowking'?3:2,cls)});drop('item',{item:genItem(e.lvl,1,cls)})}
+  // Quest bosses: one boss roll (epic or better at most 18%, the Barrow King 50%) plus one bonus item that is never above rare.
+  if(b&&zone.kind!=='dungeon'){drop('item',{item:genItem(e.lvl+1,0,cls,null,e.type==='barrowking'?RAR_W.finalBoss:RAR_W.boss)});drop('item',{item:genItem(e.lvl,0,cls,null,RAR_W.bonus)})}
   else if(!b&&Math.random()<.1*lb)drop('item',{item:genItem(e.lvl,0,cls)})}
 function pickupDrops(){for(const d of drops){if(d.dead)continue;for(const p of players){if(p.dead||Math.hypot(p.x-d.x,p.y-d.y)>38)continue;
   if(d.kind==='gold'){sfx('gold');p.gold+=d.amount;floatText(d.x,d.y,'+'+d.amount+' gold','#ffd84a',13);d.dead=true}
@@ -1666,7 +1667,10 @@ function rollStats(slot,rar,lvl,cls,want,vr){const R=RAR[rar],main=MAIN_STAT[cls
   const order=(want||[]).filter(k=>k!==first);
   while(Object.keys(stats).length<n){const w=order.length>0,k=w?order.shift():pick(pool);if(stats[k])continue;add(k,w?.7:.6)}
   return stats}
-function genItem(lvl,minRar,cls,fslot){cls=cls||'paladin';let r=Math.random(),rar=r<.55?0:r<.83?1:r<.96?2:3;rar=Math.max(rar,minRar||0);const slot=fslot||pick(SLOTS);
+// Chance per item, by rarity (common, magic, rare, epic, legendary). Each step up is several times rarer.
+const RAR_W={mob:[62,28,8.5,1.4,.1],shop:[60,30,10,0,0],boss:[0,40,42,16,2],finalBoss:[0,0,50,40,10],bonus:[30,50,20,0,0]};
+function rollRar(w,minRar){let tot=0;for(let i=minRar||0;i<5;i++)tot+=w[i];let r=Math.random()*tot;for(let i=minRar||0;i<5;i++){r-=w[i];if(r<=0&&w[i]>0)return i}return Math.max(minRar||0,w.findIndex(x=>x>0))}
+function genItem(lvl,minRar,cls,fslot,w){cls=cls||'paladin';const rar=rollRar(w||RAR_W.mob,minRar);const slot=fslot||pick(SLOTS);
   const wo=slot==='weapon'?pick(WEAPONS[cls]):null,base=wo?wo[1]:baseFor(cls,slot);
   const name=(rar>0||Math.random()<.5?pick(PREF)+' ':'')+base+(rar>=2?' '+pick(SUFF):'');
   return{id:Math.random().toString(36).slice(2),name,slot,rar,lvl,stats:rollStats(slot,rar,lvl,cls,null,[.8,1.2]),wt:wo?wo[0]:undefined}}
@@ -1843,12 +1847,12 @@ function genSpecItem(p,slot,rar,ilvl,prefix){const want=SPEC_STATS[p.spec||p.cls
   return{id:Math.random().toString(36).slice(2),name,slot,rar,lvl:ilvl,stats,wt}}
 // Each dungeon boss rolls on a table built for YOUR class and specialization. The legendary piece is the rare prize.
 function bossLootTable(p,def,bi){const last=bi===def.bosses.length-1,ilvl=def.lvl[1]+2+bi,tg=def.tag;
-  return[{w:12,rar:4,make:()=>genSpecItem(p,last?'weapon':pick(['weapon','armor']),4,ilvl+1,tg[2])},
-    {w:19,rar:3,make:()=>genSpecItem(p,'weapon',3,ilvl,tg[0])},{w:19,rar:3,make:()=>genSpecItem(p,pick(['armor','helm','offhand','legs']),3,ilvl,tg[1])},
-    {w:17,rar:2,make:()=>genSpecItem(p,pick(['ring','cape']),2,ilvl,tg[3])},{w:17,rar:2,make:()=>genSpecItem(p,pick(['helm','boots']),2,ilvl)},{w:16,rar:2,make:()=>genSpecItem(p,pick(['armor','legs']),2,ilvl)}]}
+  return[{w:10,rar:4,make:()=>genSpecItem(p,last?'weapon':pick(['weapon','armor']),4,ilvl+1,tg[2])},
+    {w:15,rar:3,make:()=>genSpecItem(p,'weapon',3,ilvl,tg[0])},{w:15,rar:3,make:()=>genSpecItem(p,pick(['armor','helm','offhand','legs']),3,ilvl,tg[1])},
+    {w:20,rar:2,make:()=>genSpecItem(p,pick(['ring','cape']),2,ilvl,tg[3])},{w:20,rar:2,make:()=>genSpecItem(p,pick(['helm','boots']),2,ilvl)},{w:20,rar:2,make:()=>genSpecItem(p,pick(['armor','legs']),2,ilvl)}]}
 function rollTable(tb){const tot=tb.reduce((s,e)=>s+e.w,0);let r=Math.random()*tot;for(const e of tb){r-=e.w;if(r<=0)return e}return tb[tb.length-1]}
 function dungeonLoot(t){const p=players[0];if(!p||!zone.def)return;const def=zone.def,bi=t.dungeonBoss||0,tb=bossLootTable(p,def,bi),n=bi===def.bosses.length-1?2:1;
-  for(let i=0;i<n;i++){const it=rollTable(tb).make();drops.push({kind:'item',item:it,x:t.x+rand(-30,30),y:t.y+rand(-20,20),t:rand(0,6)});if(it.rar===4){toast('LEGENDARY: '+it.name+'!','gold');sfx('spec')}}
+  for(let i=0;i<n;i++){const it=rollTable(i?tb.filter(e=>e.rar<=2):tb).make();drops.push({kind:'item',item:it,x:t.x+rand(-30,30),y:t.y+rand(-20,20),t:rand(0,6)});if(it.rar===4){toast('LEGENDARY: '+it.name+'!','gold');sfx('spec')}}
   drops.push({kind:'mat',mat:'essence',amount:1+bi,x:t.x,y:t.y+20,t:0})}
 function matDrop(t){const p=players[0];if(!p)return;const m=MOB_MAT[t.type];const lb=1+(p.lootBonus||0);
   if(m&&(t.boss||Math.random()<.35*lb))drops.push({kind:'mat',mat:m,amount:t.boss?2+Math.floor(Math.random()*3):1,x:t.x+rand(-20,20),y:t.y+rand(-14,14),t:rand(0,6)});
@@ -1892,7 +1896,7 @@ function renderProf(){const p=players[0];if(!p)return;$('matsRow').innerHTML=Obj
 
 // ================= Shops =================
 let curShop=null;
-function shopItems(type,p){const slots=SHOPS[type].sells.filter(s=>SLOTS.includes(s));if(!slots.length)return[];return Array.from({length:6},(_,i)=>genItem(p.level+(i<2?1:0),i<2?2:i<4?1:0,p.cls,pick(slots)))}
+function shopItems(type,p){const slots=SHOPS[type].sells.filter(s=>SLOTS.includes(s));if(!slots.length)return[];return Array.from({length:6},(_,i)=>genItem(p.level+(i<2?1:0),i<2?2:i<4?1:0,p.cls,pick(slots),RAR_W.shop))}
 function openShop(type,b){const p=players[0],def=SHOPS[type];let st;
   if(type==='tilda'){if(!p.shop||Date.now()-p.shop.t>300000||p.shop.lvl<p.level-1)restock(p);st=p.shop}
   else{if(!b.stock||Date.now()-b.stock.t>300000||b.stock.lvl<p.level-1)b.stock={t:Date.now(),lvl:p.level,items:shopItems(type,p)};st=b.stock}
@@ -1937,7 +1941,7 @@ function caveSpawner(){const p=players[0];if(!p||p.dead)return;for(const e of en
   for(let tries=0;tries<14;tries++){const a=rand(0,TAU),d=rand(560,900),x=p.x+Math.cos(a)*d,y=p.y+Math.sin(a)*d;if(!free(x,y,16))continue;
     const type=pick(sp.pool),lvl=sp.lvl[0]+Math.floor(Math.random()*(sp.lvl[1]-sp.lvl[0]+1)),n=type==='bat'||type==='sporeling'?3:ETYPES[type].big?1:(Math.random()<.5?2:1);
     for(let k=0;k<n;k++){const ex=x+rand(-40,40),ey=y+rand(-40,40);if(free(ex,ey,ETYPES[type].r))spawnEnemy(type,ex,ey,lvl)}break}}
-function restock(p){p.shop={t:Date.now(),lvl:p.level,items:Array.from({length:6},(_,i)=>genItem(p.level,i<2?1:0,p.cls))}}
+function restock(p){p.shop={t:Date.now(),lvl:p.level,items:Array.from({length:6},(_,i)=>genItem(p.level,i<2?1:0,p.cls,null,RAR_W.shop))}}
 // ================= Hints: waymarks and bards =================
 // Signposts along the roads and a bard in every city drop vague clues about what lies ahead,
 // so the player explores instead of following an arrow everywhere.
