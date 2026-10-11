@@ -2,8 +2,8 @@
 // Online: heroes are stored in Supabase, and database rules (supabase-setup.sql) make sure each player can only
 // read, change and delete their own heroes. Offline: heroes stay in this browser, as before.
 // To switch online, fill in the two values from Supabase → Project Settings → API. The anon key is meant to be public.
-const SUPA_URL='';
-const SUPA_ANON_KEY='';
+const SUPA_URL='https://hwoqrmvlxbmifzhtjfnb.supabase.co';
+const SUPA_ANON_KEY='sb_publishable_svsm-NSqyzBuEam0yhY1UQ_jORI2LyY';
 const ONLINE_READY=!!(SUPA_URL&&SUPA_ANON_KEY);
 const SUPA_LIB='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js';
 const MODE_KEY='emberfall-mode';
