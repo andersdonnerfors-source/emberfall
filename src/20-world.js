@@ -93,7 +93,7 @@ function genOverworld(){MW=MH=OW;map=new Uint8Array(MW*MH);tvar=new Float32Array
   decor=[];buildings=[];const doors=[],lights=[];
   for(const c of CITIES){for(let y=-3;y<=3;y++)for(let x=-3;x<=3;x++)if(Math.hypot(x,y)<3.6)setT(c.x+x,c.y+y,T.PATH);
     for(const[type,dx,dy,o]of c.b)placeBuilding(buildings,doors,type,c.x+dx,c.y+dy,o,c);
-    decor.push({k:'fire',x:(c.x+.5)*TILE,y:(c.y+.5)*TILE});decor.push({k:'well',x:(c.x+(c.id==='emberfall'?3.5:2.5))*TILE,y:(c.y+(c.id==='emberfall'?2.5:-1.5))*TILE})}
+    decor.push({k:'fire',x:(c.x+.5)*TILE,y:(c.y+.5)*TILE});for(const[lx,ly]of[[-4.5,-4.5],[4.5,-4.5],[-4.5,4.5],[4.5,4.5]])decor.push({k:'lamp',x:(c.x+lx+.5)*TILE,y:(c.y+ly+.5)*TILE});decor.push({k:'well',x:(c.x+(c.id==='emberfall'?3.5:2.5))*TILE,y:(c.y+(c.id==='emberfall'?2.5:-1.5))*TILE})}
   decor.push({k:'stall',x:(VC.x-1.5)*TILE,y:(VC.y-1.2)*TILE});
   for(const e of ENTRANCES){decor.push({k:e.kind==='dungeon'?'crypt':'cavemouth',x:(e.x+.5)*TILE,y:(e.y-.6)*TILE,name:e.name,lvl:e.lvl});doors.push({x:(e.x+.5)*TILE,y:(e.y+.6)*TILE,to:e.id,label:`${e.name} (level ${e.lvl[0]}–${e.lvl[1]})`})}
   const DK={0:['bush','bush','rock'],1:['snowrock','snowrock','bush'],2:['rock','skull','rock'],3:['shroom','web','bush'],4:['reeds','reeds','shroom']};

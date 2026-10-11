@@ -142,8 +142,8 @@ function netTick(dt){if(!Net.role)return;const p=players[0];
     ap:ap?{cls:q.cls,look:q.look,gear:q.gear,bagSize:q.bagSize,spec:q.spec}:undefined}));
   const cv=Net.corpVer!==Net.sentCorp,cs=cv?corpsesOf(zone).map(c=>({id:c.id,x:Math.round(c.x),y:Math.round(c.y),u:{type:c.unit.type,name:c.unit.name,r:c.unit.r,h:c.unit.h,aim:c.unit.aim,boss:c.unit.boss},l:+(c.until-time).toFixed(1),lo:c.loot.map(d=>({id:d.id,kind:d.kind,amount:d.amount,mat:d.mat,sup:d.sup,item:d.item}))})):undefined;Net.sentCorp=Net.corpVer;
   const ev=Net.ev;Net.ev=[];
-  for(const pe of Net.peers.values())if(pe.proxy)netSend(pe,{t:'snap',en,al,pl:pl.filter(x=>x.u!==pe.uid),ev,cs,q:quest.idx})}
-function applySnap(m){Net.hostQ=m.q;const same=zone.id===Net.hostZone;
+  for(const pe of Net.peers.values())if(pe.proxy)netSend(pe,{t:'snap',wc:+worldClock.toFixed(1),en,al,pl:pl.filter(x=>x.u!==pe.uid),ev,cs,q:quest.idx})}
+function applySnap(m){Net.hostQ=m.q;if(m.wc!=null)worldClock=m.wc;const same=zone.id===Net.hostZone;
   // other heroes
   const seen=new Set();for(const s of m.pl){seen.add(s.u);let a=Net.avatars.get(s.u);if(!a){a={uid:s.u,isAvatar:true,x:s.x,y:s.y,walk:0,aim:0,look:{},gear:{},cls:'paladin',bagSize:20,r:13,h:52};Net.avatars.set(s.u,a)}
     Object.assign(a,{name:s.hn,netName:s.n,tx:s.x,ty:s.y,aim:s.a,walk:s.w,hp:s.hp,maxHp:s.mh,dead:!!s.dd,castAnim:s.ca,mounted:!!s.mt,mount:s.mt||a.mount,level:s.lv,away:s.z!==zone.id});if(s.ap)Object.assign(a,s.ap)}
@@ -161,7 +161,7 @@ function applySnap(m){Net.hostQ=m.q;const same=zone.id===Net.hostZone;
     else if(v.k==='a'){const f=v.f!=null?enemies.find(e=>e.nid===v.f):null;areas.push(mkArea({x:v.x,y:v.y,r:v.r,delay:v.dl,dur:v.du,kind:v.kd,side:v.s,a:v.an,len:v.ln,follow:f}))}
     else if(v.k==='h'){const e=enemies.find(e=>e.nid===v.n);if(e){e.hitFlash=.12;floatText(e.x,e.y-(e.h||40)*.6,v.c?v.d+'!':''+v.d,v.c?'#ffd84a':'#fff',v.c?20:15);hitSpark(e,v.col||'#fff3d0',v.c);sfx('hit')}}
     else if(v.k==='m'){const e=enemies.find(e=>e.nid===v.n);if(e)floatText(e.x,e.y-(e.h||40)*.6,'Miss','#b8b8b8',13)}
-    else if(v.k==='d'){burst(v.x,v.y,v.b?'#cfe':'#a33',v.b?70:16,v.b?220:140);sfx(v.b?'bossdie':'die');if(v.b){shake=14;toast(v.n+' has fallen!','gold')}}
+    else if(v.k==='d'){bloodAt(v.x,v.y,true,v.ty);burst(v.x,v.y,v.b?'#cfe':'#a33',v.b?70:16,v.b?220:140);sfx(v.b?'bossdie':'die');if(v.b){shake=14;toast(v.n+' has fallen!','gold')}}
     else if(v.k==='t')toast(v.s,v.c||'')}
   // corpses (loot is taken through the host so nobody gets the same item twice)
   if(m.cs){const z=zone;z.corpses=m.cs.map(c=>({id:c.id,x:c.x,y:c.y,unit:c.u,until:time+c.l,boss:c.u.boss,loot:c.lo}));if(lootOpen){const c=z.corpses.find(c=>c.id===lootOpen.id);if(c){lootOpen=c;renderLoot()}else closeLoot()}}}

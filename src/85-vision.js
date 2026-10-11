@@ -19,13 +19,13 @@ function visibleTo(p,e){return dist(p,e)<=VISION}
 function visAlpha(p,e){return clamp((VISION-dist(p,e))/70,0,1)}
 function drawVisionHaze(){if(!zone||zone.dark||zone.kind==='interior')return;const p=players[0];if(!p||p.dead)return;
   if(visCv.width!==Math.ceil(W)||visCv.height!==Math.ceil(H)){visCv.width=Math.ceil(W);visCv.height=Math.ceil(H)}
-  vctx.globalCompositeOperation='source-over';vctx.clearRect(0,0,W,H);vctx.fillStyle='rgba(190,192,200,.42)';vctx.fillRect(0,0,W,H);
+  vctx.globalCompositeOperation='source-over';vctx.clearRect(0,0,W,H);vctx.fillStyle=`rgba(${14+nightness()*0},${16},${26},${.5+nightness()*.25})`;vctx.fillRect(0,0,W,H);
   const[sx,sy]=S(p.x,p.y);vctx.globalCompositeOperation='destination-out';vctx.save();vctx.translate(sx,sy-20);vctx.scale(1,TILT);
   const g=vctx.createRadialGradient(0,0,VISION*.82,0,0,VISION);g.addColorStop(0,'rgba(0,0,0,1)');g.addColorStop(1,'rgba(0,0,0,0)');vctx.fillStyle=g;vctx.beginPath();vctx.arc(0,0,VISION,0,TAU);vctx.fill();vctx.restore();
   ctx.drawImage(visCv,0,0,W,H)}
 // ---- Awareness: monsters need a moment to notice you; stronger ones see farther and react faster
 function viewerLevel(t){return t.isPlayer?t.level:t.owner?t.owner.level:1}
-function aggroRange(e,t){const d=clamp(e.lvl-viewerLevel(t),-5,6);return clamp((e.boss?380:270)+d*42,150,VISION-30)}
+function aggroRange(e,t){const d=clamp(e.lvl-viewerLevel(t),-5,6),night=zone&&zone.kind==='over'?1+.25*nightness():1;return clamp(((e.boss?380:270)+d*42)*night,150,VISION-30)}
 function alertRate(e,t,dd,range){const d=e.lvl-viewerLevel(t);let r=1/1.15;r*=d>0?1+.35*d:1/(1+.22*-d);return r*(1+.8*(1-dd/range))}
 function senseTargets(e,dt){let best=null,bd=1e9,br=0;for(const t of friendlies()){const d=dist(e,t),r=aggroRange(e,t);if(d<r&&d<bd&&(zone.kind!=='over'||lineClear(e.x,e.y,t.x,t.y,PBLOCK)||d<120)){bd=d;best=t;br=r}}
   if(best){e.alert=(e.alert||0)+dt*alertRate(e,best,bd,br);if(e.alert>=1){e.target=best;e.alert=0;e.aggroFlash=time+.7;if(best.isPlayer)sfx('enemyshot')}}else e.alert=Math.max(0,(e.alert||0)-dt*.6)}

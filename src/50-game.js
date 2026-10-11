@@ -144,7 +144,7 @@ function dealDamage(t,amt,src,o){o=o||{};if(t.dead)return;if(t.invulnUntil>time)
   if(t.isPlayer&&!o.raw)d*=100/(100+t.stats.armor);d=Math.max(1,Math.round(d));if(Net.role==='host'&&t.side==='enemy')Net.ev.push({k:'h',n:t.nid,d,c:crit?1:0,col:o.hc});
   t.hp-=d;t.hitFlash=.12;t.lastHurt=time;if(t.isPlayer&&(t.mounted||t.mountCast>0)&&!(t.fly&&!free(t.x,t.y,t.r)))dismount(t,true);if(t.isPlayer&&t.hearthCast>0){t.hearthCast=0;toast('Teleport interrupted!')}
   floatText(t.x,t.y-(t.h||40)*.6,(crit?d+'!':''+d),t.side==='player'?'#ff6a5a':crit?'#ffd84a':'#fff',crit?20:15);
-  if(t.side==='enemy'&&own)hitSpark(t,o.hc||weaponCol(own),crit);else if(t.isPlayer)sparks(t.x,t.y,26,'#ff5a4a',5,120,.25);
+  if(t.side==='enemy'&&own)hitSpark(t,o.hc||weaponCol(own),crit);else if(t.isPlayer){sparks(t.x,t.y,26,'#ff5a4a',5,120,.25);if(t===players[0])hurtFlash=Math.min(1,hurtFlash+.6)}
   if(o.slow){t.slowUntil=time+o.slow;t.slowF=o.slowF||.5}
   if(o.stun&&!(t.boss&&o.stun>1)){t.stunUntil=time+o.stun}else if(o.stun&&t.boss)t.stunUntil=time+.5;
   if(o.knockFrom){const a=Math.atan2(t.y-o.knockFrom.y,t.x-o.knockFrom.x);moveEnt(t,Math.cos(a)*40,Math.sin(a)*40)}
@@ -155,9 +155,9 @@ function dealDamage(t,amt,src,o){o=o||{};if(t.dead)return;if(t.invulnUntil>time)
   if(t.isPlayer)shake=Math.max(shake,3);
   if(t.hp<=0)kill(t,src)}
 function kill(t){t.dead=true;
-  if(t.side==='enemy'){sfx(t.boss?'bossdie':'die');burst(t.x,t.y,t.boss?'#cfe':'#a33',t.boss?70:16,t.boss?220:140);
+  if(t.side==='enemy'){bloodAt(t.x,t.y,true,t.type);sfx(t.boss?'bossdie':'die');burst(t.x,t.y,t.boss?'#cfe':'#a33',t.boss?70:16,t.boss?220:140);
     {let shown=0;for(const p of players)if(!p.dead){const xp=xpFor(p,t);if(p.isRemote){if(!p.away)netSend(Net.peers.get(p.uid),{t:'xp',a:xp})}else{gainXp(p,xp);p.kills=(p.kills||0)+1;shown=xp}}
-      if(Net.role==='host'){netAll({t:'kill',k:t.type});Net.ev.push({k:'d',x:Math.round(t.x),y:Math.round(t.y),b:t.boss?1:0,n:t.name})}floatText(t.x,t.y-(t.h||40),'+'+shown+' XP',shown<t.xp*.5?'#8a8a8a':'#c9a6ff',13)}makeCorpse(t);if(t.cellRef){t.cellRef.alive=null;t.cellRef.pending=time+rand(120,180)}
+      if(Net.role==='host'){netAll({t:'kill',k:t.type});Net.ev.push({k:'d',x:Math.round(t.x),y:Math.round(t.y),b:t.boss?1:0,n:t.name,ty:t.type})}floatText(t.x,t.y-(t.h||40),'+'+shown+' XP',shown<t.xp*.5?'#8a8a8a':'#c9a6ff',13)}makeCorpse(t);if(t.cellRef){t.cellRef.alive=null;t.cellRef.pending=time+rand(120,180)}
     if(quest.state==='active'){const q=QUESTS[quest.idx];if(q&&q.target.includes(t.type)){quest.prog++;if(quest.prog>=q.need){quest.state='ready';toast('Quest complete! Return to the Warden.','gold')}updateQuestUI()}}
     if(t.boss){toast(t.name+' has fallen!','gold');shake=14;for(const e of enemies)if(e.persist&&!e.boss&&dist(e,t)<700)e.target=e.target}
   }else if(t.isPlayer){sfx('death');t.dead=true;t.deathT=4;t.deaths=(t.deaths||0)+1;t.hearthCast=0;deathPenalty(t);burst(t.x,t.y,'#a22',30,120);$('death').classList.remove('hidden');showDeathChoices(t);for(const a of allies)if(a.owner===t)a.until=0}
@@ -214,7 +214,7 @@ function update(dt){time+=dt;
   enemies=enemies.filter(e=>!e.dead&&!e.remove);allies=allies.filter(a=>!a.dead);projs=projs.filter(p=>!p.dead);areas=areas.filter(a=>!a.dead);
   parts=parts.filter(q=>q.life>0);texts=texts.filter(t=>t.life>0);fx=fx.filter(f=>f.life>0);drops=drops.filter(d=>!d.dead);
   if(parts.length>1400)parts.splice(0,parts.length-1400);
-  if(!GU){spawner(dt);questTick()}else updateBarrowGate();netTick(dt);
+  if(!GU){spawner(dt);questTick()}else updateBarrowGate();atmosTick(dt);netTick(dt);
   saveT+=dt;if(saveT>15){saveT=0;save()}}
 function projEnd(pr){if(pr.dead)return;pr.dead=true;if(pr.explode&&Net.role==='guest'){boomFx(pr.x,pr.y,pr.explode.r,'#ff9a3a');shake=Math.max(shake,5)}else if(pr.explode)explosion(pr.x,pr.y,pr.explode.r,pr.explode.dmg,pr.src,pr.side);else burst(pr.x,pr.y,pr.col,6,80)}
 function separate(){const list=[...players.filter(p=>!p.dead),...allies,...enemies];for(let i=0;i<list.length;i++){const a=list[i];for(let j=i+1;j<list.length;j++){const b=list[j];const dx=b.x-a.x,dy=b.y-a.y,m=a.r+b.r;if(Math.abs(dx)>m||Math.abs(dy)>m)continue;const d=Math.hypot(dx,dy);if(d>0&&d<m){const p=(m-d)/2,nx=dx/d,ny=dy/d;const fa=a.isPlayer?.3:1,fb=b.isPlayer?.3:1;moveEnt(a,-nx*p*fa,-ny*p*fa);moveEnt(b,nx*p*fb,ny*p*fb)}}}}
@@ -422,9 +422,9 @@ function buildSprites(){
   const dead=i=>makeSprite(g=>{const v=R('d',i);g.strokeStyle='#4a4232';g.lineWidth=7;g.beginPath();g.moveTo(0,0);g.quadraticCurveTo(3,-20,1+v*4,-42);g.stroke();g.lineWidth=3;
     for(const[a,l]of[[-2.3,22],[-.8,20],[-1.6,16],[-2.8,14],[-.4,12]]){g.beginPath();g.moveTo(1,-24-l*.3);g.quadraticCurveTo(1+Math.cos(a)*l*.5,-24-l*.3+Math.sin(a)*l*.5-4,1+Math.cos(a)*l,-24-l*.3+Math.sin(a)*l);g.stroke()}
     g.fillStyle='rgba(120,140,90,.6)';for(let k=0;k<5;k++){circ(g,-14+k*7,-30+((k*37)%11),2.5);g.fill()}});
-  SPR.meadowRound=[0,1,2,3].map(i=>round(i,'#3f6e33','#7aa860'));SPR.meadowPine=[0,1,2,3].map(i=>pine(i,['#1d3a21','#23472a','#2b5432']));
+  SPR.meadowRound=[0,1,2,3].map(i=>round(i,'#365a2e','#64884e'));SPR.meadowPine=[0,1,2,3].map(i=>pine(i,['#183020','#1e3c26','#24462c']));
   SPR.snow=[0,1,2,3].map(i=>pine(i,['#25412e','#2b4a34','#33553c'],true));SPR.desert=[0,1,2,3].map(cactus);
-  SPR.forest=[0,1,2,3].map(i=>round(i,'#1f3a20','#456a3a'));SPR.swampDead=[0,1,2,3].map(dead);SPR.swamp=[0,1,2,3].map(i=>round(i,'#3a4a28','#6a7a48'));
+  SPR.forest=[0,1,2,3].map(i=>round(i,'#162818','#2e4a2a'));SPR.swampDead=[0,1,2,3].map(dead);SPR.swamp=[0,1,2,3].map(i=>round(i,'#3a4a28','#6a7a48'));
   // Ruin wall block
   SPR.wall=(()=>{const c=document.createElement('canvas');c.width=TILE*SS;c.height=(TILE*TILT+28)*SS;const g=c.getContext('2d');g.scale(SS,SS);const th=TILE*TILT,h=26;
     const fg=g.createLinearGradient(0,th,0,th+h);fg.addColorStop(0,'#77746b');fg.addColorStop(1,'#55524a');g.fillStyle=fg;rr(g,0,th-2,TILE,h+2,3);g.fill();
@@ -501,7 +501,7 @@ function drawAir(){for(const a of areas){const[sx,sy]=S(a.x,a.y);
 }
 function render(){
   ctx.fillStyle=zone&&zone.kind!=='over'?'#050508':'#0d0b09';ctx.fillRect(0,0,W,H);
-  drawGround();drawAreasGround();drawGroundFx();
+  drawGround();drawDecals();drawAreasGround();drawGroundFx();
   const x0=Math.max(0,Math.floor(camX/TILE)-1),x1=Math.min(MW-1,Math.floor((camX+W)/TILE)+1),y0=Math.max(0,Math.floor(camY/TILE)-1),y1=Math.min(MH-1,Math.floor((camY+H/TILT)/TILE)+3);
   const dl=[];
   for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){const t=map[y*MW+x];if(t===T.TREE){const v=tvar[y*MW+x];dl.push([(y+1)*TILE-10,()=>drawTree(x,y,v)])}else if(t===T.WALL){if(zone.kind==='over'||edgeTile(x,y))dl.push([(y+1)*TILE,()=>drawZoneWall(x,y)])}else if(t===T.ROCK&&edgeTile(x,y))dl.push([(y+1)*TILE,()=>drawRock(x,y)])}
@@ -520,11 +520,11 @@ function render(){
   dl.sort((a,b)=>a[0]-b[0]);for(const d of dl)d[1]();
   drawAir();drawAirFx();
   drawParticles();
-  if(state==='play')drawVisionHaze();drawDarkness();if(zone.warm){ctx.fillStyle='rgba(255,170,90,.06)';ctx.fillRect(0,0,W,H)}
+  drawFogBanks();drawMood();drawNight();if(state==='play')drawVisionHaze();drawDarkness();if(zone.warm){ctx.fillStyle='rgba(255,170,90,.06)';ctx.fillRect(0,0,W,H)}
   ctx.textAlign='center';for(const t of texts){const[sx,sy]=S(t.x,t.y);ctx.globalAlpha=Math.min(1,t.life*2);ctx.font=`bold ${t.size}px Georgia`;ctx.fillStyle='rgba(0,0,0,.7)';ctx.fillText(t.txt,sx+1,sy-t.z+1);ctx.fillStyle=t.col;ctx.fillText(t.txt,sx,sy-t.z)}ctx.globalAlpha=1;
   for(const d of decor)if(d.k==='fire'&&inView(d,300)){const[sx,sy]=S(d.x,d.y);ctx.save();ctx.globalCompositeOperation='lighter';const r=130+Math.sin(rt*9)*6;const g=ctx.createRadialGradient(sx,sy-10,0,sx,sy-10,r);g.addColorStop(0,'rgba(255,150,60,.28)');g.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=g;ctx.fillRect(sx-r,sy-10-r,r*2,r*2);ctx.restore()}
   if(state==='play'){drawQuestArrow();drawPrompt()}
-  const vg=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*.35,W/2,H/2,Math.max(W,H)*.75);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.55)');ctx.fillStyle=vg;ctx.fillRect(0,0,W,H)}
+  const vg=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*.3,W/2,H/2,Math.max(W,H)*.72);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.7)');ctx.fillStyle=vg;ctx.fillRect(0,0,W,H);drawDread()}
 function questTarget(){if(!zone||zone.id!=='over')return null;if(quest.state==='offer'||quest.state==='ready')return warden;if(quest.state==='active'){const q=QUESTS[quest.idx];if(q&&q.site)return tw(q.site)}return null}
 // The quest marker guides you to the right area, melts away once you are there, and comes back if you wander off.
 let questArrowA=1;const QUEST_AREA=18*TILE;
@@ -549,6 +549,8 @@ function updateHud(){const p=players[0];if(!p)return;
   $('hName').textContent=p.name+' · '+CLASSES[p.cls].name;$('hLvl').textContent='Level '+p.level;
   $('hpF').style.width=(Math.max(0,p.hp)/p.maxHp*100)+'%';$('hpT').textContent=Math.max(0,Math.ceil(p.hp))+' / '+p.maxHp;
   $('mpF').style.width=(p.mana/p.maxMana*100)+'%';$('mpT').textContent=Math.floor(p.mana)+' / '+p.maxMana;
+  $('hint').style.opacity=time<90||keys.F1?1:0;// the key help fades after a minute and a half (hold F1 to see it again)
+  {const hf=Math.max(0,p.hp)/p.maxHp,o=$('orbHp'),m=$('orbMp');o.children[0].style.height=hf*100+'%';o.children[2].textContent=Math.max(0,Math.ceil(p.hp));o.classList.toggle('low',hf<.3&&!p.dead);m.children[0].style.height=p.mana/p.maxMana*100+'%';m.children[2].textContent=Math.floor(p.mana)}
   $('xpF').style.width=(p.level>=20?100:p.xp/xpNeed(p.level)*100)+'%';$('hGold').textContent=p.gold;
   const pts=$('pts'),pp=[];if(p.points>0)pp.push(p.points+' attribute (I)');if(p.tpoints>0)pp.push(p.tpoints+' talent (T)');
   if(pp.length){pts.classList.remove('hidden');pts.textContent='+ '+pp.join(' · ')}else pts.classList.add('hidden');

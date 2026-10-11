@@ -181,6 +181,8 @@ function drawBuilding(b){const st=BSTYLE[b.style]||BSTYLE.meadow,x0=b.x*TILE-cam
     const p=players[0];if(p&&Math.hypot(p.x-b.door.x,p.y-b.door.y)<300){ctx.font='12px Georgia';ctx.fillStyle='rgba(0,0,0,.6)';ctx.fillText(S2.name,cx+1,back-14);ctx.fillStyle='#f3e6c0';ctx.fillText(S2.name,cx,back-15)}}}
 // ---- Scenery for interiors, dungeons, caves and entrances
 function drawDecor2(d,sx,sy){const c=ctx;switch(d.k){
+  case'lamp':{softShadow(c,sx,sy,10,4);c.fillStyle='#2a2420';c.fillRect(sx-2,sy-52,4,52);c.fillRect(sx-7,sy-3,14,4);c.fillStyle='#3a322a';c.fillRect(sx-8,sy-62,16,12);
+    const n=nightness(),fl=.85+.15*Math.sin(rt*11+d.x);c.fillStyle=`rgba(255,${190+40*fl|0},110,${.55+.45*Math.max(n,.3)*fl})`;c.fillRect(sx-5,sy-59,10,7);c.fillStyle='#1e1a16';c.beginPath();c.moveTo(sx-10,sy-62);c.lineTo(sx,sy-70);c.lineTo(sx+10,sy-62);c.fill();break}
   case'herb':{const ready=!((d.next||0)>time),t=+d.g.slice(4),col=['#f0f0c0','#d8e8ff','#c84aff'][t-1];softShadow(c,sx,sy,10,4);c.strokeStyle=t===2?'#7a9a8a':'#4a8a3a';c.lineWidth=2;
     for(let k=-2;k<=2;k++){c.beginPath();c.moveTo(sx,sy);c.quadraticCurveTo(sx+k*4,sy-8,sx+k*5,sy-12-Math.abs(k)*-1);c.stroke()}
     if(ready){c.fillStyle=col;c.shadowColor=col;c.shadowBlur=t*4;for(let k=-1;k<=1;k++){circ(c,sx+k*5,sy-13+Math.abs(k)*2,2.6);c.fill()}c.shadowBlur=0;

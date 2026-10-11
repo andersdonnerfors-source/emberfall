@@ -16,7 +16,7 @@ const FX_COL={fire:'#ff7a2a',meteor:'#ff5a1a',frost:'#8fd8ff',blink:'#c890ff',ho
   arrow:'#f0e2b8',trap:'#e8c890',howl:'#cfe0ff',snipe:'#fff2c0',swing:'#fff3d0'};
 const AREA_COL={holy:'#ffe08a',blizzard:'#bfe6ff',plague:'#8aff6a',meteor:'#ff7a2a',rain:'#f0e2b8',curse:'#b06aff',bones:'#ece6d4',trap:'#e8c890',tele:'#ffae4a'};
 function weaponCol(p){const w=p.gear&&p.gear.weapon,e=w&&elemOf(w);return e?ELEM_COL[e]:'#fff3d0'}
-function hitSpark(t,col,crit){const z=(t.h||40)*.55;sparks(t.x,t.y,z,col,crit?18:8,crit?260:170,crit?.5:.32);
+function hitSpark(t,col,crit){const z=(t.h||40)*.55;if(Math.random()<.6)bloodAt(t.x,t.y,false,t.type);sparks(t.x,t.y,z,col,crit?18:8,crit?260:170,crit?.5:.32);
   fx.push({k:'flash',x:t.x,y:t.y,z,r:crit?46:24,life:crit?.22:.12,max:crit?.22:.12,col});if(crit){fx.push({k:'ring',x:t.x,y:t.y,r:70,life:.25,max:.25,col});shake=Math.max(shake,3)}}
 // A rune circle under the caster and a burst of light at the hand.
 function castFx(p,i){const ab=p.abil[i],col=FX_COL[ab.sfx||CASTSFX[p.cls][i]]||CLASSES[p.cls].orb||'#ffe08a';
