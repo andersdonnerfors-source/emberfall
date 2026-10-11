@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Emberfall</title>
+<style>
+:root{--gold:#e8c26a;--panel:rgba(20,16,12,.9);--line:#6b5532;--text:#efe6d2;--muted:#b3a68a}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#0d0b09;color:var(--text);font-family:Georgia,'Palatino Linotype',serif;overflow:hidden;user-select:none}
+canvas#game{display:block;width:100vw;height:100vh;cursor:crosshair}
+.panel{background:var(--panel);border:2px solid var(--line);border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.6)}
+.hidden{display:none!important}
+.muted{color:var(--muted);font-size:13px}
+h2{margin:0 0 10px;color:var(--gold);font-weight:normal;letter-spacing:.05em}
+.screen{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;background:radial-gradient(ellipse at center,rgba(10,8,6,.3),rgba(10,8,6,.88));z-index:20;padding:16px}
+#title h1{font-size:clamp(46px,9vw,110px);letter-spacing:.12em;margin:0;color:var(--gold);text-shadow:0 0 30px rgba(232,140,60,.55),0 4px 0 #3a2410}
+.sub{color:var(--muted);font-style:italic;margin:6px 0 34px;letter-spacing:.08em;text-align:center}
+.btn{background:linear-gradient(#5a4122,#3a2a16);color:var(--text);border:2px solid var(--line);border-radius:8px;padding:11px 26px;font-size:17px;cursor:pointer;margin:6px;min-width:200px;font-family:inherit}
+.btn:hover{border-color:var(--gold);color:#fff}
+.btn.primary{background:linear-gradient(#8a5a1e,#5a3a10);border-color:var(--gold)}
+#creator .wrap{display:grid;grid-template-columns:290px 1fr;gap:22px;width:min(1080px,100%);padding:20px;max-height:94vh;overflow:auto}
+.lrow{display:flex;align-items:center;gap:8px;margin:7px 0}
+.ll{width:82px;flex:none;color:var(--muted);font-size:12px;letter-spacing:.05em;text-transform:uppercase}
+.cyb{background:#2a2016;border:1px solid var(--line);color:var(--text);border-radius:6px;width:30px;height:28px;cursor:pointer;font-size:12px}
+.cyb:hover{border-color:var(--gold)}.cyv{flex:1;text-align:center;font-size:15px}
+.lrow .sw b{width:24px;height:24px}
+.set{display:flex;justify-content:space-between;align-items:center;gap:14px;margin:14px 0;font-size:15px}
+.set input[type=range]{width:55%;accent-color:#e8c26a}.set input[type=checkbox]{width:20px;height:20px;accent-color:#e8c26a}
+#creator label{display:block;margin:12px 0 5px;color:var(--muted);font-size:13px;letter-spacing:.05em;text-transform:uppercase}
+#prev{display:block;width:100%;max-width:260px;background:radial-gradient(ellipse at 50% 80%,#3a4a2a,#1a1510 70%);border:1px solid var(--line);border-radius:8px;margin:0 auto}
+#nameIn{width:100%;padding:9px 10px;background:#15110d;color:var(--text);border:1px solid var(--line);border-radius:6px;font-family:inherit;font-size:16px}
+.sw{display:flex;gap:7px;flex-wrap:wrap}
+.sw b{width:28px;height:28px;border-radius:50%;border:2px solid #000;cursor:pointer;display:block}
+.sw b.on{outline:2px solid var(--gold);outline-offset:2px}
+#classes{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.card{border:2px solid var(--line);border-radius:10px;padding:12px 14px;cursor:pointer;background:rgba(0,0,0,.25)}
+.card:hover{border-color:#9a7a42}
+.card.on{border-color:var(--gold);background:rgba(232,194,106,.08)}
+.card h3{margin:0 0 4px;font-weight:normal;font-size:20px}
+.card p{margin:0 0 8px;font-size:13px;color:var(--muted)}
+.card ul{margin:0;padding:0;list-style:none;font-size:13px}
+.card li{margin:2px 0}
+.row{display:flex;justify-content:flex-end;flex-wrap:wrap;margin-top:14px}
+@media (max-width:760px){#creator .wrap{grid-template-columns:1fr}#classes{grid-template-columns:1fr}}
+#hud>*{position:fixed;z-index:5}
+#unit{left:14px;top:14px;width:270px;padding:10px 12px}
+.uname{display:flex;justify-content:space-between;font-size:16px}
+.uname span:last-child{color:var(--gold)}
+.bar{position:relative;height:16px;background:#1a1410;border:1px solid #000;border-radius:4px;margin-top:6px;overflow:hidden}
+.bar i{position:absolute;left:0;top:0;bottom:0;display:block}
+.bar.hp i{background:linear-gradient(#d8443a,#8e1e18)}
+.bar.mp i{background:linear-gradient(#4a86e8,#1e3f8e)}
+.bar.xp{height:8px}.bar.xp i{background:linear-gradient(#e8c26a,#a07a2a)}
+.bar span{position:absolute;inset:0;text-align:center;font-size:11px;line-height:15px;color:#fff;text-shadow:0 1px 2px #000;font-family:system-ui,sans-serif}
+.gold{margin-top:6px;font-size:13px;display:flex;justify-content:space-between}
+#pts{color:#9fe07a;cursor:pointer}
+#right{right:14px;top:14px;width:200px}
+#mini{width:200px;height:200px;display:block}
+#quest{margin-top:8px;padding:10px 12px;font-size:13px;line-height:1.4}
+#quest b{color:var(--gold);font-weight:normal;font-size:14px}
+#abar{left:50%;bottom:16px;transform:translateX(-50%);display:flex;gap:6px}
+.slot{position:relative;width:56px;height:56px;background:rgba(20,16,12,.92);border:2px solid var(--line);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:27px;overflow:hidden}
+.slot .key{position:absolute;left:3px;top:1px;font-size:10px;color:var(--muted);font-family:system-ui,sans-serif}
+.slot .cd{position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,.68)}
+.slot .cdt{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:bold;color:#fff;text-shadow:0 1px 3px #000;font-family:system-ui,sans-serif}
+.slot.nomana .ic{filter:grayscale(.9) brightness(.55)}
+.slot.locked .ic{filter:grayscale(1) brightness(.35)}
+.slot .cnt{position:absolute;right:4px;bottom:2px;font-size:12px;font-family:system-ui,sans-serif;font-weight:bold}
+@media (max-width:1000px){#hint{display:none}#bossbar{top:auto!important;bottom:84px;width:80vw!important}}
+#hint{left:14px;bottom:12px;font-size:11px;color:rgba(239,230,210,.55);font-family:system-ui,sans-serif;max-width:34vw;line-height:1.5}
+#bossbar{top:16px;left:50%;transform:translateX(-50%);width:min(520px,50vw);text-align:center;font-size:17px;color:#e8d0ff;text-shadow:0 2px 4px #000}
+.bar.boss{height:18px}.bar.boss i{background:linear-gradient(#b04ad8,#5a1e8e)}
+#toasts{position:fixed;top:20%;left:50%;transform:translateX(-50%);z-index:30;display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none}
+.toast{background:rgba(15,12,9,.88);border:1px solid var(--line);padding:8px 18px;border-radius:8px;font-size:16px;animation:tf 3.4s forwards;text-align:center}
+.toast.danger{color:#ff8a6a;border-color:#c84a3a}.toast.gold{color:var(--gold);border-color:var(--gold)}
+@keyframes tf{0%{opacity:0;transform:translateY(8px)}8%{opacity:1;transform:none}80%{opacity:1}100%{opacity:0}}
+#inv{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:25;width:min(800px,96vw);padding:16px 20px;max-height:94vh;overflow:auto}
+.invhead{display:flex;align-items:center;gap:14px;margin-bottom:10px}
+.invhead h2{margin:0}
+.x{margin-left:auto;background:none;border:1px solid var(--line);color:var(--text);border-radius:6px;cursor:pointer;font-size:16px;padding:2px 9px}
+.invbody{display:grid;grid-template-columns:300px 1fr;gap:20px}
+@media (max-width:700px){.invbody{grid-template-columns:1fr}}
+#equip{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.cell{aspect-ratio:1;border:2px solid #3a2e1e;border-radius:8px;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;font-size:24px;cursor:pointer;position:relative}
+.cell:hover{border-color:var(--gold)}
+.cell small{position:absolute;bottom:2px;font-size:9px;color:var(--muted);font-family:system-ui,sans-serif}
+#bag,#supplies{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}
+#invPrev{display:block;margin:0 auto 6px;width:200px;height:190px}
+.cell .qty{position:absolute;right:4px;bottom:1px;font-size:12px;font-weight:bold;font-family:system-ui,sans-serif;text-shadow:0 1px 2px #000}
+#buffs{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}#buffs:empty{display:none}
+.buff{position:relative;width:30px;height:30px;border:1px solid var(--line);border-radius:6px;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;font-size:17px}
+.buff small{position:absolute;bottom:-2px;right:1px;font-size:9px;font-family:system-ui,sans-serif;color:#fff;text-shadow:0 1px 2px #000}
+#stats{margin-top:14px;font-size:14px}
+#stats .st{display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-bottom:1px solid rgba(107,85,50,.35)}
+#stats .st button{background:#2f4a1e;border:1px solid #6fa04a;color:#cfe8b8;border-radius:4px;cursor:pointer;font-size:12px;margin-left:6px;padding:0 6px}
+#tal,#shop,#prof{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:25;width:min(880px,96vw);padding:16px 20px;max-height:94vh;overflow:auto}
+#talTree{display:grid;grid-template-columns:1fr 1.4fr;gap:14px}
+.specinfo{background:rgba(232,194,106,.1);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:13px;margin-bottom:8px;color:#f0dca0}
+.speccard{border:2px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:10px;background:rgba(20,16,12,.85)}
+.speccard b{font-weight:normal;font-size:17px;color:var(--gold)}.speccard small{display:block;color:var(--muted);font-size:12.5px;margin-top:4px;line-height:1.4}
+.speccard small b{font-size:12.5px}.speccard .btn{margin:8px 0 0;min-width:0;padding:7px 16px;font-size:15px}.speccard.dim{opacity:.6}
+@media (max-width:700px){#talTree{grid-template-columns:1fr}}
+.branch{border:1px solid var(--line);border-radius:10px;padding:10px;background:rgba(0,0,0,.25)}
+.branch h3{margin:0 0 8px;font-weight:normal;color:var(--gold);text-align:center}
+.tnode{display:block;width:100%;text-align:left;margin:0 0 8px;padding:8px 10px;border:2px solid #3a2e1e;border-radius:8px;background:rgba(20,16,12,.9);color:var(--text);font-family:inherit;cursor:pointer}
+.tnode b{font-weight:normal;font-size:15px}.tnode span{float:right;font-family:system-ui,sans-serif;font-size:12px;color:var(--muted)}
+.tnode small{display:block;color:var(--muted);font-size:12px;margin-top:3px;line-height:1.35}
+.tnode.can{border-color:#6fa04a}.tnode.can:hover{background:rgba(60,90,40,.5)}.tnode.max{border-color:var(--gold)}.tnode.lock{opacity:.45;cursor:default}
+.srow{display:flex;align-items:center;gap:10px;padding:6px 4px;border-bottom:1px solid rgba(107,85,50,.35)}
+.srow .ic{font-size:22px;width:30px;text-align:center}.srow .nm{flex:1;font-size:14px}
+.srow button{background:linear-gradient(#5a4122,#3a2a16);color:var(--text);border:1px solid var(--line);border-radius:6px;cursor:pointer;font-family:inherit;padding:4px 10px;white-space:nowrap}
+.srow button:disabled{opacity:.4;cursor:default}
+.tsel{margin:4px 0;font-size:13px}.tsel select{background:#1e1812;color:var(--text);border:1px solid var(--line);border-radius:4px;font-family:inherit;max-width:150px}
+#sbag{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}
+#matsRow{display:flex;flex-wrap:wrap;gap:8px 16px;margin-bottom:12px;font-size:14px}.mat b{color:var(--gold);font-weight:normal}
+#profList{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}@media (max-width:800px){#profList{grid-template-columns:1fr}}
+#tip{position:fixed;z-index:40;pointer-events:none;background:rgba(12,10,8,.97);border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-size:13px;max-width:290px;line-height:1.45}
+#tip .tn{font-size:15px}
+#tip .ts{color:var(--muted);font-size:12px;margin-bottom:4px}
+#worldmap{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:26;padding:14px 16px;max-width:96vw;max-height:96vh;overflow:auto}#wmap{display:block;width:min(640px,88vw,78vh);height:auto;border:1px solid var(--line);border-radius:6px}#mini{cursor:pointer}
+#loot{position:fixed;right:230px;top:50%;transform:translateY(-50%);z-index:24;width:280px;padding:12px 14px}
+#loot h2{font-size:18px}.lrow2{display:flex;align-items:center;gap:10px;padding:6px 8px;border:1px solid rgba(107,85,50,.4);border-radius:6px;margin-bottom:5px;cursor:pointer;font-size:14px;background:rgba(0,0,0,.25)}.lrow2:hover{border-color:var(--gold)}.li{font-size:20px;width:24px;text-align:center}
+#heroList{display:flex;flex-direction:column;align-items:center}.herorow{display:flex;align-items:center;gap:4px}.herorow .btn{min-width:320px}
+@media (max-width:700px){#loot{right:auto;left:50%;top:auto;bottom:90px;transform:translateX(-50%)}}
+.up{color:#8fe06a}.down{color:#e86a5a}
+#dialog{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);z-index:25;width:min(640px,94vw);padding:18px 22px}
+#dialog h3{margin:0 0 2px;color:var(--gold);font-weight:normal;font-size:21px}
+#dialog .who{color:var(--muted);font-size:12px;margin-bottom:8px;letter-spacing:.06em;text-transform:uppercase}
+#dialog p{line-height:1.55;margin:0 0 10px}
+#dGoal{color:#cfe0a0;font-size:14px;margin-bottom:6px}
+#death h1,#pause h1{color:#d84a3a;font-size:56px;margin:0 0 8px;font-weight:normal;letter-spacing:.06em}
+#pause h1{color:var(--gold)}
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+
+<div id="hud" class="hidden">
+  <div id="unit" class="panel">
+    <div class="uname"><span id="hName"></span><span id="hLvl"></span></div>
+    <div class="bar hp"><i id="hpF"></i><span id="hpT"></span></div>
+    <div class="bar mp"><i id="mpF"></i><span id="mpT"></span></div>
+    <div class="bar xp"><i id="xpF"></i></div>
+    <div class="gold"><span>🪙 <span id="hGold">0</span></span><span id="pts" class="hidden"></span></div>
+    <div id="buffs"></div>
+  </div>
+  <div id="right"><canvas id="mini" width="200" height="200" class="panel"></canvas><div id="quest" class="panel"></div></div>
+  <div id="bossbar" class="hidden"><div id="bossName"></div><div class="bar boss"><i id="bossF"></i></div></div>
+  <div id="abar"></div>
+  <div id="hint">WASD / arrows: move · Mouse: aim · Left click: attack · Right click / 1–4: abilities · Q: heal potion · Z: mana potion · X: eat · E: talk, trade, enter · F: mount · H: teleport home · N: world map · I: character · T: talents · P: professions · Esc: pause</div>
+</div>
+<div id="toasts"></div>
+
+<div id="title" class="screen">
+  <h1>EMBERFALL</h1>
+  <div class="sub">A tale of the Westmark · working title</div>
+  <button class="btn primary" id="btnNew">New hero</button>
+  <div id="heroList"></div>
+  <button class="btn" id="btnHow">How to play</button>
+  <button class="btn" id="btnSet">Settings</button>
+</div>
+
+<div id="creator" class="screen hidden">
+  <div class="wrap panel">
+    <div>
+      <h2>Create your hero</h2>
+      <canvas id="prev" width="260" height="280"></canvas>
+      <label>Name</label><input id="nameIn" maxlength="16">
+      <div id="looks"></div><button class="btn" id="btnRand" style="min-width:0;width:100%;margin:12px 0 0">🎲 Randomize look</button>
+    </div>
+    <div>
+      <h2>Choose your class</h2>
+      <div id="classes"></div>
+      <div class="row"><button class="btn" id="btnBack">Back</button><button class="btn primary" id="btnBegin">Begin the journey</button></div>
+    </div>
+  </div>
+</div>
+
+<div id="inv" class="panel hidden">
+  <div class="invhead"><h2>Character</h2><span class="muted">Click item: equip · Sell loot at any shop</span><button class="x" id="invClose">✕</button></div>
+  <div class="invbody">
+    <div><canvas id="invPrev" width="200" height="190"></canvas><div id="equip"></div><div id="stats"></div></div>
+    <div><div class="muted" style="margin-bottom:6px">Bag</div><div id="bag"></div><div class="muted" style="margin:14px 0 6px">Supplies · click to use · Q heal · Z mana · X eat</div><div id="supplies"></div></div>
+  </div>
+</div>
+
+<div id="tal" class="panel hidden"><div class="invhead"><h2>Talents</h2><span class="muted" id="talPts"></span><button class="x" id="talClose">✕</button></div><div id="talTree"></div>
+  <div class="muted" style="margin-top:10px">You earn 1 talent point per level from level 2. Deeper talents need points spent in their tree first. At level 10 you choose a specialization with its own tree. Reset talents or change specialization at any General Store.</div></div>
+<div id="shop" class="panel hidden"><div class="invhead"><h2 id="shopTitle">Shop</h2><span class="muted">🪙 <span id="shopGold"></span></span><button class="x" id="shopClose">✕</button></div>
+  <div class="invbody"><div><div class="muted" style="margin-bottom:6px">For sale · new stock every 5 minutes</div><div id="stock"></div><div id="services"></div></div>
+  <div><div class="muted" style="margin-bottom:6px">Your bag · click an item to sell it</div><div id="sbag"></div><button class="btn" id="sellJunk" style="margin:10px 0 0;min-width:0;width:100%">Sell all common items</button></div></div></div>
+<div id="prof" class="panel hidden"><div class="invhead"><h2>Professions</h2><span class="muted" id="bagInfo"></span><button class="x" id="profClose">✕</button></div>
+  <div id="matsRow"></div><div id="profList"></div>
+  <div class="muted" style="margin-top:10px">Monsters drop materials: beasts give hide, spiders give silk, goblins and trolls give ore, undead and spirits give arcane dust, and bosses give essence. Herbs grow in the wild (better herbs in harder lands), berry bushes and wells can be gathered with E, and beasts drop meat. Learn a profession from a trainer in a city shop.</div></div>
+<div id="loot" class="panel hidden"><div class="invhead"><h2 id="lootTitle">Loot</h2><button class="x" id="lootClose">✕</button></div><div id="lootList"></div><div class="row"><button class="btn primary" id="lootAll" style="min-width:0;width:100%;margin:8px 0 0">Take all</button></div></div>
+<div id="worldmap" class="panel hidden"><div class="invhead"><h2 id="wmapTitle">World map</h2><span class="muted" id="wmapPct"></span><button class="x" id="wmapClose">✕</button></div><canvas id="wmap" width="640" height="640"></canvas><div class="muted" style="margin-top:6px">Only places you have seen are shown. 🏠 your home city · orange: dungeons · blue: caves · gold ring: your current goal.</div></div>
+<div id="dialog" class="panel hidden"><h3 id="dTitle"></h3><div class="who" id="dWho">Old Warden Bram</div><p id="dText"></p><div id="dGoal"></div><div class="row" id="dBtns"></div></div>
+<div id="intro" class="screen hidden"><div class="panel" style="max-width:640px;padding:24px 30px;line-height:1.6">
+  <h2>The Lamp has gone dark</h2>
+  <p>For a thousand years the Lamp of Emberfall has burned above the valley, and its light kept the old dead asleep in their barrows.</p>
+  <p>Three nights ago, it went out. The wolves grew bold, the forests turned sick, and a cold wind began to blow from the barrow-downs.</p>
+  <p>You arrive in Emberfall at dusk, a stranger with a weapon and nothing to lose. Old Warden Bram is waiting by the fire.</p>
+  <div class="row"><button class="btn primary" id="btnIntro">Begin</button></div></div></div>
+<div id="victory" class="screen hidden"><h1 style="color:var(--gold);font-size:56px;margin:0;font-weight:normal;letter-spacing:.06em">Victory</h1><div class="sub" id="vicText" style="max-width:560px;line-height:1.6"></div><button class="btn primary" id="btnVic">Keep exploring</button></div>
+<div id="death" class="screen hidden"><h1>You have fallen</h1><div class="sub">Returning to Emberfall…</div></div>
+<div id="pause" class="screen hidden"><h1>Paused</h1><button class="btn primary" id="btnResume">Resume</button><button class="btn" id="btnSaveG">Save game</button><button class="btn" id="btnSet2">Settings</button><button class="btn" id="btnQuit">Save &amp; quit to menu</button><button class="btn" id="btnNew2">New hero</button></div>
+<div id="settings" class="screen hidden"><div class="panel" style="width:min(440px,100%);padding:20px 24px">
+  <h2>Settings</h2>
+  <label class="set"><span>Sound effects</span><input type="range" id="volSfx" min="0" max="1" step="0.05"></label>
+  <label class="set"><span>Music</span><input type="range" id="volMus" min="0" max="1" step="0.05"></label>
+  <label class="set"><span>Mute everything (M)</span><input type="checkbox" id="volMute"></label>
+  <div class="row"><button class="btn primary" id="btnSetClose">Done</button></div></div></div>
+<div id="howto" class="screen hidden"><div class="panel" style="width:min(620px,100%);padding:20px 26px;line-height:1.55;max-height:92vh;overflow:auto">
+  <h2>How to play</h2>
+  <p><b>Move</b> with WASD or the arrow keys. <b>Aim</b> with the mouse. <b>Left click</b> attacks, <b>right click or 1–4</b> use abilities, <b>R</b> uses your specialization ability. <b>Q</b> drinks a potion, <b>E</b> talks or trades, <b>I</b> opens your character, <b>T</b> your talents, <b>M</b> mutes sound.</p>
+  <p><b>The story</b> leads you through the valley: the meadows, the Gloomwood, the Frostfells, the Sunscar Desert, the Mirefen Bog and finally the barrow-downs. Each region is harder than the last. Monster levels are colored: <span style="color:#ff4a3a">red</span> means dangerous, <span style="color:#8a8a8a">grey</span> means too weak to give much XP.</p>
+  <p><b>Growing stronger:</b> every level gives attribute points and a talent point. New abilities unlock at levels 3, 5 and 7. At <b>level 10</b> you choose one of three specializations, with its own talent tree and a signature ability.</p>
+  <p><b>Cities and shops:</b> walk into shops through their doors (E). Every shop buys your loot; each one sells its own kind of goods. Stables sell mounts (F to ride), General Stores sell potions and torches.</p>
+  <p><b>Dungeons and caves</b> lie at fixed places in the world. Dungeon bosses drop gear made for your class and specialization. Caves are dark: bring a torch.</p>
+  <p><b>Professions</b> (P): learn Blacksmithing, Leatherworking or Enchanting from city trainers and craft with materials from monsters. <b>Skills:</b> using a weapon trains its skill and makes its hits stronger; casting trains Spellcraft.</p>
+  <p><b>Home city:</b> talk to the innkeeper in any city to make it your home. Your Hearthstone (H) teleports you there, and you wake there if you fall. Dying costs 10% of your level's experience (it can drop you a level) and a little weapon skill.</p>
+  <p><b>Lost?</b> Read the waymarks along the roads (click them) and listen to the bards in each city.</p>
+  <div class="row"><button class="btn primary" id="btnHowClose">Got it</button></div></div></div>
+<div id="tip" class="hidden"></div>
+
+<script>
