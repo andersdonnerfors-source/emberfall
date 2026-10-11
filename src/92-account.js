@@ -18,7 +18,7 @@ const Account={mode:null,user:null,sb:null,cache:[],dirty:null,lastPush:0,
   async signUp(email,pw){const sb=await this.client(),{data,error}=await sb.auth.signUp({email,password:pw});if(error)throw error;
     if(data.session){this.mode='online';this.user=data.user;store(MODE_KEY,'online');return'in'}return'confirm'},
   async resetPassword(email){const sb=await this.client(),{error}=await sb.auth.resetPasswordForEmail(email);if(error)throw error},
-  async signOut(){if(this.mode==='online'){await this.flush();try{await (await this.client()).auth.signOut()}catch(e){}}this.mode=null;this.user=null;this.cache=[];store(MODE_KEY,null)},
+  async signOut(){if(this.mode==='online'){await this.flush();try{await (await this.client()).auth.signOut()}catch(e){}}this.mode=null;this.user=null;this.cache=[];Friends.me=null;Friends.list=[];updateFriendBadge();store(MODE_KEY,null)},
   label(){return this.mode==='online'?(this.user&&this.user.email||'Signed in'):'Offline · heroes are saved on this computer'},
   // ---- heroes: list, save, delete (same shape both ways: {id,t,data})
   async list(){if(this.mode!=='online'){this.cache=allSaves().heroes.sort((a,b)=>b.t-a.t);return this.cache}

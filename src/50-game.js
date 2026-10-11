@@ -238,11 +238,12 @@ function questTick(){updateBarrowGate();const p=players[0];if(!p||quest.state!==
 function readInput(p){const i=p.input;i.mx=((keys.KeyD||keys.ArrowRight)?1:0)-((keys.KeyA||keys.ArrowLeft)?1:0);i.my=((keys.KeyS||keys.ArrowDown)?1:0)-((keys.KeyW||keys.ArrowUp)?1:0);i.ax=mouse.x+camX;i.ay=mouse.y/TILT+camY;i.fire=mouse.l}
 addEventListener('keydown',e=>{if(storyOpen){if(e.code==='Enter'||e.code==='Escape'){if(!$('intro').classList.contains('hidden'))$('btnIntro').click();else $('btnVic').click()}return}if(e.target.tagName==='INPUT'){if(e.code==='Enter'&&state==='creator')beginGame();return}keys[e.code]=true;if(state!=='play')return;
   const p=players[0];if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code))e.preventDefault();
-  if(e.code==='Escape'){if(mapOpen)toggleMap(false);else if(lootOpen)closeLoot();else if(profOpen)toggleProf(false);else if(invOpen)toggleInv(false);else if(talOpen)toggleTal(false);else if(shopOpen)closeShop();else if(dialogOpen)closeDialog();else togglePause();return}
+  if(e.code==='Escape'){if(Friends.open){toggleFriends(false);return}if(mapOpen)toggleMap(false);else if(lootOpen)closeLoot();else if(profOpen)toggleProf(false);else if(invOpen)toggleInv(false);else if(talOpen)toggleTal(false);else if(shopOpen)closeShop();else if(dialogOpen)closeDialog();else togglePause();return}
   if(e.code==='KeyI'||e.code==='KeyC'){if(!pauseOpen&&!dialogOpen)toggleInv();return}
   if(e.code==='KeyT'){if(!pauseOpen&&!dialogOpen)toggleTal();return}
   if(e.code==='KeyP'){if(!pauseOpen&&!dialogOpen)toggleProf();return}
   if(e.code==='KeyN'){if(!pauseOpen&&!dialogOpen)toggleMap();return}
+  if(e.code==='KeyO'){if(!pauseOpen&&!dialogOpen)toggleFriends();return}
   if(e.code==='KeyE'&&shopOpen){closeShop();return}
   if(isPaused()||!p)return;
   const m=/^Digit([1-5])$/.exec(e.code);if(m)p.input.abil[+m[1]]=true;if(e.code==='KeyR')p.input.abil[5]=true;
@@ -258,7 +259,7 @@ cvs.addEventListener('mousedown',e=>{if(state!=='play'||isPaused())return;if(e.b
 addEventListener('mouseup',e=>{if(e.button===0)mouse.l=false});
 cvs.addEventListener('contextmenu',e=>e.preventDefault());
 let storyOpen=false;
-function isPaused(){return invOpen||dialogOpen||pauseOpen||talOpen||shopOpen||storyOpen||profOpen||mapOpen}
+function isPaused(){return Friends.open||invOpen||dialogOpen||pauseOpen||talOpen||shopOpen||storyOpen||profOpen||mapOpen}
 function showStory(id,on){storyOpen=on;$(id).classList.toggle('hidden',!on);mouse.l=false}
 function fmtTime(s){const m=Math.floor(s/60);return m>=60?Math.floor(m/60)+' h '+(m%60)+' min':m+' min'}
 function showVictory(){const p=players[0];sfx('victory');$('vicText').innerHTML=`The Barrow King is no more, and the Lamp of Emberfall shines over the whole valley.<br><br>${p.name} the ${CLASSES[p.cls].name} · level ${p.level}<br>${p.kills||0} foes defeated · fallen ${p.deaths||0} times · ${fmtTime(p.playT||0)} played<br><br>The world stays open: keep hunting for epic gear and growing stronger.`;showStory('victory',true)}

@@ -8,7 +8,7 @@ function homeCityName(p){const c=CITIES.find(c=>c.id===(p.home||'emberfall'));re
 function locName(tx,ty){for(const c of CITIES)if(Math.hypot(tx-c.x,ty-c.y)<c.r+2)return c.name;const b=biomeOf(Math.floor(tx),Math.floor(ty));
   if(Math.hypot(tx-BARROW.x,ty-BARROW.y)<12)return'The Barrow-downs';return isDeep(tx,ty,b)?'Deep Wilds · '+BIOME_NAME[b].replace(/^The /,''):BIOME_NAME[b]}
 function selHero(i){const h=SEL.heroes[i];if(!h)return null;const d=h.data.p;return{cls:d.cls,look:d.look,gear:Object.assign({weapon:starterWeapon(d.cls),offhand:starterOffhand(d.cls)},d.gear||{}),bagSize:d.bagSize||20,level:d.level||1,spec:d.spec}}
-async function openSelect(){state='title';show('title');$('acctLabel').textContent=Account.mode==='offline'&&!storageOK()?'Saving is blocked in this window. Open the game with Play Emberfall.':Account.label();$('btnAcct').textContent=Account.mode==='online'?'Sign out':'Sign in';
+async function openSelect(){state='title';show('title');if(Account.mode==='online')await ensureProfile();$('acctLabel').textContent=Account.mode==='offline'&&!storageOK()?'Saving is blocked in this window. Open the game with Play Emberfall.':Account.label();$('btnAcct').textContent=Account.mode==='online'?'Sign out':'Sign in';
   $('heroList').innerHTML='<div class="muted" style="padding:20px;text-align:center">Gathering your heroes…</div>';
   try{SEL.heroes=await Account.list()}catch(e){SEL.heroes=[];toast('Could not load heroes: '+e.message,'danger')}
   const last=fetchStore(LAST_KEY);SEL.idx=Math.max(0,SEL.heroes.findIndex(h=>h.id===last));renderSelect()}

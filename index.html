@@ -39,6 +39,16 @@ h2{margin:0 0 10px;color:var(--gold);font-weight:normal;letter-spacing:.05em}
 #loginForm.off{opacity:.35;pointer-events:none}#loginNote{margin-top:10px;line-height:1.45}
 #loginMsg{margin-top:10px;font-size:14px;color:#cfe8b8;min-height:1em}#loginMsg.err{color:#ff9a8a}
 .or{display:flex;align-items:center;gap:10px;margin:16px 0 12px;color:var(--muted);font-size:13px}.or:before,.or:after{content:'';flex:1;border-top:1px solid var(--line)}
+#friends{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:26;width:min(480px,94vw);max-height:84vh;overflow:auto;padding:16px 20px}
+.frAdd{display:flex;gap:8px}.frAdd input{flex:1;padding:9px 10px;background:#15110d;color:var(--text);border:1px solid var(--line);border-radius:6px;font-family:inherit;font-size:15px}.frAdd .btn{min-width:0;margin:0;padding:8px 14px;font-size:15px}
+#frMsg{min-height:1.2em;margin:8px 0 2px;font-size:13px;color:#cfe8b8}#frMe b{color:var(--gold);font-weight:normal}
+.frgroup{margin:12px 0 6px;color:var(--gold);font-size:14px;border-bottom:1px solid rgba(107,85,50,.5);padding-bottom:3px}
+.frrow{display:flex;align-items:center;gap:10px;padding:7px 4px}.frtx{flex:1;display:flex;flex-direction:column;min-width:0}.frtx b{font-weight:normal;font-size:16px}.frtx small{color:var(--muted);font-size:12px}
+.frrow button{background:linear-gradient(#5a4122,#3a2a16);color:var(--text);border:1px solid var(--line);border-radius:6px;cursor:pointer;font-family:inherit;padding:4px 10px}.frrow button.ghost{background:none}.frrow button:disabled{opacity:.4;cursor:default}
+.dot{width:10px;height:10px;border-radius:50%;background:#555;flex:none}.dot.on{background:#6fe06a;box-shadow:0 0 8px #6fe06a}
+.badge{display:inline-block;min-width:16px;padding:0 5px;border-radius:9px;background:#c84a3a;color:#fff;font:bold 11px/16px system-ui,sans-serif;text-align:center;margin-left:4px}
+#namePick{position:fixed;inset:0;z-index:41;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center}
+#npName{width:100%;box-sizing:border-box;padding:10px;background:#15110d;color:var(--text);border:1px solid var(--line);border-radius:6px;font-family:inherit;font-size:16px}
 #confirm{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center}
 .cfbox{width:min(420px,92vw);padding:20px 22px}.cfbox p{line-height:1.5}.cfbox .row{display:flex;gap:8px;margin-top:14px;justify-content:flex-end}.cfbox .btn{min-width:0}
 @media (max-width:700px){#selPanel{top:auto;bottom:90px;transform:none;width:auto;left:12px;max-height:40vh}#selBottom{left:50%}.logo{font-size:34px}}
@@ -169,13 +179,13 @@ h2{margin:0 0 10px;color:var(--gold);font-weight:normal;letter-spacing:.05em}
     <div class="bar hp"><i id="hpF"></i><span id="hpT"></span></div>
     <div class="bar mp"><i id="mpF"></i><span id="mpT"></span></div>
     <div class="bar xp"><i id="xpF"></i></div>
-    <div class="gold"><span>🪙 <span id="hGold">0</span></span><span id="pts" class="hidden"></span></div>
+    <div class="gold"><span>🪙 <span id="hGold">0</span></span><span id="pts" class="hidden"></span><span class="badge hidden" id="frBadge2" title="Friend requests (O)"></span></div>
     <div id="buffs"></div>
   </div>
   <div id="right"><canvas id="mini" width="200" height="200" class="panel"></canvas><div id="quest" class="panel"></div></div>
   <div id="bossbar" class="hidden"><div id="bossName"></div><div class="bar boss"><i id="bossF"></i></div></div>
   <div id="abar"></div>
-  <div id="hint">WASD / arrows: move · Mouse: aim · Left click: attack · Right click / 1–4: abilities · Q: heal potion · Z: mana potion · X: eat · E: talk, trade, enter · F: mount · H: teleport home · N: world map · I: character · T: talents · P: professions · Esc: pause</div>
+  <div id="hint">WASD / arrows: move · Mouse: aim · Left click: attack · Right click / 1–4: abilities · Q: heal potion · Z: mana potion · X: eat · E: talk, trade, enter · F: mount · H: teleport home · N: world map · O: friends · I: character · T: talents · P: professions · Esc: pause</div>
 </div>
 <div id="toasts"></div>
 
@@ -204,9 +214,14 @@ h2{margin:0 0 10px;color:var(--gold);font-weight:normal;letter-spacing:.05em}
     <button class="btn primary" id="btnNew" style="width:100%;margin:10px 0 0">Create new hero</button>
   </div>
   <div id="selBottom"><button class="btn" id="btnDel">Delete</button><button class="btn primary big" id="btnPlay">Play</button></div>
-  <div id="selMenu"><span id="acctLabel"></span><button class="linkbtn" id="btnAcct">Sign out</button><button class="linkbtn" id="btnHow">How to play</button><button class="linkbtn" id="btnSet">Settings</button></div>
+  <div id="selMenu"><span id="acctLabel"></span><button class="linkbtn" id="btnFriends">Friends <span class="badge hidden" id="frBadge"></span></button><button class="linkbtn" id="btnAcct">Sign out</button><button class="linkbtn" id="btnHow">How to play</button><button class="linkbtn" id="btnSet">Settings</button></div>
 </div>
 
+<div id="friends" class="panel hidden"><div class="invhead"><h2>Friends</h2><span class="muted" id="frMe"></span><button class="x" id="frClose">✕</button></div>
+  <div id="frAdd" class="frAdd"><input id="frName" placeholder="Friend's account name" maxlength="16" autocomplete="off" spellcheck="false"><button class="btn" id="frAddBtn">Add friend</button></div>
+  <div id="frMsg"></div><div id="frList"></div></div>
+<div id="namePick" class="hidden"><div class="panel cfbox"><h2>Choose your account name</h2><p>Friends find you by this name. It is shown instead of your email. Use 3–16 letters, numbers or _.</p>
+  <input id="npName" maxlength="16" autocomplete="off" spellcheck="false"><div id="npMsg" style="color:#ff9a8a;margin-top:8px;min-height:1em"></div><div class="row"><button class="btn primary" id="npOk">Save name</button></div></div></div>
 <div id="confirm" class="hidden"><div class="panel cfbox"><h2 id="cfTitle"></h2><p id="cfText"></p><input id="cfInput" autocomplete="off" spellcheck="false">
   <div class="row"><button class="btn" id="cfNo">Keep</button><button class="btn danger" id="cfOk">Delete forever</button></div></div></div>
 
@@ -1155,11 +1170,12 @@ function questTick(){updateBarrowGate();const p=players[0];if(!p||quest.state!==
 function readInput(p){const i=p.input;i.mx=((keys.KeyD||keys.ArrowRight)?1:0)-((keys.KeyA||keys.ArrowLeft)?1:0);i.my=((keys.KeyS||keys.ArrowDown)?1:0)-((keys.KeyW||keys.ArrowUp)?1:0);i.ax=mouse.x+camX;i.ay=mouse.y/TILT+camY;i.fire=mouse.l}
 addEventListener('keydown',e=>{if(storyOpen){if(e.code==='Enter'||e.code==='Escape'){if(!$('intro').classList.contains('hidden'))$('btnIntro').click();else $('btnVic').click()}return}if(e.target.tagName==='INPUT'){if(e.code==='Enter'&&state==='creator')beginGame();return}keys[e.code]=true;if(state!=='play')return;
   const p=players[0];if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code))e.preventDefault();
-  if(e.code==='Escape'){if(mapOpen)toggleMap(false);else if(lootOpen)closeLoot();else if(profOpen)toggleProf(false);else if(invOpen)toggleInv(false);else if(talOpen)toggleTal(false);else if(shopOpen)closeShop();else if(dialogOpen)closeDialog();else togglePause();return}
+  if(e.code==='Escape'){if(Friends.open){toggleFriends(false);return}if(mapOpen)toggleMap(false);else if(lootOpen)closeLoot();else if(profOpen)toggleProf(false);else if(invOpen)toggleInv(false);else if(talOpen)toggleTal(false);else if(shopOpen)closeShop();else if(dialogOpen)closeDialog();else togglePause();return}
   if(e.code==='KeyI'||e.code==='KeyC'){if(!pauseOpen&&!dialogOpen)toggleInv();return}
   if(e.code==='KeyT'){if(!pauseOpen&&!dialogOpen)toggleTal();return}
   if(e.code==='KeyP'){if(!pauseOpen&&!dialogOpen)toggleProf();return}
   if(e.code==='KeyN'){if(!pauseOpen&&!dialogOpen)toggleMap();return}
+  if(e.code==='KeyO'){if(!pauseOpen&&!dialogOpen)toggleFriends();return}
   if(e.code==='KeyE'&&shopOpen){closeShop();return}
   if(isPaused()||!p)return;
   const m=/^Digit([1-5])$/.exec(e.code);if(m)p.input.abil[+m[1]]=true;if(e.code==='KeyR')p.input.abil[5]=true;
@@ -1175,7 +1191,7 @@ cvs.addEventListener('mousedown',e=>{if(state!=='play'||isPaused())return;if(e.b
 addEventListener('mouseup',e=>{if(e.button===0)mouse.l=false});
 cvs.addEventListener('contextmenu',e=>e.preventDefault());
 let storyOpen=false;
-function isPaused(){return invOpen||dialogOpen||pauseOpen||talOpen||shopOpen||storyOpen||profOpen||mapOpen}
+function isPaused(){return Friends.open||invOpen||dialogOpen||pauseOpen||talOpen||shopOpen||storyOpen||profOpen||mapOpen}
 function showStory(id,on){storyOpen=on;$(id).classList.toggle('hidden',!on);mouse.l=false}
 function fmtTime(s){const m=Math.floor(s/60);return m>=60?Math.floor(m/60)+' h '+(m%60)+' min':m+' min'}
 function showVictory(){const p=players[0];sfx('victory');$('vicText').innerHTML=`The Barrow King is no more, and the Lamp of Emberfall shines over the whole valley.<br><br>${p.name} the ${CLASSES[p.cls].name} · level ${p.level}<br>${p.kills||0} foes defeated · fallen ${p.deaths||0} times · ${fmtTime(p.playT||0)} played<br><br>The world stays open: keep hunting for epic gear and growing stronger.`;showStory('victory',true)}
@@ -2478,7 +2494,7 @@ const Account={mode:null,user:null,sb:null,cache:[],dirty:null,lastPush:0,
   async signUp(email,pw){const sb=await this.client(),{data,error}=await sb.auth.signUp({email,password:pw});if(error)throw error;
     if(data.session){this.mode='online';this.user=data.user;store(MODE_KEY,'online');return'in'}return'confirm'},
   async resetPassword(email){const sb=await this.client(),{error}=await sb.auth.resetPasswordForEmail(email);if(error)throw error},
-  async signOut(){if(this.mode==='online'){await this.flush();try{await (await this.client()).auth.signOut()}catch(e){}}this.mode=null;this.user=null;this.cache=[];store(MODE_KEY,null)},
+  async signOut(){if(this.mode==='online'){await this.flush();try{await (await this.client()).auth.signOut()}catch(e){}}this.mode=null;this.user=null;this.cache=[];Friends.me=null;Friends.list=[];updateFriendBadge();store(MODE_KEY,null)},
   label(){return this.mode==='online'?(this.user&&this.user.email||'Signed in'):'Offline · heroes are saved on this computer'},
   // ---- heroes: list, save, delete (same shape both ways: {id,t,data})
   async list(){if(this.mode!=='online'){this.cache=allSaves().heroes.sort((a,b)=>b.t-a.t);return this.cache}
@@ -2514,6 +2530,69 @@ $('btnOffline').onclick=()=>{Account.playOffline();openSelect()};
 $('btnForgot').onclick=async()=>{const email=$('loginEmail').value.trim();if(!email){loginBusy(false,{t:'Type your email first.',err:1});return}
   try{await Account.resetPassword(email);loginBusy(false,{t:'If that account exists, a reset link is on its way to your email.'})}catch(e){loginBusy(false,{t:e.message,err:1})}};
 async function startScreens(){if(await Account.resume())openSelect();else showLogin()}
+// ================= Friends =================
+// Online players have an account name (never their email). Add friends by name, accept requests, and see who is
+// online and what they are playing. Database rules (supabase-friends.sql) show you only yourself and your friends.
+const Friends={me:null,list:[],seen:new Set(),open:false,lastPoll:0,
+  async sb(){return Account.client()},
+  async loadMe(){if(Account.mode!=='online')return null;const sb=await this.sb(),{data,error}=await sb.from('profiles').select('id,name').eq('id',Account.user.id).maybeSingle();if(error)throw error;this.me=data;return data},
+  async claimName(name){const sb=await this.sb(),{data,error}=await sb.from('profiles').insert({name}).select('id,name').single();
+    if(error)throw new Error(error.code==='23505'?'That name is taken. Try another.':error.message.includes('check')?'Use 3–16 letters, numbers or _.':error.message);this.me=data;return data},
+  async refresh(){if(Account.mode!=='online'||!this.me)return[];const sb=await this.sb(),uid=Account.user.id;
+    const{data:fs,error}=await sb.from('friendships').select('id,requester,addressee,status,created_at');if(error)throw error;
+    const ids=[...new Set(fs.map(f=>f.requester===uid?f.addressee:f.requester))];let profs=[];
+    if(ids.length){const r=await sb.from('profiles').select('id,name,last_seen,status').in('id',ids);if(r.error)throw r.error;profs=r.data}
+    const pm=Object.fromEntries(profs.map(p=>[p.id,p]));
+    this.list=fs.map(f=>{const other=f.requester===uid?f.addressee:f.requester,p=pm[other]||{name:'(unknown)',status:{}};
+      return{fid:f.id,id:other,name:p.name,status:f.status,incoming:f.status==='pending'&&f.addressee===uid,outgoing:f.status==='pending'&&f.requester===uid,
+        online:p.last_seen&&Date.now()-Date.parse(p.last_seen)<150000,lastSeen:p.last_seen,play:p.status||{}}});
+    for(const f of this.list)if(f.incoming&&!this.seen.has(f.fid)){this.seen.add(f.fid);toast(`${f.name} wants to be your friend. Press O to answer.`,'gold');sfx('quest')}
+    updateFriendBadge();return this.list},
+  async add(name){const sb=await this.sb(),{data,error}=await sb.rpc('find_player',{p_name:name});if(error)throw error;const p=data&&data[0];
+    if(!p)throw new Error('No player with that name.');if(p.id===Account.user.id)throw new Error('That is you!');
+    if(this.list.some(f=>f.id===p.id))throw new Error(`${p.name} is already on your list.`);
+    const r=await sb.from('friendships').insert({addressee:p.id});if(r.error)throw new Error(r.error.code==='23505'?`You and ${p.name} already have a request.`:r.error.message);return p.name},
+  async accept(fid){const sb=await this.sb(),{error}=await sb.from('friendships').update({status:'accepted'}).eq('id',fid);if(error)throw error},
+  async remove(fid){const sb=await this.sb(),{error}=await sb.from('friendships').delete().eq('id',fid);if(error)throw error},
+  // Tells friends you are online and what you are doing (every minute while signed in).
+  async heartbeat(){if(Account.mode!=='online'||!this.me)return;const p=players[0];
+    const status=state==='play'&&p?{hero:p.name,level:p.level,cls:p.cls,where:zone.id==='over'?locName(p.x/TILE,p.y/TILE):zone.name}:{menu:true};
+    try{const sb=await this.sb();await sb.from('profiles').update({last_seen:new Date().toISOString(),status}).eq('id',Account.user.id)}catch(e){}}};
+setInterval(()=>{if(Account.mode==='online'&&Friends.me){Friends.heartbeat();Friends.refresh().then(()=>{if(Friends.open)renderFriends()}).catch(()=>{})}},45000);
+
+// ---- Choosing an account name (once, after the first sign-in)
+async function ensureProfile(){if(Account.mode!=='online')return true;try{if(await Friends.loadMe()){Friends.heartbeat();Friends.refresh().catch(()=>{});return true}}catch(e){toast('Could not load your profile: '+e.message,'danger');return true}
+  return new Promise(done=>{const box=$('namePick');box.classList.remove('hidden');const inp=$('npName'),msg=$('npMsg');inp.value='';msg.textContent='';inp.focus();
+    const go=async()=>{const n=inp.value.trim();if(!/^[A-Za-z0-9_]{3,16}$/.test(n)){msg.textContent='Use 3–16 letters, numbers or _ (no spaces).';return}
+      $('npOk').disabled=true;try{await Friends.claimName(n);box.classList.add('hidden');toast(`Welcome, ${n}! Friends can now find you by that name.`,'gold');Friends.heartbeat();done(true)}catch(e){msg.textContent=e.message}$('npOk').disabled=false};
+    $('npOk').onclick=go;inp.onkeydown=e=>{if(e.key==='Enter')go()}})}
+
+// ---- The friends panel (O, or the Friends button on the hero screen)
+function toggleFriends(v){Friends.open=v===undefined?!Friends.open:v;$('friends').classList.toggle('hidden',!Friends.open);mouse.l=false;hideTip();
+  if(Friends.open){renderFriends();Friends.refresh().then(renderFriends).catch(e=>{$('frMsg').textContent=e.message})}}
+function updateFriendBadge(){const n=Friends.list.filter(f=>f.incoming).length;for(const id of['frBadge','frBadge2']){const b=$(id);if(b){b.textContent=n;b.classList.toggle('hidden',!n)}}}
+function friendLine(f){if(f.status!=='accepted')return f.incoming?'Wants to be your friend':'Request sent';if(!f.online)return'Offline'+(f.lastSeen?' · seen '+agoText(f.lastSeen):'');
+  const s=f.play;return s.hero?`Playing ${escapeHtml(s.hero)} · level ${s.level} ${CLASSES[s.cls]?CLASSES[s.cls].name:''}${s.where?' · '+escapeHtml(s.where):''}`:'Online · choosing a hero'}
+function agoText(t){const m=Math.round((Date.now()-Date.parse(t))/60000);return m<60?m+' min ago':m<1440?Math.round(m/60)+' h ago':Math.round(m/1440)+' days ago'}
+function renderFriends(){const el=$('frList');if(!el)return;
+  if(Account.mode!=='online'){$('frMe').textContent='';$('frAdd').classList.add('hidden');el.innerHTML='<div class="muted" style="padding:14px;text-align:center">Sign in with an online account to add friends and play together.</div>';return}
+  $('frAdd').classList.remove('hidden');$('frMe').innerHTML=Friends.me?`Your name: <b>${escapeHtml(Friends.me.name)}</b> · friends add you by this name`:'';el.innerHTML='';
+  const L=Friends.list,groups=[['Requests for you',L.filter(f=>f.incoming)],['Friends',L.filter(f=>f.status==='accepted').sort((a,b)=>(b.online-a.online)||a.name.localeCompare(b.name))],['Waiting for answer',L.filter(f=>f.outgoing)]];
+  if(!L.length)el.innerHTML='<div class="muted" style="padding:14px;text-align:center">No friends yet. Add someone by their account name above.</div>';
+  for(const[title,arr]of groups){if(!arr.length)continue;el.insertAdjacentHTML('beforeend',`<div class="frgroup">${title}</div>`);
+    for(const f of arr){const row=document.createElement('div');row.className='frrow';
+      row.innerHTML=`<span class="dot ${f.online&&f.status==='accepted'?'on':''}"></span><div class="frtx"><b>${escapeHtml(f.name)}</b><small>${friendLine(f)}</small></div>`;
+      const btn=(t,fn,cls)=>{const b=document.createElement('button');b.textContent=t;if(cls)b.className=cls;b.onclick=async()=>{b.disabled=true;try{await fn()}catch(e){$('frMsg').textContent=e.message}await Friends.refresh().catch(()=>{});renderFriends()};row.appendChild(b)};
+      if(f.incoming){btn('Accept',()=>Friends.accept(f.fid).then(()=>toast(`You and ${f.name} are now friends.`,'gold')));btn('Decline',()=>Friends.remove(f.fid),'ghost')}
+      else if(f.outgoing)btn('Cancel',()=>Friends.remove(f.fid),'ghost');
+      else{const j=document.createElement('button');j.textContent='Join';j.disabled=true;j.title='Playing together comes in the next update.';row.appendChild(j);
+        btn('✕',async()=>{if(confirm(`Remove ${f.name} from your friends?`))await Friends.remove(f.fid)},'ghost')}
+      el.appendChild(row)}}}
+$('frAddBtn').onclick=async()=>{const n=$('frName').value.trim();$('frMsg').textContent='';if(!n)return;$('frAddBtn').disabled=true;
+  try{const name=await Friends.add(n);$('frName').value='';$('frMsg').textContent=`Request sent to ${name}.`;await Friends.refresh();renderFriends()}catch(e){$('frMsg').textContent=e.message}$('frAddBtn').disabled=false};
+$('frName').addEventListener('keydown',e=>{if(e.key==='Enter')$('frAddBtn').click();e.stopPropagation()});
+addEventListener('keydown',e=>{if(state!=='title'||e.target.tagName==='INPUT')return;if(e.code==='KeyO')toggleFriends();if(e.code==='Escape'&&Friends.open)toggleFriends(false)});
+$('frClose').onclick=()=>toggleFriends(false);$('btnFriends').onclick=()=>toggleFriends(true);
 // ================= Character select =================
 // A night camp under the stars: your heroes gather around a fire, the chosen one steps into the light.
 // The list on the right shows each hero's name, level, class and where they last stood.
@@ -2524,7 +2603,7 @@ function homeCityName(p){const c=CITIES.find(c=>c.id===(p.home||'emberfall'));re
 function locName(tx,ty){for(const c of CITIES)if(Math.hypot(tx-c.x,ty-c.y)<c.r+2)return c.name;const b=biomeOf(Math.floor(tx),Math.floor(ty));
   if(Math.hypot(tx-BARROW.x,ty-BARROW.y)<12)return'The Barrow-downs';return isDeep(tx,ty,b)?'Deep Wilds · '+BIOME_NAME[b].replace(/^The /,''):BIOME_NAME[b]}
 function selHero(i){const h=SEL.heroes[i];if(!h)return null;const d=h.data.p;return{cls:d.cls,look:d.look,gear:Object.assign({weapon:starterWeapon(d.cls),offhand:starterOffhand(d.cls)},d.gear||{}),bagSize:d.bagSize||20,level:d.level||1,spec:d.spec}}
-async function openSelect(){state='title';show('title');$('acctLabel').textContent=Account.mode==='offline'&&!storageOK()?'Saving is blocked in this window. Open the game with Play Emberfall.':Account.label();$('btnAcct').textContent=Account.mode==='online'?'Sign out':'Sign in';
+async function openSelect(){state='title';show('title');if(Account.mode==='online')await ensureProfile();$('acctLabel').textContent=Account.mode==='offline'&&!storageOK()?'Saving is blocked in this window. Open the game with Play Emberfall.':Account.label();$('btnAcct').textContent=Account.mode==='online'?'Sign out':'Sign in';
   $('heroList').innerHTML='<div class="muted" style="padding:20px;text-align:center">Gathering your heroes…</div>';
   try{SEL.heroes=await Account.list()}catch(e){SEL.heroes=[];toast('Could not load heroes: '+e.message,'danger')}
   const last=fetchStore(LAST_KEY);SEL.idx=Math.max(0,SEL.heroes.findIndex(h=>h.id===last));renderSelect()}

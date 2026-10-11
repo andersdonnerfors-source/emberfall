@@ -39,6 +39,16 @@ h2{margin:0 0 10px;color:var(--gold);font-weight:normal;letter-spacing:.05em}
 #loginForm.off{opacity:.35;pointer-events:none}#loginNote{margin-top:10px;line-height:1.45}
 #loginMsg{margin-top:10px;font-size:14px;color:#cfe8b8;min-height:1em}#loginMsg.err{color:#ff9a8a}
 .or{display:flex;align-items:center;gap:10px;margin:16px 0 12px;color:var(--muted);font-size:13px}.or:before,.or:after{content:'';flex:1;border-top:1px solid var(--line)}
+#friends{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:26;width:min(480px,94vw);max-height:84vh;overflow:auto;padding:16px 20px}
+.frAdd{display:flex;gap:8px}.frAdd input{flex:1;padding:9px 10px;background:#15110d;color:var(--text);border:1px solid var(--line);border-radius:6px;font-family:inherit;font-size:15px}.frAdd .btn{min-width:0;margin:0;padding:8px 14px;font-size:15px}
+#frMsg{min-height:1.2em;margin:8px 0 2px;font-size:13px;color:#cfe8b8}#frMe b{color:var(--gold);font-weight:normal}
+.frgroup{margin:12px 0 6px;color:var(--gold);font-size:14px;border-bottom:1px solid rgba(107,85,50,.5);padding-bottom:3px}
+.frrow{display:flex;align-items:center;gap:10px;padding:7px 4px}.frtx{flex:1;display:flex;flex-direction:column;min-width:0}.frtx b{font-weight:normal;font-size:16px}.frtx small{color:var(--muted);font-size:12px}
+.frrow button{background:linear-gradient(#5a4122,#3a2a16);color:var(--text);border:1px solid var(--line);border-radius:6px;cursor:pointer;font-family:inherit;padding:4px 10px}.frrow button.ghost{background:none}.frrow button:disabled{opacity:.4;cursor:default}
+.dot{width:10px;height:10px;border-radius:50%;background:#555;flex:none}.dot.on{background:#6fe06a;box-shadow:0 0 8px #6fe06a}
+.badge{display:inline-block;min-width:16px;padding:0 5px;border-radius:9px;background:#c84a3a;color:#fff;font:bold 11px/16px system-ui,sans-serif;text-align:center;margin-left:4px}
+#namePick{position:fixed;inset:0;z-index:41;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center}
+#npName{width:100%;box-sizing:border-box;padding:10px;background:#15110d;color:var(--text);border:1px solid var(--line);border-radius:6px;font-family:inherit;font-size:16px}
 #confirm{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center}
 .cfbox{width:min(420px,92vw);padding:20px 22px}.cfbox p{line-height:1.5}.cfbox .row{display:flex;gap:8px;margin-top:14px;justify-content:flex-end}.cfbox .btn{min-width:0}
 @media (max-width:700px){#selPanel{top:auto;bottom:90px;transform:none;width:auto;left:12px;max-height:40vh}#selBottom{left:50%}.logo{font-size:34px}}
@@ -169,13 +179,13 @@ h2{margin:0 0 10px;color:var(--gold);font-weight:normal;letter-spacing:.05em}
     <div class="bar hp"><i id="hpF"></i><span id="hpT"></span></div>
     <div class="bar mp"><i id="mpF"></i><span id="mpT"></span></div>
     <div class="bar xp"><i id="xpF"></i></div>
-    <div class="gold"><span>🪙 <span id="hGold">0</span></span><span id="pts" class="hidden"></span></div>
+    <div class="gold"><span>🪙 <span id="hGold">0</span></span><span id="pts" class="hidden"></span><span class="badge hidden" id="frBadge2" title="Friend requests (O)"></span></div>
     <div id="buffs"></div>
   </div>
   <div id="right"><canvas id="mini" width="200" height="200" class="panel"></canvas><div id="quest" class="panel"></div></div>
   <div id="bossbar" class="hidden"><div id="bossName"></div><div class="bar boss"><i id="bossF"></i></div></div>
   <div id="abar"></div>
-  <div id="hint">WASD / arrows: move · Mouse: aim · Left click: attack · Right click / 1–4: abilities · Q: heal potion · Z: mana potion · X: eat · E: talk, trade, enter · F: mount · H: teleport home · N: world map · I: character · T: talents · P: professions · Esc: pause</div>
+  <div id="hint">WASD / arrows: move · Mouse: aim · Left click: attack · Right click / 1–4: abilities · Q: heal potion · Z: mana potion · X: eat · E: talk, trade, enter · F: mount · H: teleport home · N: world map · O: friends · I: character · T: talents · P: professions · Esc: pause</div>
 </div>
 <div id="toasts"></div>
 
@@ -204,9 +214,14 @@ h2{margin:0 0 10px;color:var(--gold);font-weight:normal;letter-spacing:.05em}
     <button class="btn primary" id="btnNew" style="width:100%;margin:10px 0 0">Create new hero</button>
   </div>
   <div id="selBottom"><button class="btn" id="btnDel">Delete</button><button class="btn primary big" id="btnPlay">Play</button></div>
-  <div id="selMenu"><span id="acctLabel"></span><button class="linkbtn" id="btnAcct">Sign out</button><button class="linkbtn" id="btnHow">How to play</button><button class="linkbtn" id="btnSet">Settings</button></div>
+  <div id="selMenu"><span id="acctLabel"></span><button class="linkbtn" id="btnFriends">Friends <span class="badge hidden" id="frBadge"></span></button><button class="linkbtn" id="btnAcct">Sign out</button><button class="linkbtn" id="btnHow">How to play</button><button class="linkbtn" id="btnSet">Settings</button></div>
 </div>
 
+<div id="friends" class="panel hidden"><div class="invhead"><h2>Friends</h2><span class="muted" id="frMe"></span><button class="x" id="frClose">✕</button></div>
+  <div id="frAdd" class="frAdd"><input id="frName" placeholder="Friend's account name" maxlength="16" autocomplete="off" spellcheck="false"><button class="btn" id="frAddBtn">Add friend</button></div>
+  <div id="frMsg"></div><div id="frList"></div></div>
+<div id="namePick" class="hidden"><div class="panel cfbox"><h2>Choose your account name</h2><p>Friends find you by this name. It is shown instead of your email. Use 3–16 letters, numbers or _.</p>
+  <input id="npName" maxlength="16" autocomplete="off" spellcheck="false"><div id="npMsg" style="color:#ff9a8a;margin-top:8px;min-height:1em"></div><div class="row"><button class="btn primary" id="npOk">Save name</button></div></div></div>
 <div id="confirm" class="hidden"><div class="panel cfbox"><h2 id="cfTitle"></h2><p id="cfText"></p><input id="cfInput" autocomplete="off" spellcheck="false">
   <div class="row"><button class="btn" id="cfNo">Keep</button><button class="btn danger" id="cfOk">Delete forever</button></div></div></div>
 
