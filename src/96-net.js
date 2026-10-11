@@ -121,7 +121,7 @@ function hostZoneChanged(id,x,y){if(Net.role==='host')netAll({t:'zone',id,x,y})}
 function netFollowZone(id,x,y){if(zone.id!==id)enterZone(id,x,y);const p=players[0];if(p){p.x=x+rand(-30,30);p.y=y+rand(10,40)}enemies=[];allies=[];projs=[];areas=[]}
 function guestKillCredit(type){if(quest.state!=='active')return;const q=QUESTS[quest.idx];if(q&&q.target.includes(type)){quest.prog++;if(quest.prog>=q.need){quest.state='ready';toast('Quest complete! Return to the Warden.','gold')}updateQuestUI()}}
 function guestGot(d){Loot.pending.delete(d.id);const p=players[0];if(!p)return;if(d.kind==='gold'){p.gold+=d.amount;sfx('gold')}else if(d.kind==='sup')addSup(p,d.sup,d.amount||1);else if(d.kind==='mat')p.mats[d.mat]=(p.mats[d.mat]||0)+d.amount;
-  else if(d.item){if(p.bag.length<p.bagSize)p.bag.push(d.item);sfx('loot',{rar:d.item.rar})}if(invOpen)renderInv()}
+  else if(d.item){if(p.bag.length<p.bagSize){p.bag.push(d.item);sfx('loot',{rar:d.item.rar})}else toast(`Your bag is full: ${d.item.name} was lost`,'danger')}if(invOpen)renderInv()}
 // Guests save their own world position, not where they stand in a friend's world.
 function netSaveFix(d){if(Net.role==='guest'&&Net.own){d.p.x=Net.own.x;d.p.y=Net.own.y;d.p.loc=Net.own.loc;d.p.explored=Net.own.explored}return d}
 
@@ -164,7 +164,7 @@ function applySnap(m){Net.hostQ=m.q;if(m.wc!=null)worldClock=m.wc;const same=zon
     else if(v.k==='d'){bloodAt(v.x,v.y,true,v.ty);burst(v.x,v.y,v.b?'#cfe':'#a33',v.b?70:16,v.b?220:140);sfx(v.b?'bossdie':'die');if(v.b){shake=14;toast(v.n+' has fallen!','gold')}}
     else if(v.k==='t')toast(v.s,v.c||'')}
   // corpses (loot is taken through the host so nobody gets the same item twice)
-  if(m.cs){const z=zone;z.corpses=m.cs.map(c=>({id:c.id,x:c.x,y:c.y,unit:c.u,until:time+c.l,boss:c.u.boss,loot:c.lo}));{const live=new Set();for(const c of z.corpses)for(const d of c.loot)live.add(d.id);for(const id of Loot.pending)if(!live.has(id))Loot.pending.delete(id)}if(lootOpen)lootChanged()}}
+  if(m.cs){const z=zone;z.corpses=m.cs.map(c=>({id:c.id,x:c.x,y:c.y,unit:c.u,until:time+c.l,boss:c.u.boss,loot:c.lo}));{const live=new Set();for(const c of z.corpses)for(const d of c.loot)live.add(d.id);for(const id of[...Loot.pending.keys()])if(!live.has(id))Loot.pending.delete(id)}if(lootOpen)lootChanged()}}
 function guestLerp(dt){const k=Math.min(1,dt*12);for(const list of[enemies,allies,Net.avatars.values()])for(const u of list){if(u.tx==null)continue;if(Math.hypot(u.tx-u.x,u.ty-u.y)>300){u.x=u.tx;u.y=u.ty}else{u.x+=(u.tx-u.x)*k;u.y+=(u.ty-u.y)*k}}}
 
 // ---- Party frames: everyone in the world, their health, and teleport (also used when you die)

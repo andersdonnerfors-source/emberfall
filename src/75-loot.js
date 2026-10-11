@@ -17,7 +17,7 @@ function closeLoot(){lootOpen=null;$('loot').classList.add('hidden');hideTip()}
 function lootLabel(d){return d.kind==='gold'?`${d.amount} gold`:d.kind==='sup'?supName(d.sup):d.kind==='mat'?`${d.amount} ${MATS[d.mat].n}`:d.item.name}
 function lootIcon(d){return d.kind==='gold'?'🪙':d.kind==='sup'?supHtml(d.sup):d.kind==='mat'?MATS[d.mat].icon:itemIcon(d.item)}
 function takeLoot(c,d,quiet){const p=players[0];if(!c)return false;
-  if(Net.role==='guest'){if(d.item&&p.bag.length>=p.bagSize){if(!quiet)toast('Your bag is full');return false}Loot.pending.add(d.id);netSend([...Net.peers.values()][0],{t:'take',cid:c.id,did:d.id});c.loot.splice(c.loot.indexOf(d),1);return true}
+  if(Net.role==='guest'){if(d.item&&bagFree(p)<=0){if(!quiet)toast('Your bag is full');return false}Loot.pending.set(d.id,!!d.item);netSend([...Net.peers.values()][0],{t:'take',cid:c.id,did:d.id});c.loot.splice(c.loot.indexOf(d),1);return true}
   Net.corpVer++;
   if(d.kind==='gold'){p.gold+=d.amount;if(!quiet)sfx('gold')}else if(d.kind==='sup')addSup(p,d.sup,d.amount||1);else if(d.kind==='mat')p.mats[d.mat]=(p.mats[d.mat]||0)+d.amount;
   else{if(p.bag.length>=p.bagSize){toast('Your bag is full');return false}p.bag.push(d.item);if(!quiet)sfx('loot',{rar:d.item.rar})}
@@ -77,14 +77,18 @@ function deleteHero(id){const s=allSaves();s.heroes=s.heroes.filter(h=>h.id!==id
 function saveAndQuit(){if(Net.role==='guest'){pauseOpen=false;$('pause').classList.add('hidden');leaveParty();return}if(Net.role==='host')leaveParty();save();toast('Game saved');pauseOpen=false;closeLoot();state='title';players=[];$('hud').classList.add('hidden');for(const id of['inv','tal','shop','dialog','prof','pause'])$(id).classList.add('hidden');invOpen=talOpen=shopOpen=dialogOpen=profOpen=false;useZone(zones.over);enemies=[];Account.flush();openSelect()}
 $('lootClose').onclick=closeLoot;$('lootAll').onclick=takeAll;
 // ---- Auto loot (personal setting, also in co-op): walk near corpses to pick up coins, potions, materials and items of a chosen rarity
-const Settings=loadSettings(),Loot={pending:new Set(),t:0,fullAt:-99};
+// Loot.pending: drop id → is it an item; a guest's takes the host hasn't answered yet (their items already reserve bag space).
+const Settings=loadSettings(),Loot={pending:new Map(),t:0,fullAt:-99};
+function lootReset(){Loot.pending.clear();Loot.t=0}
+function bagFree(p){let n=0;if(Net.role==='guest')for(const it of Loot.pending.values())if(it)n++;return p.bagSize-p.bag.length-n}
 function loadSettings(){return Object.assign({autoLoot:false,lootMinRar:1},fetchStore('emberfall-settings')||{})}
 function saveSettings(){store('emberfall-settings',Settings)}
 function autoLootPick(loot,minRar,bagFree,pending){const take=[];let blocked=false;
   for(const d of loot){if(pending.has(d.id))continue;if(!d.item){take.push(d);continue}if(d.item.rar<minRar)continue;if(bagFree>0){take.push(d);bagFree--}else blocked=true}return{take,blocked}}
+function autoLootPlan(cs,minRar,free,pending){const take=[];let blocked=false;for(const c of cs){const r=autoLootPick(c.loot,minRar,free,pending);if(r.blocked)blocked=true;for(const d of r.take){take.push([c,d]);if(d.item)free--}}return{take,blocked}}
 function autoLootTick(dt){const p=players[0];if(!Settings.autoLoot||!p||p.dead||p.fly||!zone||zone.kind==='interior'||isPaused())return;if((Loot.t-=dt)>0)return;Loot.t=.25;
   const got=[];let blocked=false;
-  for(const c of corpsesOf(zone)){if(!lootable(c)||!inReach(p,c))continue;const r=autoLootPick(c.loot,Settings.lootMinRar,p.bagSize-p.bag.length,Loot.pending);if(r.blocked)blocked=true;
-    for(const d of r.take){const label=lootLabel(d);if(takeLoot(c,d,true))got.push(label)}}
+  const plan=autoLootPlan(corpsesOf(zone).filter(c=>lootable(c)&&inReach(p,c)),Settings.lootMinRar,bagFree(p),Loot.pending);blocked=plan.blocked;
+  for(const[c,d]of plan.take){const label=lootLabel(d);if(takeLoot(c,d,true))got.push(label)}
   if(got.length){sfx('gold');toast("+"+got.slice(0,4).join(", ")+(got.length>4?` +${got.length-4} more`:""));lootChanged();if(invOpen)renderInv();save()}
   if(blocked&&time-Loot.fullAt>10){Loot.fullAt=time;toast('Your bag is full')}}
