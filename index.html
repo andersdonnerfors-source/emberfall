@@ -49,6 +49,13 @@ h2{margin:0 0 10px;color:var(--gold);font-weight:normal;letter-spacing:.05em}
 .badge{display:inline-block;min-width:16px;padding:0 5px;border-radius:9px;background:#c84a3a;color:#fff;font:bold 11px/16px system-ui,sans-serif;text-align:center;margin-left:4px}
 #namePick{position:fixed;inset:0;z-index:41;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center}
 #npName{width:100%;box-sizing:border-box;padding:10px;background:#15110d;color:var(--text);border:1px solid var(--line);border-radius:6px;font-family:inherit;font-size:16px}
+#netAsks{position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:45;display:flex;flex-direction:column;gap:8px;align-items:center}
+.netask{padding:12px 16px;text-align:center;min-width:280px;max-width:90vw}.netask .row{display:flex;gap:8px;justify-content:center;margin-top:10px}.netask .btn{min-width:0;margin:0;padding:7px 18px;font-size:15px}
+#party{position:absolute;left:14px;top:150px;width:210px;display:flex;flex-direction:column;gap:6px;pointer-events:auto}
+.pm{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:5px 8px}.pm.dead{opacity:.5}
+.pmn{display:flex;align-items:center;gap:6px;font-size:13px}.pmn span{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pmn small{color:var(--muted);font-size:11px}
+.pmn button{background:none;border:1px solid var(--line);color:var(--text);border-radius:5px;cursor:pointer;font-size:12px;padding:0 6px}.pmn button:hover{border-color:var(--gold)}
+.pm .bar{height:6px;margin-top:4px}
 #confirm{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center}
 .cfbox{width:min(420px,92vw);padding:20px 22px}.cfbox p{line-height:1.5}.cfbox .row{display:flex;gap:8px;margin-top:14px;justify-content:flex-end}.cfbox .btn{min-width:0}
 @media (max-width:700px){#selPanel{top:auto;bottom:90px;transform:none;width:auto;left:12px;max-height:40vh}#selBottom{left:50%}.logo{font-size:34px}}
@@ -182,12 +189,14 @@ h2{margin:0 0 10px;color:var(--gold);font-weight:normal;letter-spacing:.05em}
     <div class="gold"><span>🪙 <span id="hGold">0</span></span><span id="pts" class="hidden"></span><span class="badge hidden" id="frBadge2" title="Friend requests (O)"></span></div>
     <div id="buffs"></div>
   </div>
+  <div id="party" class="hidden"></div>
   <div id="right"><canvas id="mini" width="200" height="200" class="panel"></canvas><div id="quest" class="panel"></div></div>
   <div id="bossbar" class="hidden"><div id="bossName"></div><div class="bar boss"><i id="bossF"></i></div></div>
   <div id="abar"></div>
   <div id="hint">WASD / arrows: move · Mouse: aim · Left click: attack · Right click / 1–4: abilities · Q: heal potion · Z: mana potion · X: eat · E: talk, trade, enter · F: mount · H: teleport home · N: world map · O: friends · I: character · T: talents · P: professions · Esc: pause</div>
 </div>
 <div id="toasts"></div>
+<div id="netAsks"></div>
 
 <div id="login" class="screen hidden">
   <div class="logo">EMBERFALL<small>A tale of the Westmark</small></div>
@@ -267,7 +276,7 @@ h2{margin:0 0 10px;color:var(--gold);font-weight:normal;letter-spacing:.05em}
   <p>You arrive in Emberfall at dusk, a stranger with a weapon and nothing to lose. Old Warden Bram is waiting by the fire.</p>
   <div class="row"><button class="btn primary" id="btnIntro">Begin</button></div></div></div>
 <div id="victory" class="screen hidden"><h1 style="color:var(--gold);font-size:56px;margin:0;font-weight:normal;letter-spacing:.06em">Victory</h1><div class="sub" id="vicText" style="max-width:560px;line-height:1.6"></div><button class="btn primary" id="btnVic">Keep exploring</button></div>
-<div id="death" class="screen hidden"><h1>You have fallen</h1><div class="sub">Returning to Emberfall…</div></div>
+<div id="death" class="screen hidden"><h1>You have fallen</h1><div class="sub">Returning to Emberfall…</div><div id="deathBtns" class="row" style="flex-wrap:wrap;justify-content:center"></div></div>
 <div id="pause" class="screen hidden"><h1>Paused</h1><button class="btn primary" id="btnResume">Resume</button><button class="btn" id="btnSaveG">Save game</button><button class="btn" id="btnSet2">Settings</button><button class="btn" id="btnQuit">Save &amp; quit to menu</button><button class="btn" id="btnNew2">New hero</button></div>
 <div id="settings" class="screen hidden"><div class="panel" style="width:min(440px,100%);padding:20px 24px">
   <h2>Settings</h2>
@@ -931,7 +940,7 @@ function musicTick(dt){if(!Snd.ctx||Snd.ctx.state!=='running')return;const p=pla
   if(musStep%8===0)tone({f:M.root*Math.pow(2,M.scale[2]/12)/2,type:'sine',dur:M.tempo*7,vol:.035,attack:.8,dest:Snd.musG})}
 
 // ================= Helpers =================
-function friendlies(){const r=[];for(const p of players)if(!p.dead)r.push(p);for(const a of allies)if(!a.dead)r.push(a);return r}
+function friendlies(){const r=[];for(const p of players)if(!p.dead&&!p.away)r.push(p);for(const a of allies)if(!a.dead)r.push(a);return r}
 function inRadius(list,x,y,r){return list.filter(e=>!e.dead&&Math.hypot(e.x-x,e.y-y)<=r+e.r)}
 function wrapA(a){while(a>Math.PI)a-=TAU;while(a<-Math.PI)a+=TAU;return a}
 function mkArea(o){return Object.assign({t:0,delay:0,dur:0,tick:0,nt:0,tickDmg:0},o,{delay0:o.delay||0})}
@@ -940,10 +949,10 @@ function burst(x,y,col,n,spd){for(let i=0;i<n;i++){const a=rand(0,TAU),s=rand(.2
 function floatText(x,y,txt,col,size){texts.push({x:x+rand(-8,8),y,z:44,txt,col,size:size||15,life:1})}
 function toast(msg,cls){const d=document.createElement('div');d.className='toast '+(cls||'');d.textContent=msg;const tc=$('toasts');tc.appendChild(d);while(tc.children.length>4)tc.firstChild.remove();setTimeout(()=>d.remove(),3500)}
 function swing(u,a,col,r){fx.push({k:'swing',x:u.x,y:u.y,a,life:.18,max:.18,col,r:r||60})}
-function heal(t,amt,silent){const b=t.hp;t.hp=Math.min(t.maxHp,t.hp+amt);const g=Math.round(t.hp-b);if(g>=1&&!silent)floatText(t.x,t.y,'+'+g,'#7dff7a',14)}
+function heal(t,amt,silent){if(t.isRemote){if(!t.away&&!t.dead)netSend(Net.peers.get(t.uid),{t:'heal',a:Math.round(amt)});return}const b=t.hp;t.hp=Math.min(t.maxHp,t.hp+amt);const g=Math.round(t.hp-b);if(g>=1&&!silent)floatText(t.x,t.y,'+'+g,'#7dff7a',14)}
 function melee(p,a,range,arc,dmg,o){for(const e of enemies){if(e.dead)continue;const d=dist(p,e);if(d>range+e.r)continue;if(Math.abs(wrapA(Math.atan2(e.y-p.y,e.x-p.x)-a))>arc/2&&d>e.r+p.r)continue;dealDamage(e,dmg,p,o);if(o.knock&&!e.boss)moveEnt(e,Math.cos(a)*o.knock,Math.sin(a)*o.knock)}}
 function explosion(x,y,r,dmg,src,side){sfx('boom');const list=side==='player'?enemies:friendlies();for(const t of inRadius(list,x,y,r))dealDamage(t,dmg,src,{});burst(x,y,'#ffae4a',24,260);boomFx(x,y,r,'#ff9a3a');shake=Math.max(shake,7)}
-function summon(p,kind,x,y,dur,temp){const w=kind==='wolf';sfx('summon');const a={side:'player',isAlly:true,kind,owner:p,temp:!!temp,x,y,r:w?14:13,maxHp:Math.round(p.maxHp*(w?.6:.4)*(p.petMult||1)),dmg:p.stats.dmg*(w?.75:.55)*(p.petMult||1),speed:w?205:150,range:26,atkCd:w?.8:1,cd:0,until:time+dur,walk:0,aim:0,h:w?30:48};a.hp=a.maxHp;allies.push(a);burst(x,y,w?'#cfd8e0':'#9fffaa',20,100);return a}
+function summon(p,kind,x,y,dur,temp){const w=kind==='wolf';sfx('summon');const a={side:'player',isAlly:true,kind,owner:p,temp:!!temp,x,y,r:w?14:13,maxHp:Math.round(p.maxHp*(w?.6:.4)*(p.petMult||1)),dmg:p.stats.dmg*(w?.75:.55)*(p.petMult||1),speed:w?205:150,range:26,atkCd:w?.8:1,cd:0,until:time+dur,walk:0,aim:0,h:w?30:48};a.hp=a.maxHp;a.nid=++Net.nid;allies.push(a);burst(x,y,w?'#cfd8e0':'#9fffaa',20,100);return a}
 function xpNeed(l){return Math.round(70*Math.pow(l,1.7))}
 
 // ================= Items =================
@@ -985,6 +994,7 @@ function chooseSpec(p,key){p.spec=key;p.abil=abilList(p);calcStats(p);buildAbar(
 function useAbility(p,i){const ab=p.abil[i];if(p.level<UNLOCK[i])return;if(p.cds[i]>0||p.stunUntil>time)return;const cost=abilCost(p,i);
   if(p.mana<cost){if(i>0&&rt>noManaT){noManaT=rt+1;floatText(p.x,p.y-30,'Not enough mana','#8fb8ff',13)}return}
   if(p.mounted||p.mountCast>0)dismount(p,true);
+  if(Net.role==='guest'){netSend([...Net.peers.values()][0],{t:'cast',i,ax:Math.round(p.input.ax),ay:Math.round(p.input.ay)});p.mana-=cost;p.cds[i]=p.cdMax[i]=abilCd(p,i);p.castAnim=.3;castFx(p,i);if(i===0)trainSkill(p,wtypeOf(p),.12);else trainSkill(p,'spell',.25);sfx(ab.sfx||CASTSFX[p.cls][i]);return}
   const base=p.stats.dmg;p.stats.dmg=base*(1+(p.tm['a'+i]||0))*skillMult(p,i);const r=ab.cast(p,p.input.ax,p.input.ay);p.stats.dmg=base;
   if(r===false)return;p.mana-=cost;p.cds[i]=p.cdMax[i]=abilCd(p,i);p.castAnim=.3;castFx(p,i);if(i===0)trainSkill(p,wtypeOf(p),.12);else trainSkill(p,'spell',.25);sfx(ab.sfx||CASTSFX[p.cls][i])}
 const CASTSFX={paladin:['swing','bash','holy','holy','shieldup'],sorcerer:['fire','frost','blink','fire','meteor'],hunter:['arrow','arrow','trap','howl','arrow'],necromancer:['shadow','summon','drain','curse','bone']};
@@ -999,12 +1009,13 @@ function updatePlayer(p,dt){p.playT=(p.playT||0)+dt;
   p.mana=Math.min(p.maxMana,p.mana+p.stats.mregen*dt);
   if(time-p.lastHurt>5&&p.hp<p.maxHp)p.hp=Math.min(p.maxHp,p.hp+p.maxHp*.03*dt);
   if(i.fire)useAbility(p,0);for(let k=1;k<6;k++)if(i.abil[k])useAbility(p,k);i.abil.fill(false)}
-function respawn(p){p.dead=false;p.hp=p.maxHp;p.mana=p.maxMana;const hs=homeSpot(p);if(zone.id!=='over')enterZone('over',hs.x,hs.y);p.x=hs.x;p.y=hs.y;p.gold=Math.floor(p.gold*.9);p.invulnUntil=time+2;$('death').classList.add('hidden');for(const e of enemies)if(e.target===p){e.target=null;e.returning=true}}
+function respawn(p){$('deathBtns').innerHTML='';p.dead=false;p.hp=p.maxHp;p.mana=p.maxMana;const hs=homeSpot(p);if(zone.id!=='over')enterZone('over',hs.x,hs.y);p.x=hs.x;p.y=hs.y;p.gold=Math.floor(p.gold*.9);p.invulnUntil=time+2;$('death').classList.add('hidden');for(const e of enemies)if(e.target===p){e.target=null;e.returning=true}}
 
 // ================= Enemies =================
 function spawnEnemy(type,x,y,lvl,extra){const b=ETYPES[type],m=1+.45*(lvl-1),dm=1+.3*(lvl-1);
   const e=Object.assign({side:'enemy',type,name:b.name,x,y,hx:x,hy:y,r:b.r,h:b.h,lvl,maxHp:Math.round(b.hp*m),dmg:b.dmg*dm,speed:b.speed,range:b.range,atkCd:b.atkCd,cd:rand(.3,1),
     xp:Math.round(b.xp*(1+.35*(lvl-1))),ranged:!!b.ranged,windupT:b.windup||0,boss:!!b.boss,hitFx:b.hitFx||{},aggroR:b.boss?440:320,walk:0,aim:0,wander:0,wdx:0,wdy:0,pat:2,lastSummon:-99},extra||{});
+  e.nid=++Net.nid;e.pn=Net.size();if(e.pn>1){const m=partyMul(e.pn);e.maxHp=Math.round(e.maxHp*m.hp);e.dmg*=m.dmg}
   e.hp=e.maxHp;enemies.push(e);return e}
 function updateEnemy(e,dt){
   e.cd-=dt;if(e.charge){doCharge(e,dt);return}
@@ -1060,15 +1071,18 @@ function updateAlly(a,dt){if(time>a.until||a.hp<=0||a.owner.dead){a.dead=true;bu
   else{const d=dist(a,o);if(d>80){navMove(a,o.x,o.y,a.speed*dt*(d>300?1.6:1));a.walk+=dt*12;a.aim=Math.atan2(o.y-a.y,o.x-a.x)}if(d>900){a.x=o.x+rand(-30,30);a.y=o.y+rand(-30,30)}}}
 
 // ================= Combat =================
-function dealDamage(t,amt,src,o){if(t.dead)return;if(t.invulnUntil>time){if(rt>(t.immT||0)){t.immT=rt+.4;floatText(t.x,t.y-20,'Immune','#ffe9a0',13)}return}
+function dealDamage(t,amt,src,o){o=o||{};if(t.dead)return;if(t.invulnUntil>time){if(rt>(t.immT||0)){t.immT=rt+.4;floatText(t.x,t.y-20,'Immune','#ffe9a0',13)}return}
+  if(Net.role==='guest'&&!o.raw)return;// guests only show spells; the host decides what hits
+  if(t.isRemote){if(t.away)return;let d=amt*(t.cursedUntil>time?1.4:1)*100/(100+t.stats.armor);d=Math.max(1,Math.round(d));t.hp=Math.max(1,t.hp-d);t.hitFlash=.12;floatText(t.x,t.y-30,''+d,'#ff6a5a',15);
+    netSend(Net.peers.get(t.uid),{t:'dmg',d,sl:o.slow,sf:o.slowF,st:o.stun,kx:o.knockFrom?o.knockFrom.x:null,ky:o.knockFrom?o.knockFrom.y:null});return}
   let d=amt,crit=false;if(t.cursedUntil>time)d*=1.4;
   // Your attacks (and your minions') can miss higher-level monsters. Crits only happen at 75%+ hit chance.
   const own=src&&(src.isPlayer?src:src.owner&&src.owner.isPlayer?src.owner:null);
   if(own&&t.side==='enemy'){const hc=hitChance(own,t);
-    if(Math.random()>hc){if(!t.target&&!src.dead){t.target=own;t.returning=false}if(rt>(t.missT||0)){t.missT=rt+.25;floatText(t.x,t.y-(t.h||40)*.6,'Miss','#b8b8b8',13)}return}
+    if(Math.random()>hc){if(!t.target&&!src.dead){t.target=own;t.returning=false}if(rt>(t.missT||0)){t.missT=rt+.25;floatText(t.x,t.y-(t.h||40)*.6,'Miss','#b8b8b8',13);if(Net.role)Net.ev.push({k:'m',n:t.nid})}return}
     if(hc>=CRIT_MIN_HIT&&Math.random()<own.stats.crit){d*=1.75;crit=true}}
   if(t.isPlayer&&t.eat){t.eat=null;floatText(t.x,t.y-50,'Meal interrupted','#ffb08a',12)}
-  if(t.isPlayer)d*=100/(100+t.stats.armor);d=Math.max(1,Math.round(d));
+  if(t.isPlayer&&!o.raw)d*=100/(100+t.stats.armor);d=Math.max(1,Math.round(d));if(Net.role==='host'&&t.side==='enemy')Net.ev.push({k:'h',n:t.nid,d,c:crit?1:0,col:o.hc});
   t.hp-=d;t.hitFlash=.12;t.lastHurt=time;if(t.isPlayer&&(t.mounted||t.mountCast>0)&&!(t.fly&&!free(t.x,t.y,t.r)))dismount(t,true);if(t.isPlayer&&t.hearthCast>0){t.hearthCast=0;toast('Teleport interrupted!')}
   floatText(t.x,t.y-(t.h||40)*.6,(crit?d+'!':''+d),t.side==='player'?'#ff6a5a':crit?'#ffd84a':'#fff',crit?20:15);
   if(t.side==='enemy'&&own)hitSpark(t,o.hc||weaponCol(own),crit);else if(t.isPlayer)sparks(t.x,t.y,26,'#ff5a4a',5,120,.25);
@@ -1083,15 +1097,16 @@ function dealDamage(t,amt,src,o){if(t.dead)return;if(t.invulnUntil>time){if(rt>(
   if(t.hp<=0)kill(t,src)}
 function kill(t){t.dead=true;
   if(t.side==='enemy'){sfx(t.boss?'bossdie':'die');burst(t.x,t.y,t.boss?'#cfe':'#a33',t.boss?70:16,t.boss?220:140);
-    {let shown=0;for(const p of players)if(!p.dead){const xp=xpFor(p,t);gainXp(p,xp);p.kills=(p.kills||0)+1;shown=xp}floatText(t.x,t.y-(t.h||40),'+'+shown+' XP',shown<t.xp*.5?'#8a8a8a':'#c9a6ff',13)}makeCorpse(t);if(t.cellRef){t.cellRef.alive=null;t.cellRef.pending=time+rand(120,180)}
+    {let shown=0;for(const p of players)if(!p.dead){const xp=xpFor(p,t);if(p.isRemote){if(!p.away)netSend(Net.peers.get(p.uid),{t:'xp',a:xp})}else{gainXp(p,xp);p.kills=(p.kills||0)+1;shown=xp}}
+      if(Net.role==='host'){netAll({t:'kill',k:t.type});Net.ev.push({k:'d',x:Math.round(t.x),y:Math.round(t.y),b:t.boss?1:0,n:t.name})}floatText(t.x,t.y-(t.h||40),'+'+shown+' XP',shown<t.xp*.5?'#8a8a8a':'#c9a6ff',13)}makeCorpse(t);if(t.cellRef){t.cellRef.alive=null;t.cellRef.pending=time+rand(120,180)}
     if(quest.state==='active'){const q=QUESTS[quest.idx];if(q&&q.target.includes(t.type)){quest.prog++;if(quest.prog>=q.need){quest.state='ready';toast('Quest complete! Return to the Warden.','gold')}updateQuestUI()}}
     if(t.boss){toast(t.name+' has fallen!','gold');shake=14;for(const e of enemies)if(e.persist&&!e.boss&&dist(e,t)<700)e.target=e.target}
-  }else if(t.isPlayer){sfx('death');t.dead=true;t.deathT=4;t.deaths=(t.deaths||0)+1;t.hearthCast=0;deathPenalty(t);burst(t.x,t.y,'#a22',30,120);$('death').classList.remove('hidden');for(const a of allies)if(a.owner===t)a.until=0}
+  }else if(t.isPlayer){sfx('death');t.dead=true;t.deathT=4;t.deaths=(t.deaths||0)+1;t.hearthCast=0;deathPenalty(t);burst(t.x,t.y,'#a22',30,120);$('death').classList.remove('hidden');showDeathChoices(t);for(const a of allies)if(a.owner===t)a.until=0}
   else burst(t.x,t.y,'#ccc',12,80)}
 function enemyDrops(e){const b=e.boss;const drop=(kind,extra)=>drops.push(Object.assign({kind,x:e.x+rand(-26,26),y:e.y+rand(-18,18),t:rand(0,6)},extra));
   if(b||Math.random()<.5)drop('gold',{amount:Math.max(1,Math.round(rand(1.5,4)*e.lvl*(b?20:1)))});
   const pot=()=>drop('sup',{sup:(Math.random()<.65?'hp':'mp')+potTier(e.lvl),amount:1});if(Math.random()<(b?1:.05))pot();if(b)pot();
-  const cls=players[0]?players[0].cls:'paladin';
+  const cls=players.length?pick(players).cls:'paladin';// shared loot: items fit a random hero in the party
   const lb=1+(players[0]?players[0].lootBonus||0:0);
   // Quest bosses: one boss roll (epic or better at most 18%, the Barrow King 50%) plus one bonus item that is never above rare.
   if(b&&zone.kind!=='dungeon'){drop('item',{item:genItem(e.lvl+1,0,cls,null,e.type==='barrowking'?RAR_W.finalBoss:RAR_W.boss)});drop('item',{item:genItem(e.lvl,0,cls,null,RAR_W.bonus)})}
@@ -1107,29 +1122,32 @@ function pickupDrops(){for(const d of drops){if(d.dead)continue;for(const p of p
 
 // ================= Update =================
 function update(dt){time+=dt;
-  for(const p of players){if(p.id===0)readInput(p);updatePlayer(p,dt)}
-  for(const a of allies)if(!a.dead)updateAlly(a,dt);
+  const GU=Net.role==='guest';
+  for(const p of players){if(p.isRemote){p.castAnim=Math.max(0,(p.castAnim||0)-dt);continue}if(p.id===0)readInput(p);updatePlayer(p,dt)}
+  if(!GU){for(const a of allies)if(!a.dead)updateAlly(a,dt);
   for(const e of enemies)if(!e.dead)updateEnemy(e,dt);
-  separate();
+  separate()}
   for(const pr of projs){if(pr.dead)continue;pr.life-=dt;pr.x+=pr.vx*dt;pr.y+=pr.vy*dt;
     if(PBLOCK.has(tileAt(pr.x,pr.y))){projEnd(pr);continue}
-    const list=pr.side==='player'?enemies:friendlies();
+    if(GU){const hitList=pr.side==='player'?enemies:[players[0],...Net.avatars.values()];for(const t of hitList)if(t&&!t.dead&&Math.hypot(t.x-pr.x,t.y-pr.y)<(t.r||13)+pr.r&&!pr.hit.has(t)){pr.hit.add(t);if(pr.pierce>0)pr.pierce--;else{projEnd(pr);break}}}
+    const list=GU?[]:pr.side==='player'?enemies:friendlies();
     for(const t of list){if(t.dead||pr.hit.has(t))continue;if(Math.hypot(t.x-pr.x,t.y-pr.y)<t.r+pr.r){pr.hit.add(t);dealDamage(t,pr.dmg,pr.src,Object.assign({hc:pr.col},pr.fx));if(pr.explode){projEnd(pr);break}if(pr.pierce>0)pr.pierce--;else{projEnd(pr);break}}}
     if(!pr.dead&&pr.life<=0)projEnd(pr);
     if(!pr.dead){(pr.tr||(pr.tr=[])).push(pr.x,pr.y);if(pr.tr.length>16)pr.tr.splice(0,2);
       if(pr.kind==='orb')for(let k=0;k<(pr.side==='player'?2:1);k++)parts.push({x:pr.x+rand(-3,3),y:pr.y+rand(-3,3),z:22+rand(-3,3),vx:rand(-25,25)-pr.vx*.08,vy:rand(-25,25)-pr.vy*.08,vz:rand(-10,25),life:.35,max:.35,col:pr.col,size:rand(1.6,3.2),gl:true})}}
   for(const a of areas){if(a.dead)continue;if(a.follow){a.x=a.follow.x;a.y=a.follow.y}
-    if(a.delay>0){a.delay-=dt;if(a.delay<=0){if(a.side==='enemy'&&a.burst)sfx('slam');if(a.burst){const list=a.side==='player'?enemies:friendlies();for(const t of inRadius(list,a.x,a.y,a.r))dealDamage(t,a.burst.dmg,a.src,Object.assign({hc:AREA_COL[a.kind]},a.burst))}if(a.onBurst)a.onBurst(a)}continue}
+    if(GU){if(a.delay>0){a.delay-=dt;if(a.delay<=0){if(a.side==='enemy')sfx('slam');fx.push({k:'ring',x:a.x,y:a.y,r:a.r,life:.3,max:.3,col:a.side==='enemy'?'#ffb080':'#ffe0a0'});if(a.kind==='boulder'){shake=8;burst(a.x,a.y,'#8a7a5a',30,200)}}continue}}
+    else if(a.delay>0){a.delay-=dt;if(a.delay<=0){if(a.side==='enemy'&&a.burst)sfx('slam');if(a.burst){const list=a.side==='player'?enemies:friendlies();for(const t of inRadius(list,a.x,a.y,a.r))dealDamage(t,a.burst.dmg,a.src,Object.assign({hc:AREA_COL[a.kind]},a.burst))}if(a.onBurst)a.onBurst(a)}continue}
     a.t+=dt;const list=a.side==='player'?enemies:friendlies();
-    if(a.kind==='trap'&&inRadius(enemies,a.x,a.y,a.r).length){for(const t of inRadius(enemies,a.x,a.y,85))dealDamage(t,a.trapDmg,a.src,{stun:2});burst(a.x,a.y,'#c8b890',26,180);fx.push({k:'ring',x:a.x,y:a.y,r:85,life:.3,max:.3,col:'#e8d8a0'});a.dead=true;continue}
-    if(a.tick&&a.tickDmg){a.nt-=dt;if(a.nt<=0){a.nt=a.tick;for(const t of inRadius(list,a.x,a.y,a.r))dealDamage(t,a.tickDmg,a.src,Object.assign({hc:AREA_COL[a.kind]},a.tickFx));if(a.healTick)for(const q of inRadius(friendlies(),a.x,a.y,a.r))heal(q,a.healTick)}}
+    if(!GU&&a.kind==='trap'&&inRadius(enemies,a.x,a.y,a.r).length){for(const t of inRadius(enemies,a.x,a.y,85))dealDamage(t,a.trapDmg,a.src,{stun:2});burst(a.x,a.y,'#c8b890',26,180);fx.push({k:'ring',x:a.x,y:a.y,r:85,life:.3,max:.3,col:'#e8d8a0'});a.dead=true;continue}
+    if(!GU&&a.tick&&a.tickDmg){a.nt-=dt;if(a.nt<=0){a.nt=a.tick;for(const t of inRadius(list,a.x,a.y,a.r))dealDamage(t,a.tickDmg,a.src,Object.assign({hc:AREA_COL[a.kind]},a.tickFx));if(a.healTick)for(const q of inRadius(friendlies(),a.x,a.y,a.r))heal(q,a.healTick)}}
     if(a.kind==='blizzard')for(let k=0;k<3;k++){const an=rand(0,TAU),rr2=Math.sqrt(Math.random())*a.r;parts.push({x:a.x+Math.cos(an)*rr2,y:a.y+Math.sin(an)*rr2,z:120,vx:rand(-60,-20),vy:0,vz:-200,life:.6,max:.6,col:'#f0f8ff',size:2.5,ng:true})}
     if(a.kind==='plague'&&Math.random()<.7){const an=rand(0,TAU),rr2=Math.sqrt(Math.random())*a.r;parts.push({x:a.x+Math.cos(an)*rr2,y:a.y+Math.sin(an)*rr2,z:4,vx:0,vy:0,vz:30,life:1,max:1,col:Math.random()<.5?'#8aff6a':'#b06aff',size:3,ng:true})}
     if(a.kind==='rain')for(let k=0;k<3;k++){const an=rand(0,TAU),rr2=Math.sqrt(Math.random())*a.r;parts.push({x:a.x+Math.cos(an)*rr2,y:a.y+Math.sin(an)*rr2,z:160,vx:0,vy:0,vz:-700,life:.25,max:.25,col:'#e8dcc0',size:1.5,streak:true,ng:true})}
     if(a.kind==='holy'&&Math.random()<.5){const an=rand(0,TAU),rr2=Math.sqrt(Math.random())*a.r;parts.push({x:a.x+Math.cos(an)*rr2,y:a.y+Math.sin(an)*rr2,z:2,vx:0,vy:0,vz:60,life:.8,max:.8,col:'#ffe08a',size:2,ng:true})}
     if(a.kind==='meteor'&&Math.random()<.6){const an=rand(0,TAU),rr2=Math.sqrt(Math.random())*a.r;parts.push({x:a.x+Math.cos(an)*rr2,y:a.y+Math.sin(an)*rr2,z:2,vx:0,vy:0,vz:50,life:.6,max:.6,col:'#ff7a2a',size:3,ng:true})}
     if(a.t>=a.dur)a.dead=true}
-  pickupDrops();updateCorpses();fogTick(dt);
+  if(!GU)pickupDrops();updateCorpses();fogTick(dt);
   for(const q of parts){q.life-=dt;q.x+=q.vx*dt;q.y+=q.vy*dt;q.z+=q.vz*dt;if(!q.ng)q.vz-=320*dt;if(q.z<0){q.z=0;q.vz*=-.3;q.vx*=.6;q.vy*=.6}}
   for(const t of texts){t.life-=dt;t.z+=40*dt}
   for(const f of fx)f.life-=dt;
@@ -1137,9 +1155,9 @@ function update(dt){time+=dt;
   enemies=enemies.filter(e=>!e.dead&&!e.remove);allies=allies.filter(a=>!a.dead);projs=projs.filter(p=>!p.dead);areas=areas.filter(a=>!a.dead);
   parts=parts.filter(q=>q.life>0);texts=texts.filter(t=>t.life>0);fx=fx.filter(f=>f.life>0);drops=drops.filter(d=>!d.dead);
   if(parts.length>1400)parts.splice(0,parts.length-1400);
-  spawner(dt);questTick();
+  if(!GU){spawner(dt);questTick()}else updateBarrowGate();netTick(dt);
   saveT+=dt;if(saveT>15){saveT=0;save()}}
-function projEnd(pr){if(pr.dead)return;pr.dead=true;if(pr.explode)explosion(pr.x,pr.y,pr.explode.r,pr.explode.dmg,pr.src,pr.side);else burst(pr.x,pr.y,pr.col,6,80)}
+function projEnd(pr){if(pr.dead)return;pr.dead=true;if(pr.explode&&Net.role==='guest'){boomFx(pr.x,pr.y,pr.explode.r,'#ff9a3a');shake=Math.max(shake,5)}else if(pr.explode)explosion(pr.x,pr.y,pr.explode.r,pr.explode.dmg,pr.src,pr.side);else burst(pr.x,pr.y,pr.col,6,80)}
 function separate(){const list=[...players.filter(p=>!p.dead),...allies,...enemies];for(let i=0;i<list.length;i++){const a=list[i];for(let j=i+1;j<list.length;j++){const b=list[j];const dx=b.x-a.x,dy=b.y-a.y,m=a.r+b.r;if(Math.abs(dx)>m||Math.abs(dy)>m)continue;const d=Math.hypot(dx,dy);if(d>0&&d<m){const p=(m-d)/2,nx=dx/d,ny=dy/d;const fa=a.isPlayer?.3:1,fb=b.isPlayer?.3:1;moveEnt(a,-nx*p*fa,-ny*p*fa);moveEnt(b,nx*p*fb,ny*p*fb)}}}}
 // Each region follows the story: Meadows → Gloomwood → Frostfells → Sunscar → Mirefen → Barrow-downs.
 // Monsters get stronger the deeper you go into a region.
@@ -1162,13 +1180,13 @@ function spawnSite(boss){const ok=(x,y)=>free(x,y,16);const ring=(type,c,n,r,lvl
     barrowking:()=>{const c=tw(BARROW);spawnEnemy('barrowking',c.x,c.y,15,{persist:true});ring('wight',c,4,150,13);sfx('roar');toast('A cold voice echoes from the barrow…')}};
   if(S2[boss])S2[boss]()}
 // Once the Lamp burns again (the Barrow King quest is reached), the ward breaks and the barrow gate opens.
-function updateBarrowGate(){const z=zones.over;if(!z||z.gateOpen||quest.idx<8||!z.barrowGate)return;z.gateOpen=true;for(const i of z.barrowGate)z.map[i]=T.PATH;
+function updateBarrowGate(){const z=zones.over,qi=Net.role==='guest'?Net.hostQ:quest.idx;if(!z||z.gateOpen||qi<8||!z.barrowGate)return;z.gateOpen=true;for(const i of z.barrowGate)z.map[i]=T.PATH;
   if(z.terrain)for(const i of z.barrowGate)z.terrain.chunks.delete(Math.floor(i%z.MW/TCH)+','+Math.floor(i/z.MW/TCH));if(zone===z&&rt>5)toast('Far away, the ward on the barrow-downs shatters. The way to the Barrow King is open.','gold')}
 function questTick(){updateBarrowGate();const p=players[0];if(!p||quest.state!=='active'||zone.id!=='over')return;const q=QUESTS[quest.idx];if(!q||!q.boss||flags['site'+quest.idx])return;
   if(Math.hypot(p.x/TILE-q.site.x,p.y/TILE-q.site.y)<22){flags['site'+quest.idx]=true;spawnSite(q.boss)}}
 
 // ================= Input =================
-function readInput(p){const i=p.input;i.mx=((keys.KeyD||keys.ArrowRight)?1:0)-((keys.KeyA||keys.ArrowLeft)?1:0);i.my=((keys.KeyS||keys.ArrowDown)?1:0)-((keys.KeyW||keys.ArrowUp)?1:0);i.ax=mouse.x+camX;i.ay=mouse.y/TILT+camY;i.fire=mouse.l}
+function readInput(p){const i=p.input;if(isPaused()){i.mx=i.my=0;i.fire=false;return}i.mx=((keys.KeyD||keys.ArrowRight)?1:0)-((keys.KeyA||keys.ArrowLeft)?1:0);i.my=((keys.KeyS||keys.ArrowDown)?1:0)-((keys.KeyW||keys.ArrowUp)?1:0);i.ax=mouse.x+camX;i.ay=mouse.y/TILT+camY;i.fire=mouse.l}
 addEventListener('keydown',e=>{if(storyOpen){if(e.code==='Enter'||e.code==='Escape'){if(!$('intro').classList.contains('hidden'))$('btnIntro').click();else $('btnVic').click()}return}if(e.target.tagName==='INPUT'){if(e.code==='Enter'&&state==='creator')beginGame();return}keys[e.code]=true;if(state!=='play')return;
   const p=players[0];if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code))e.preventDefault();
   if(e.code==='Escape'){if(Friends.open){toggleFriends(false);return}if(mapOpen)toggleMap(false);else if(lootOpen)closeLoot();else if(profOpen)toggleProf(false);else if(invOpen)toggleInv(false);else if(talOpen)toggleTal(false);else if(shopOpen)closeShop();else if(dialogOpen)closeDialog();else togglePause();return}
@@ -1262,7 +1280,7 @@ function drawUnit(u){let[sx,sy]=S(u.x,u.y);softShadow(ctx,sx,sy,u.r*1.5,u.r*.62)
     ctx.fillStyle=players[0]?lvlColor(players[0],u.lvl):'#eee';ctx.font='bold 10px system-ui';ctx.textAlign='center';ctx.fillText('Lv '+u.lvl,sx,y0-3)}
   drawAwareness(u,sx,sy);
   if(u.isAlly){const w=28,y0=sy-u.h-10;ctx.fillStyle='rgba(0,0,0,.6)';ctx.fillRect(sx-w/2-1,y0-1,w+2,5);ctx.fillStyle='#5ac85a';ctx.fillRect(sx-w/2,y0,w*Math.max(0,u.hp/u.maxHp),3)}}
-function drawPlayer(p){if(p.dead)return;const[sx,sy]=S(p.x,p.y);softShadow(ctx,sx,sy,20,8);
+function drawPlayer(p){if(p.dead||p.away||(p.isAvatar&&!(p.look&&p.look.skin)))return;const[sx,sy]=S(p.x,p.y);softShadow(ctx,sx,sy,20,8);
   const o=playerLook(p);o.aim=p.aim;o.aimS=aimScreen(p.aim);o.walk=p.walk;const moved=p.walk!==p._lw;p._lw=p.walk;p._mv=moved?.15:Math.max(0,(p._mv||0)-1/60);o.moving=p._mv>0&&!p.mounted;o.atk=(p.castAnim||0)/.3;let seat=0;
   if(p.mounted){drawMount(ctx,p.mount,sx,sy,p.aim,p.walk);seat=mountSeat(p.mount)+(p.mount==='dragon'?Math.sin(rt*3)*3:0);o.walk=0}
   if(p.mountCast>0){ctx.fillStyle='rgba(0,0,0,.6)';ctx.fillRect(sx-20,sy+10,40,5);ctx.fillStyle='#e8c26a';ctx.fillRect(sx-20,sy+10,40*(1-p.mountCast),5)}
@@ -1436,7 +1454,7 @@ function render(){
   for(const d of drops)if(inView(d,80))dl.push([d.y,()=>drawDrop(d)]);
   {const pv=players[0];for(const e of enemies)if(inView(e,150)){const a=pv&&!pv.dead&&state==='play'?visAlpha(pv,e):1;if(a>0)dl.push([e.y,()=>{ctx.globalAlpha=a;drawUnit(e);ctx.globalAlpha=1}])}}
   for(const a of allies)if(inView(a,100))dl.push([a.y,()=>drawUnit(a)]);
-  for(const p of players)dl.push([p.y,()=>drawPlayer(p)]);
+  for(const p of players)dl.push([p.y,()=>drawPlayer(p)]);for(const a of Net.avatars.values())dl.push([a.y,()=>drawPlayer(a)]);
   if(zone.id==='over'&&inView(warden,150))dl.push([warden.y,drawWarden]);
   if(zone.id==='over'&&inView(merchant,150))dl.push([merchant.y,drawMerchant]);
   for(const pr of projs)if(inView(pr,60))dl.push([pr.y+2,()=>drawProj(pr)]);
@@ -1484,6 +1502,7 @@ function updateHud(){const p=players[0];if(!p)return;
   {const h=$('hearthSlot');if(h){const cd=Math.max(0,(p.hearthCd||0)-time);h.children[2].style.height=(p.hearthCast>0?(1-p.hearthCast/HEARTH_CAST)*100:cd/HEARTH_CD*100)+'%';h.children[2].style.background=p.hearthCast>0?'rgba(120,200,255,.5)':'rgba(0,0,0,.68)';h.children[3].textContent=cd>0?Math.ceil(cd)+'':''}}
   let boss=null,bd=900;for(const e of enemies)if(e.boss&&e.target&&dist(e,p)<bd){bd=dist(e,p);boss=e}
   const bb=$('bossbar');if(boss){bb.classList.remove('hidden');$('bossName').textContent=boss.name+' · Level '+boss.lvl+(boss.enraged?' · ENRAGED':'');$('bossF').style.width=(boss.hp/boss.maxHp*100)+'%'}else bb.classList.add('hidden');
+  partyT-=1/60;if(partyT<=0){partyT=.25;renderParty()}
   drawMini()}
 function updateQuestUI(){const q=QUESTS[quest.idx],el=$('quest');
   if(!q||quest.state==='done'){el.innerHTML='<b>The road goes on</b><br>All quests complete. Roam the wilds, grow stronger and hunt for gear. More adventures are coming.';return}
@@ -1569,7 +1588,7 @@ function drawMerchant(){const[sx,sy]=S(merchant.x,merchant.y);const p=players[0]
   const b=Math.sin(rt*3)*3;ctx.font='20px system-ui';ctx.textAlign='center';ctx.fillText('🪙',sx,sy-70+b);ctx.font='12px Georgia';ctx.fillStyle='#e8dcb8';ctx.fillText('Tilda the Trader',sx,sy-56);
   if(p&&!p.dead&&dist(p,merchant)<95&&!shopOpen&&!(dist(p,warden)<95)){ctx.font='bold 13px system-ui';ctx.fillStyle='#fff';ctx.fillText('[E] Trade',sx,sy+22)}}
 function toggleInv(v){invOpen=v===undefined?!invOpen:v;if(invOpen){talOpen=false;$('tal').classList.add('hidden');closeShop()}$('inv').classList.toggle('hidden',!invOpen);hideTip();if(invOpen){mouse.l=false;renderInv()}}
-function togglePause(){pauseOpen=!pauseOpen;$('pause').classList.toggle('hidden',!pauseOpen);mouse.l=false;if(pauseOpen)save()}
+function togglePause(){$('btnQuit').textContent=Net.role==='guest'?'Leave party':Net.role==='host'?'Save & quit (ends the party)':'Save & quit to menu';pauseOpen=!pauseOpen;$('pause').classList.toggle('hidden',!pauseOpen);mouse.l=false;if(pauseOpen)save()}
 function openDialog(){const q=QUESTS[quest.idx];dialogOpen=true;$('dWho').textContent='Old Warden Bram';mouse.l=false;$('dialog').classList.remove('hidden');const btns=$('dBtns');btns.innerHTML='';
   const btn=(txt,fn,pri)=>{const b=document.createElement('button');b.className='btn'+(pri?' primary':'');b.textContent=txt;b.onclick=fn;btns.appendChild(b)};$('dGoal').textContent='';
   if(!q||quest.state==='done'){$('dTitle').textContent='Peace, for now';$('dText').textContent='The lamps burn again, thanks to you. But the world is wide, and darker things stir beyond the hills. Rest, grow stronger, and be ready. More adventures are coming.';btn('Farewell',closeDialog,true);return}
@@ -1583,7 +1602,7 @@ function closeDialog(){dialogOpen=false;$('dialog').classList.add('hidden')}
 
 // ================= Save =================
 const SAVE_KEY='emberfall-save-v1';
-function save(){const p=players[0];if(!p||state!=='play')return;storeExplored(p);Account.write(heroId,{p:{name:p.name,loc:zone.id==='over'?locName(p.x/TILE,p.y/TILE):zone.name,cls:p.cls,look:p.look,level:p.level,xp:p.xp,gold:p.gold,sup:p.sup,buffs:p.buffs,gear:p.gear,bag:p.bag,attr:p.attr,points:p.points,talents:p.talents,tpoints:p.tpoints,spec:p.spec,shop:p.shop,skills:p.skills,prof:p.prof,mats:p.mats,mounts:p.mounts,mount:p.mount,light:p.light,bagSize:p.bagSize,lootBonus:p.lootBonus,bagName:p.bagName,home:p.home,explored:p.explored,ws:OW,seed:p.seed,kills:p.kills,deaths:p.deaths,playT:p.playT,x:p.dead||zone.id!=='over'?0:p.x,y:p.dead||zone.id!=='over'?0:p.y},quest})}
+function save(){const p=players[0];if(!p||state!=='play')return;storeExplored(p);Account.write(heroId,netSaveFix({p:{name:p.name,loc:zone.id==='over'?locName(p.x/TILE,p.y/TILE):zone.name,cls:p.cls,look:p.look,level:p.level,xp:p.xp,gold:p.gold,sup:p.sup,buffs:p.buffs,gear:p.gear,bag:p.bag,attr:p.attr,points:p.points,talents:p.talents,tpoints:p.tpoints,spec:p.spec,shop:p.shop,skills:p.skills,prof:p.prof,mats:p.mats,mounts:p.mounts,mount:p.mount,light:p.light,bagSize:p.bagSize,lootBonus:p.lootBonus,bagName:p.bagName,home:p.home,explored:p.explored,ws:OW,seed:p.seed,kills:p.kills,deaths:p.deaths,playT:p.playT,x:p.dead||zone.id!=='over'?0:p.x,y:p.dead||zone.id!=='over'?0:p.y},quest}))}
 
 // ================= Screens =================
 const LOOKS={skin:['#f6d5b8','#f1c9a5','#d9a47a','#b47a52','#8a5a3a','#5e3d26'],hair:['#1e1510','#4a2e1a','#6b4423','#c9a25a','#e8d8b0','#d8d4cc','#8a2d1c','#3a4a6a'],
@@ -1608,7 +1627,7 @@ function drawPreview(){const c=$('prev').getContext('2d');c.clearRect(0,0,260,28
   const o=playerLook({cls:cr.cls,look:cr.look});o.s=2.6;o.aim=Math.sin(rt*.8)*.6;o.aimS=o.aim;o.walk=rt*4;drawHumanoid(c,130,236,o)}
 function show(id){for(const s of['login','title','creator','death','pause'])$(s).classList.toggle('hidden',s!==id)}
 function resetWorld(){if(zones.over&&zones.over.gateOpen){for(const i of zones.over.barrowGate)zones.over.map[i]=T.WALL;zones.over.gateOpen=false;zones.over.terrain.chunks.clear()}for(const d of zones.over.decor)delete d.next;for(const k in zones)if(k!=='over')delete zones[k];zones.over.fog=null;zones.over.cells=null;zones.over.corpses=[];for(const b of zones.over.buildings)b.stock=null;zones.over.enemies=[];zones.over.drops=[];useZone(zones.over);enemies=[];allies=[];projs=[];areas=[];parts=[];texts=[];drops=[];fx=[];players=[];flags={};time=0}
-function startGame(data,isNew,id){heroId=id||Account.newId();ensureWorld(data.p.seed||0);resetWorld();closeLoot();quest=data.quest||{idx:0,state:'offer',prog:0};const p=createPlayer(data.p);p.id=0;players=[p];
+function startGame(data,isNew,id){heroId=id||Account.newId();ensureWorld(Net.role==='guest'?Net.host.seed:data.p.seed||0);resetWorld();closeLoot();quest=data.quest||{idx:0,state:'offer',prog:0};const p=createPlayer(data.p);p.id=0;players=[p];
   state='play';show(null);$('hud').classList.remove('hidden');buildAbar(p);updateQuestUI();invOpen=dialogOpen=pauseOpen=talOpen=shopOpen=storyOpen=false;for(const id of['inv','tal','shop','dialog','intro','victory'])$(id).classList.add('hidden');
   if(isNew)showStory('intro',true);save()}
 function beginGame(){const name=($('nameIn').value||'').trim().slice(0,16)||pick(NAMES);startGame({p:{name,cls:cr.cls,look:Object.assign({},cr.look),seed:newWorldSeed()}},true)}
@@ -1637,7 +1656,7 @@ let last=performance.now();
 // One frame. If anything throws, keep the loop alive and show the error instead of freezing the game.
 let errT=0;function frame(now){try{frameStep(now)}catch(e){console.error(e);if(rt>errT){errT=rt+5;toast('Something went wrong: '+e.message,'danger')}}requestAnimationFrame(frame)}
 function frameStep(now){const dt=Math.min(.05,(now-last)/1000);last=now;rt+=dt;
-  if(state==='play'&&!isPaused())update(dt);
+  if(state==='play'&&(!isPaused()||Net.role))update(dt);
   const p=players[0];let tx,ty;
   if(state==='play'&&p){tx=p.x-W/2;ty=p.y-H/2/TILT}else{tx=(VC.x+.5)*TILE+Math.cos(rt*.06)*380-W/2;ty=(VC.y+.5)*TILE+Math.sin(rt*.06)*300-H/2/TILT}
   const zw=MW*TILE,zh=MH*TILE;camX=zw<W?(zw-W)/2:clamp(tx,0,zw-W);camY=zh<H/TILT?(zh-H/TILT)/2:clamp(ty,0,zh-H/TILT);
@@ -1769,13 +1788,14 @@ function buildZone(id){let z;if(id.startsWith('int_')){const b=zones.over.buildi
   z.terrain=genTerrain();return z}
 function enterZone(id,x,y){const prev=zone;if(prev){prev.enemies=enemies;prev.drops=drops}
   let z=zones[id];if(!z){z=zones[id]=buildZone(id)}useZone(z);
-  closeLoot();if(z.kind==='dungeon'&&(!z.enemies||z.needReset)){z.corpses=[];enemies=[];for(const s of z.spawns)spawnEnemy(s.type,s.x,s.y,s.lvl,{persist:true,dungeonBoss:s.boss});z.enemies=enemies;z.drops=[];z.needReset=false}
+  closeLoot();if(Net.role!=='guest'&&z.kind==='dungeon'&&(!z.enemies||z.needReset)){z.corpses=[];enemies=[];for(const s of z.spawns)spawnEnemy(s.type,s.x,s.y,s.lvl,{persist:true,dungeonBoss:s.boss});z.enemies=enemies;z.drops=[];z.needReset=false}
   enemies=z.enemies||[];drops=z.drops||[];projs=[];areas=[];fx=[];parts=[];texts=[];
   const sp=x!=null?{x,y}:z.start;for(const q of players){q.x=sp.x;q.y=sp.y;q.biome=undefined;if(q.mounted&&(z.kind==='interior'||z.kind==='dungeon'))dismount(q,true)}
   for(const a of allies){a.x=sp.x+rand(-30,30);a.y=sp.y+rand(-20,20);a.path=null}
   if(prev&&prev.kind==='dungeon'&&z.kind==='over')prev.needReset=true;
   sfx('door');if(z.kind!=='over')toast(z.name+(z.ent?` · level ${z.ent.lvl[0]}–${z.ent.lvl[1]}`:''),'gold');
   if(z.kind==='dungeon')toast('The bosses here drop gear made for your class and specialization.');
+  if(Net.role==='host'){const sp2=x!=null?{x,y}:z.start;hostZoneChanged(z.id,sp2.x,sp2.y)}
   if(z.dark&&players[0]&&!players[0].light)toast('It is dark down here. A torch from a General Store would help.','danger')}
 function interactables(p){const r=[];if(zone.id==='over'){r.push({o:warden,d:dist(p,warden),r:95,act:openDialog,own:true});r.push({o:merchant,d:dist(p,merchant),r:95,act:()=>openShop('tilda',null),own:true})}
   for(const n of zone.npcs||[])r.push(n.kind==='innkeeper'?{o:n,d:dist(p,n),r:100,label:'Talk to '+n.name,act:()=>innTalk(n)}:n.kind==='bard'?{o:n,d:dist(p,n),r:100,label:'Listen to '+n.name,act:()=>bardTalk(n)}:{o:n,d:dist(p,n),r:150,label:'Trade with '+n.name,act:()=>openShop(n.shop,n.building)});
@@ -1784,7 +1804,8 @@ function interactables(p){const r=[];if(zone.id==='over'){r.push({o:warden,d:dis
   for(const s of zone.signs||[])r.push({o:s,d:dist(p,s),r:80,label:'Read the waymark',act:()=>readSign(s)});
   for(const d of zone.doors||[])r.push({o:d,d:dist(p,d),r:75,label:d.label,act:()=>useDoor(d)});
   return r.filter(i=>i.d<i.r).sort((a,b)=>a.d-b.d)}
-function useDoor(d){if(d.to==='over')enterZone('over',d.tx,d.ty);else enterZone(d.to)}
+function useDoor(d){if(Net.role==='guest'&&!(d.to.startsWith('int_')||(d.to==='over'&&Net.hostZone==='over'))){toast(`${Net.host.name} leads the party through this door.`);return}
+  if(d.to==='over')enterZone('over',d.tx,d.ty);else enterZone(d.to)}
 function drawPrompt(){const p=players[0];if(!p||p.dead||isPaused())return;const it=interactables(p)[0];if(!it||it.own)return;const[sx,sy]=S(it.o.x,it.o.y);
   const txt='[E] '+it.label;ctx.font='bold 13px system-ui';const w=ctx.measureText(txt).width+16;ctx.fillStyle='rgba(15,12,9,.85)';rr(ctx,sx-w/2,sy-70,w,22,6);ctx.fill();ctx.strokeStyle='#6b5532';ctx.lineWidth=1;ctx.stroke();ctx.fillStyle='#fff3d0';ctx.textAlign='center';ctx.fillText(txt,sx,sy-54)}
 function edgeTile(x,y){for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,1]])if(!BLOCK.has(getT(x+dx,y+dy)))return true;return false}
@@ -2278,7 +2299,7 @@ function drawHelm(c,s,face,v,hair){const k=v.kind;
 const LOOT_REACH=170,CORPSE_TIME=[120,180];
 function corpsesOf(z){return z.corpses||(z.corpses=[])}
 function makeCorpse(t){const before=drops.length;enemyDrops(t);matDrop(t);if(t.boss&&zone.kind==='dungeon')dungeonLoot(t);
-  const loot=drops.splice(before);corpsesOf(zone).push({x:t.x,y:t.y,unit:Object.assign({},t,{hitFlash:0,stunUntil:0,cursedUntil:0,slowUntil:0,charge:null}),loot,until:time+rand(CORPSE_TIME[0],CORPSE_TIME[1]),boss:t.boss})}
+  const loot=drops.splice(before);for(const d of loot)d.id=++Net.nid;Net.corpVer++;corpsesOf(zone).push({id:++Net.nid,x:t.x,y:t.y,unit:Object.assign({},t,{hitFlash:0,stunUntil:0,cursedUntil:0,slowUntil:0,charge:null}),loot,until:time+rand(CORPSE_TIME[0],CORPSE_TIME[1]),boss:t.boss})}
 function lootable(c){return c.loot.length>0}
 function corpseUnderMouse(){const p=players[0];if(!p||!zone)return null;let best=null,bd=40;for(const c of corpsesOf(zone)){if(!lootable(c))continue;const[sx,sy]=S(c.x,c.y),d=Math.hypot(mouse.x-sx,mouse.y-(sy-8));if(d<bd){bd=d;best=c}}return best}
 function inReach(p,c){return dist(p,c)<=LOOT_REACH}
@@ -2288,6 +2309,8 @@ function closeLoot(){lootOpen=null;$('loot').classList.add('hidden');hideTip()}
 function lootLabel(d){return d.kind==='gold'?`${d.amount} gold`:d.kind==='sup'?supName(d.sup):d.kind==='mat'?`${d.amount} ${MATS[d.mat].n}`:d.item.name}
 function lootIcon(d){return d.kind==='gold'?'🪙':d.kind==='sup'?supHtml(d.sup):d.kind==='mat'?MATS[d.mat].icon:itemIcon(d.item)}
 function takeLoot(d,quiet){const p=players[0],c=lootOpen;if(!c)return false;
+  if(Net.role==='guest'){if(d.item&&p.bag.length>=p.bagSize){toast('Your bag is full');return false}netSend([...Net.peers.values()][0],{t:'take',cid:c.id,did:d.id});c.loot.splice(c.loot.indexOf(d),1);return true}
+  Net.corpVer++;
   if(d.kind==='gold'){p.gold+=d.amount;if(!quiet)sfx('gold')}else if(d.kind==='sup')addSup(p,d.sup,d.amount||1);else if(d.kind==='mat')p.mats[d.mat]=(p.mats[d.mat]||0)+d.amount;
   else{if(p.bag.length>=p.bagSize){toast('Your bag is full');return false}p.bag.push(d.item);if(!quiet)sfx('loot',{rar:d.item.rar})}
   c.loot.splice(c.loot.indexOf(d),1);return true}
@@ -2298,7 +2321,7 @@ function renderLoot(){const c=lootOpen,el=$('lootList');if(!c)return;$('lootTitl
     row.innerHTML=`<span class="li">${lootIcon(d)}</span><span style="color:${col};flex:1">${lootLabel(d)}</span>`;
     if(d.item){row.onmouseenter=()=>showTip(itemTip(d.item,players[0].gear[d.item.slot]||null));row.onmouseleave=hideTip}
     row.onclick=()=>{if(takeLoot(d)){hideTip();if(!c.loot.length)closeLoot();else renderLoot();if(invOpen)renderInv();save()}};el.appendChild(row)}}
-function updateCorpses(){const z=zone;if(!z||!z.corpses)return;z.corpses=z.corpses.filter(c=>c.until>time);if(lootOpen){const p=players[0];if(!z.corpses.includes(lootOpen)||!p||p.dead||dist(p,lootOpen)>LOOT_REACH+60)closeLoot()}}
+function updateCorpses(){const z=zone;if(!z||!z.corpses)return;const n0=z.corpses.length;z.corpses=z.corpses.filter(c=>c.until>time);if(z.corpses.length!==n0)Net.corpVer++;if(lootOpen){const p=players[0];if(!z.corpses.includes(lootOpen)||!p||p.dead||dist(p,lootOpen)>LOOT_REACH+60)closeLoot()}}
 function drawCorpse(c){const u=c.unit,[sx,sy]=S(c.x,c.y),fade=Math.min(1,(c.until-time)/8);ctx.save();ctx.globalAlpha=.85*fade;softShadow(ctx,sx,sy,u.r*1.6,u.r*.6,.6);
   ctx.translate(sx,sy);ctx.rotate(Math.cos(u.aim||0)<0?-1.35:1.35);ctx.filter='grayscale(.45) brightness(.75)';
   const kind=u.type;try{if(kind==='wolf'||kind==='frostwolf'||kind==='greyfang'||kind==='rimeclaw'||kind==='direwolf')drawWolf(ctx,0,0,{s:kind==='greyfang'||kind==='rimeclaw'?1.8:1,aim:0,walk:0,col:kind==='frostwolf'||kind==='rimeclaw'?'#dfe8f0':'#7c7f86',eye:'#333'});
@@ -2341,7 +2364,7 @@ const SAVES_KEY='emberfall-saves-v2',MAX_HEROES=6;let heroId=null;
 function allSaves(){const s=fetchStore(SAVES_KEY)||{heroes:[]};if(!s.migrated){const old=fetchStore(SAVE_KEY);if(old&&old.p)s.heroes.push({id:'h'+Date.now(),t:Date.now(),data:old});s.migrated=true;store(SAVES_KEY,s)}return s}
 function writeHero(data){const s=allSaves();if(!heroId)heroId='h'+Date.now();if(!storageOK())return;const i=s.heroes.findIndex(h=>h.id===heroId),e={id:heroId,t:Date.now(),data};if(i>=0)s.heroes[i]=e;else s.heroes.push(e);store(SAVES_KEY,s)}
 function deleteHero(id){const s=allSaves();s.heroes=s.heroes.filter(h=>h.id!==id);store(SAVES_KEY,s)}
-function saveAndQuit(){save();toast('Game saved');pauseOpen=false;closeLoot();state='title';players=[];$('hud').classList.add('hidden');for(const id of['inv','tal','shop','dialog','prof','pause'])$(id).classList.add('hidden');invOpen=talOpen=shopOpen=dialogOpen=profOpen=false;useZone(zones.over);enemies=[];Account.flush();openSelect()}
+function saveAndQuit(){if(Net.role==='guest'){pauseOpen=false;$('pause').classList.add('hidden');leaveParty();return}if(Net.role==='host')leaveParty();save();toast('Game saved');pauseOpen=false;closeLoot();state='title';players=[];$('hud').classList.add('hidden');for(const id of['inv','tal','shop','dialog','prof','pause'])$(id).classList.add('hidden');invOpen=talOpen=shopOpen=dialogOpen=profOpen=false;useZone(zones.over);enemies=[];Account.flush();openSelect()}
 $('lootClose').onclick=closeLoot;$('lootAll').onclick=takeAll;
 // ================= Spell and combat effects =================
 // Magic particles glow (drawn additively from cached soft sprites), spells leave trails, hits spark,
@@ -2419,7 +2442,7 @@ const VISION=480;// how far your character can see (world pixels)
 const FOGS=2;// tiles per fog cell
 // ---- Exploration: each zone remembers which cells you have seen
 function fogOf(z){if(!z.fog){const w=Math.ceil(z.MW/FOGS),h=Math.ceil(z.MH/FOGS);const cv=document.createElement('canvas');cv.width=w;cv.height=h;const g=cv.getContext('2d');g.fillStyle='#07070a';g.fillRect(0,0,w,h);
-  z.fog={w,h,grid:new Uint8Array(w*h),cv,g};if(z.kind==='interior')revealAll(z);const saved=players[0]&&players[0].explored&&players[0].explored[z.id];if(saved)unpackFog(z,saved)}return z.fog}
+  z.fog={w,h,grid:new Uint8Array(w*h),cv,g};if(z.kind==='interior')revealAll(z);const saved=Net.role!=='guest'&&players[0]&&players[0].explored&&players[0].explored[z.id];if(saved)unpackFog(z,saved)}return z.fog}
 function revealCell(f,i){if(f.grid[i])return;f.grid[i]=1;f.g.clearRect(i%f.w,Math.floor(i/f.w),1,1)}
 function revealAll(z){const f=z.fog;for(let i=0;i<f.grid.length;i++)revealCell(f,i)}
 function revealAround(p){const f=fogOf(zone),r=(zone.dark?Math.min(VISION,lightRadius(p)+80):VISION)/TILE/FOGS,cx=p.x/TILE/FOGS,cy=p.y/TILE/FOGS;
@@ -2498,7 +2521,7 @@ const Account={mode:null,user:null,sb:null,cache:[],dirty:null,lastPush:0,
   async signUp(email,pw){const sb=await this.client(),{data,error}=await sb.auth.signUp({email,password:pw});if(error)throw error;
     if(data.session){this.mode='online';this.user=data.user;store(MODE_KEY,'online');return'in'}return'confirm'},
   async resetPassword(email){const sb=await this.client(),{error}=await sb.auth.resetPasswordForEmail(email);if(error)throw error},
-  async signOut(){if(this.mode==='online'){await this.flush();try{await (await this.client()).auth.signOut()}catch(e){}}this.mode=null;this.user=null;this.cache=[];Friends.me=null;Friends.list=[];updateFriendBadge();store(MODE_KEY,null)},
+  async signOut(){if(this.mode==='online'){await this.flush();try{await (await this.client()).auth.signOut()}catch(e){}}if(Net.chan){try{Net.chan.unsubscribe()}catch(e){}Net.chan=null}this.mode=null;this.user=null;this.cache=[];Friends.me=null;Friends.list=[];updateFriendBadge();store(MODE_KEY,null)},
   label(){return this.mode==='online'?(this.user&&this.user.email||'Signed in'):'Offline · heroes are saved on this computer'},
   // ---- heroes: list, save, delete (same shape both ways: {id,t,data})
   async list(){if(this.mode!=='online'){this.cache=allSaves().heroes.sort((a,b)=>b.t-a.t);return this.cache}
@@ -2560,7 +2583,7 @@ const Friends={me:null,list:[],seen:new Set(),open:false,lastPoll:0,
   async remove(fid){const sb=await this.sb(),{error}=await sb.from('friendships').delete().eq('id',fid);if(error)throw error},
   // Tells friends you are online and what you are doing (every minute while signed in).
   async heartbeat(){if(Account.mode!=='online'||!this.me)return;const p=players[0];
-    const status=state==='play'&&p?{hero:p.name,level:p.level,cls:p.cls,where:zone.id==='over'?locName(p.x/TILE,p.y/TILE):zone.name}:{menu:true};
+    const status=state==='play'&&p?{hero:p.name,level:p.level,cls:p.cls,where:Net.role==='guest'?`in ${Net.host.name}'s world`:zone.id==='over'?locName(p.x/TILE,p.y/TILE):zone.name,guest:Net.role==='guest',party:Net.size()}:{menu:true};
     try{const sb=await this.sb();await sb.from('profiles').update({last_seen:new Date().toISOString(),status}).eq('id',Account.user.id)}catch(e){}}};
 setInterval(()=>{if(Account.mode==='online'&&Friends.me){Friends.heartbeat();Friends.refresh().then(()=>{if(Friends.open)renderFriends()}).catch(()=>{})}},45000);
 
@@ -2589,7 +2612,9 @@ function renderFriends(){const el=$('frList');if(!el)return;
       const btn=(t,fn,cls)=>{const b=document.createElement('button');b.textContent=t;if(cls)b.className=cls;b.onclick=async()=>{b.disabled=true;try{await fn()}catch(e){$('frMsg').textContent=e.message}await Friends.refresh().catch(()=>{});renderFriends()};row.appendChild(b)};
       if(f.incoming){btn('Accept',()=>Friends.accept(f.fid).then(()=>toast(`You and ${f.name} are now friends.`,'gold')));btn('Decline',()=>Friends.remove(f.fid),'ghost')}
       else if(f.outgoing)btn('Cancel',()=>Friends.remove(f.fid),'ghost');
-      else{const j=document.createElement('button');j.textContent='Join';j.disabled=true;j.title='Playing together comes in the next update.';row.appendChild(j);
+      else{const canJoin=f.online&&f.play.hero&&!f.play.guest&&(f.play.party||1)<MAX_PARTY,canInv=f.online&&state==='play'&&Net.role!=='guest';
+        if(canInv){const iv=document.createElement('button');iv.textContent='Invite';iv.onclick=()=>netInvite(f.id,f.name);row.appendChild(iv)}
+        const j=document.createElement('button');j.textContent='Join';j.disabled=!canJoin||(Net.role==='guest'&&Net.host&&Net.host.uid===f.id);j.title=canJoin?`Play in ${f.name}'s world`:f.play.guest?`${f.name} is visiting someone else`:`${f.name} is not in a world right now`;j.onclick=()=>{toggleFriends(false);netJoin(f.id,f.name,false)};row.appendChild(j);
         btn('✕',async()=>{if(confirm(`Remove ${f.name} from your friends?`))await Friends.remove(f.fid)},'ghost')}
       el.appendChild(row)}}}
 $('frAddBtn').onclick=async()=>{const n=$('frName').value.trim();$('frMsg').textContent='';if(!n)return;$('frAddBtn').disabled=true;
@@ -2607,7 +2632,7 @@ function homeCityName(p){const c=CITIES.find(c=>c.id===(p.home||'emberfall'));re
 function locName(tx,ty){for(const c of CITIES)if(Math.hypot(tx-c.x,ty-c.y)<c.r+2)return c.name;const b=biomeOf(Math.floor(tx),Math.floor(ty));
   if(Math.hypot(tx-BARROW.x,ty-BARROW.y)<12)return'The Barrow-downs';return isDeep(tx,ty,b)?'Deep Wilds · '+BIOME_NAME[b].replace(/^The /,''):BIOME_NAME[b]}
 function selHero(i){const h=SEL.heroes[i];if(!h)return null;const d=h.data.p;return{cls:d.cls,look:d.look,gear:Object.assign({weapon:starterWeapon(d.cls),offhand:starterOffhand(d.cls)},d.gear||{}),bagSize:d.bagSize||20,level:d.level||1,spec:d.spec}}
-async function openSelect(){state='title';show('title');if(Account.mode==='online')await ensureProfile();$('acctLabel').textContent=Account.mode==='offline'&&!storageOK()?'Saving is blocked in this window. Open the game with Play Emberfall.':Account.label();$('btnAcct').textContent=Account.mode==='online'?'Sign out':'Sign in';
+async function openSelect(){state='title';show('title');if(Account.mode==='online'){await ensureProfile();netInit().catch(e=>console.error(e))}$('acctLabel').textContent=Account.mode==='offline'&&!storageOK()?'Saving is blocked in this window. Open the game with Play Emberfall.':Account.label();$('btnAcct').textContent=Account.mode==='online'?'Sign out':'Sign in';
   $('heroList').innerHTML='<div class="muted" style="padding:20px;text-align:center">Gathering your heroes…</div>';
   try{SEL.heroes=await Account.list()}catch(e){SEL.heroes=[];toast('Could not load heroes: '+e.message,'danger')}
   const last=fetchStore(LAST_KEY);SEL.idx=Math.max(0,SEL.heroes.findIndex(h=>h.id===last));renderSelect()}
@@ -2675,6 +2700,202 @@ function drawCampfire(c,x,y,sc,dt){const s=sc*.9;
   if(Math.random()<dt*28)SEL.embers.push({x:x+rand(-8,8)*s,y:y-10*s,vx:rand(-12,12),vy:-rand(40,90),life:rand(1.2,2.6),max:2.6});
   for(const e of SEL.embers){e.life-=dt;e.x+=(e.vx+Math.sin(rt*2+e.max*9)*14)*dt;e.y+=e.vy*dt;c.globalAlpha=Math.max(0,e.life/e.max);c.drawImage(glowSprite('#ffb050'),e.x-4,e.y-4,8,8)}
   SEL.embers=SEL.embers.filter(e=>e.life>0);c.restore();c.globalAlpha=1}
+// ================= Co-op: playing together in one world =================
+// The host's browser runs the world (monsters, loot, bosses). Guests run their own hero for instant response and send
+// what it does; the host sends back what happens. Browsers talk directly (WebRTC data channel); Supabase Realtime only
+// introduces them, and relays the game if a network blocks direct connections. Only accepted friends can join.
+const NET_VER=1,MAX_PARTY=4,SNAP_DT=1/12,ST_DT=1/15,TP_CD=30;
+const ICE=[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}];
+const Net={role:null,peers:new Map(),chan:null,out:new Map(),nid:0,ev:[],snapT:0,stT:0,heroT:0,heroSig:'',apT:0,corpVer:0,
+  host:null,hostZone:'over',hostQ:0,own:null,avatars:new Map(),invited:new Set(),asking:null,pendingHero:null,tpCd:0,
+  active(){return!!this.role},size(){return this.role==='host'?1+[...this.peers.values()].filter(p=>p.proxy&&!p.proxy.away).length:this.role==='guest'?1+this.avatars.size:1}};
+
+// ---- Signalling through Supabase Realtime (each player listens on their own channel)
+function rtSub(ch){return new Promise((ok,fail)=>{let done=false;ch.subscribe(s=>{if(done)return;if(s==='SUBSCRIBED'){done=true;ok()}else if(s==='CHANNEL_ERROR'||s==='TIMED_OUT'){done=true;fail(new Error('Could not reach the co-op service.'))}})})}
+async function netInit(){if(Account.mode!=='online'||Net.chan||!Account.user)return;const sb=await Account.client();
+  Net.chan=sb.channel('ef-u-'+Account.user.id,{config:{broadcast:{self:false}}});Net.chan.on('broadcast',{event:'m'},({payload})=>netSignal(payload));await rtSub(Net.chan)}
+async function sig(uid,msg){const sb=await Account.client();let ch=Net.out.get(uid);
+  if(!ch){ch=sb.channel('ef-u-'+uid,{config:{broadcast:{self:false}}});Net.out.set(uid,ch);await rtSub(ch)}
+  msg.from=Account.user.id;msg.fname=Friends.me?Friends.me.name:'?';msg.v=NET_VER;await ch.send({type:'broadcast',event:'m',payload:msg})}
+// The saved record of a hero (online: the account cache; offline: this browser).
+function heroRecord(id){return(Account.mode==='online'?Account.cache:allSaves().heroes).find(h=>h.id===id)}
+function isFriend(uid){return Friends.list.some(f=>f.id===uid&&f.status==='accepted')}
+function netSignal(m){if(!m||!isFriend(m.from))return;
+  if(m.v!==NET_VER){if(m.t==='join'||m.t==='invite')toast(`${m.fname} has a different game version. Both of you: reload the page.`,'danger');return}
+  switch(m.t){
+    case'invite':if(Net.role==='guest'&&Net.host&&Net.host.uid===m.from)return;netAsk(`${m.fname} invites you to their world.`,[['Join',()=>netJoin(m.from,m.fname,true)],['Not now',null]]);break;
+    case'join':onJoinRequest(m);break;
+    case'ok':if(Net.asking&&Net.asking.uid===m.from){Net.asking.ok=true;toast(`${m.fname} accepted. Connecting…`,'gold');netConnect(m.from,m.fname,m.seed)}break;
+    case'no':if(Net.asking&&Net.asking.uid===m.from){Net.asking=null;toast(m.why||`${m.fname} could not take you in right now.`,'danger')}break;
+    case'sdp':onSdp(m);break;
+    case'ice':{const pe=Net.peers.get(m.from);if(!pe)return;if(pe.pc&&pe.pc.remoteDescription)pe.pc.addIceCandidate(m.c).catch(()=>{});else(pe.iceQ=pe.iceQ||[]).push(m.c);break}
+    case'g':{let pe=Net.peers.get(m.from);if(!pe&&Net.role!=='guest'&&m.d&&m.d.t==='hello'){pe=newPeer(m.from,m.fname)}if(!pe)return;if(!pe.open){pe.relay=true;pe.open=true;clearTimeout(pe.fallT)}netData(pe,m.d);break}}}
+// A small box at the top of the screen that waits for an answer.
+function netAsk(text,btns,ms){const box=document.createElement('div');box.className='netask panel';box.innerHTML=`<div>${escapeHtml(text)}</div>`;const row=document.createElement('div');row.className='row';
+  const close=()=>{box.remove()};for(const[l,fn]of btns){const b=document.createElement('button');b.className='btn'+(fn?' primary':'');b.textContent=l;b.onclick=()=>{close();if(fn)fn()};row.appendChild(b)}
+  box.appendChild(row);$('netAsks').appendChild(box);sfx('quest');setTimeout(close,ms||30000)}
+
+// ---- Joining (guest side)
+function netJoin(uid,name,invited){if(Account.mode!=='online'&&!NETTEST){toast('Sign in online to play with friends.','danger');return}
+  if(Net.role){toast(Net.role==='guest'?'Leave your current party first (Esc menu).':'You are hosting friends right now.','danger');return}
+  let hero=null;if(state==='play'&&players[0]){save();hero={id:heroId}}else{const h=SEL.heroes[SEL.idx];if(!h){toast('Create a hero first.','danger');return}hero={id:h.id,data:h.data}}
+  Net.pendingHero=hero;Net.asking={uid,name,ok:false};sig(uid,{t:'join',invited:!!invited,hero:{name:(hero.data||{p:players[0]}).p.name,level:(hero.data||{p:players[0]}).p.level}}).catch(e=>toast(e.message,'danger'));
+  toast(`Asking ${name} to join their world…`);setTimeout(()=>{if(Net.asking&&Net.asking.uid===uid&&!Net.asking.ok){Net.asking=null;toast(`${name} did not answer.`,'danger')}},35000)}
+function newPeer(uid,name){const pe={uid,name,pc:null,dc:null,open:false,relay:false,proxy:null,iceQ:[]};Net.peers.set(uid,pe);return pe}
+async function netConnect(uid,name,seed){const pe=newPeer(uid,name);pe.seed=seed;const pc=pe.pc=new RTCPeerConnection({iceServers:ICE});
+  pc.onicecandidate=e=>{if(e.candidate)sig(uid,{t:'ice',c:e.candidate.toJSON()}).catch(()=>{})};
+  pc.onconnectionstatechange=()=>{if(pc.connectionState==='failed'&&!pe.relay&&pe.open)peerLost(pe)};
+  setupDC(pe,pc.createDataChannel('g',{ordered:true}));await pc.setLocalDescription(await pc.createOffer());await sig(uid,{t:'sdp',d:pc.localDescription.toJSON()});
+  // No direct connection within 9 s (strict network): play through the relay instead.
+  pe.fallT=setTimeout(()=>{if(!pe.open){pe.relay=true;pe.open=true;netSend(pe,{t:'hello',hero:heroNetData()})}},9000)}
+function setupDC(pe,dc){pe.dc=dc;dc.onopen=()=>{if(pe.relay)return;pe.open=true;clearTimeout(pe.fallT);if(Net.role!=='host'&&Net.asking)netSend(pe,{t:'hello',hero:heroNetData()})};
+  dc.onmessage=e=>{try{netData(pe,JSON.parse(e.data))}catch(err){console.error(err)}};dc.onclose=()=>{if(!pe.relay)peerLost(pe)}}
+function netSend(pe,m){if(!pe||!pe.open)return;if(pe.relay)sig(pe.uid,{t:'g',d:m}).catch(()=>{});else if(pe.dc&&pe.dc.readyState==='open')pe.dc.send(JSON.stringify(m))}
+function netAll(m){for(const pe of Net.peers.values())netSend(pe,m)}
+function heroNetData(){const p=players[0];if(state==='play'&&p)return{p:{name:p.name,cls:p.cls,look:p.look,level:p.level,gear:p.gear,attr:p.attr,talents:p.talents,spec:p.spec,skills:p.skills,bagSize:p.bagSize,home:p.home}};
+  const d=Net.pendingHero&&Net.pendingHero.data;return d?{p:d.p}:null}
+
+// ---- Hosting (host side)
+function onJoinRequest(m){const no=why=>sig(m.from,{t:'no',why}).catch(()=>{});
+  if(state!=='play'||!players[0])return no(`${Friends.me?Friends.me.name:'Your friend'} is not in a world right now.`);
+  if(Net.role==='guest')return no('They are visiting someone else right now.');
+  if(Net.size()>=MAX_PARTY)return no('Their world is full (4 players).');
+  const accept=()=>{Net.invited.delete(m.from);sig(m.from,{t:'ok',seed:WSEED}).catch(()=>{})};
+  if(m.invited&&Net.invited.has(m.from))accept();else netAsk(`${m.fname} (${escapeHtml(m.hero&&m.hero.name||'')}, level ${m.hero&&m.hero.level||'?'}) wants to join your world.`,[['Accept',accept],['Decline',()=>no(`${Friends.me?Friends.me.name:'Your friend'} declined.`)]])}
+function netInvite(uid,name){if(state!=='play'){toast('Enter your world first, then invite.','danger');return}if(Net.role==='guest'){toast('You are visiting someone else right now.','danger');return}
+  Net.invited.add(uid);sig(uid,{t:'invite'}).then(()=>toast(`Invitation sent to ${name}.`)).catch(e=>toast(e.message,'danger'))}
+async function onSdp(m){if(m.d.type==='offer'){if(state!=='play')return;let pe=Net.peers.get(m.from);if(pe&&pe.pc)pe.pc.close();pe=newPeer(m.from,m.fname);
+    const pc=pe.pc=new RTCPeerConnection({iceServers:ICE});pc.onicecandidate=e=>{if(e.candidate)sig(m.from,{t:'ice',c:e.candidate.toJSON()}).catch(()=>{})};pc.ondatachannel=e=>setupDC(pe,e.channel);
+    pc.onconnectionstatechange=()=>{if(pc.connectionState==='failed'&&!pe.relay)peerLost(pe)};
+    await pc.setRemoteDescription(m.d);for(const c of pe.iceQ)pc.addIceCandidate(c).catch(()=>{});pe.iceQ=[];await pc.setLocalDescription(await pc.createAnswer());await sig(m.from,{t:'sdp',d:pc.localDescription.toJSON()})}
+  else{const pe=Net.peers.get(m.from);if(!pe||!pe.pc)return;await pe.pc.setRemoteDescription(m.d);for(const c of pe.iceQ)pe.pc.addIceCandidate(c).catch(()=>{});pe.iceQ=[]}}
+function peerLost(pe){if(!Net.peers.has(pe.uid))return;Net.peers.delete(pe.uid);try{pe.pc&&pe.pc.close()}catch(e){}
+  if(Net.role==='host'){if(pe.proxy){players=players.filter(p=>p!==pe.proxy);for(const e of enemies)if(e.target===pe.proxy){e.target=null;e.returning=true}toast(`${pe.name} left your world.`)}
+    rescaleEnemies();if(!Net.peers.size)Net.role=null;renderParty()}
+  else if(Net.role==='guest')leaveParty(`The connection to ${pe.name}'s world was lost.`)}
+
+// ---- Messages
+function netData(pe,m){if(Net.role!=='guest'&&m.t==='hello')return hostHello(pe,m);
+  if(Net.role==='host'){const pr=pe.proxy;if(!pr)return;switch(m.t){
+    case'st':pr.x=m.x;pr.y=m.y;pr.aim=m.a;pr.walk=m.w;pr.hp=m.hp;pr.maxHp=m.mh;pr.dead=!!m.dd;pr.castAnim=m.ca||0;pr.mounted=!!m.mt;pr.mount=m.mt||pr.mount;pr.away=m.z!==zone.id;break;
+    case'cast':castRemote(pr,m.i,m.ax,m.ay);break;
+    case'hero':{const k={x:pr.x,y:pr.y,hp:pr.hp};Object.assign(pr,{level:m.p.level,gear:m.p.gear,attr:m.p.attr,talents:m.p.talents,spec:m.p.spec,skills:m.p.skills,bagSize:m.p.bagSize,look:m.p.look});pr.abil=abilList(pr);calcStats(pr);Object.assign(pr,k);break}
+    case'take':hostGiveLoot(pe,m.cid,m.did);break;
+    case'bye':peerLost(pe);break}return}
+  if(Net.role==='guest'||Net.asking){switch(m.t){
+    case'welcome':enterGuestWorld(pe,m);break;
+    case'snap':applySnap(m);break;
+    case'dmg':{const p=players[0];if(p&&!p.dead)dealDamage(p,m.d,null,{raw:1,slow:m.sl,slowF:m.sf,stun:m.st,knockFrom:m.kx!=null?{x:m.kx,y:m.ky}:null});break}
+    case'heal':{const p=players[0];if(p&&!p.dead)heal(p,m.a);break}
+    case'xp':if(players[0])gainXp(players[0],m.a);break;
+    case'kill':guestKillCredit(m.k);break;
+    case'got':guestGot(m.d);break;
+    case'setpos':{const p=players[0];if(p){p.x=m.x;p.y=m.y}break}
+    case'zone':Net.hostZone=m.id;netFollowZone(m.id,m.x,m.y);break;
+    case'bye':leaveParty(`${pe.name} left, so their world closed.`);break}}}
+function hostHello(pe,m){if(!m.hero||Net.size()>=MAX_PARTY){netSend(pe,{t:'bye'});return}Net.role='host';const h=players[0];
+  const pr=createPlayer(Object.assign({},m.hero.p,{x:h.x+rand(-40,40),y:h.y+rand(20,50)}));pr.isRemote=true;pr.uid=pe.uid;pr.id=pe.uid;pr.netName=pe.name;pr.x=h.x+rand(-40,40);pr.y=h.y+rand(20,50);
+  pe.proxy=pr;players.push(pr);rescaleEnemies();Net.corpVer++;Net.apT=0;
+  netSend(pe,{t:'welcome',seed:WSEED,q:quest.idx,zone:zone.id,x:pr.x,y:pr.y,host:Friends.me?Friends.me.name:h.name});toast(`${pe.name} joined your world!`,'gold');sfx('level');renderParty()}
+function enterGuestWorld(pe,m){Net.role='guest';Net.asking=null;Net.host={uid:pe.uid,name:pe.name,seed:m.seed};Net.hostQ=m.q;Net.hostZone=m.zone;
+  let data;if(Net.pendingHero.data)data=Net.pendingHero.data;else{const c=heroRecord(Net.pendingHero.id);data=c?c.data:{p:heroNetData().p}}
+  const id=Net.pendingHero.id;Net.own={x:data.p.x,y:data.p.y,loc:data.p.loc,explored:data.p.explored};
+  startGame(data,false,id);const p=players[0];if(m.zone!=='over')enterZone(m.zone,m.x,m.y);p.x=m.x;p.y=m.y;enemies=[];allies=[];
+  toast(`You entered ${pe.name}'s world. Press Esc to leave the party.`,'gold');sfx('level');renderParty()}
+function leaveParty(msg){const wasGuest=Net.role==='guest';netAll({t:'bye'});for(const pe of Net.peers.values()){try{pe.pc&&pe.pc.close()}catch(e){}}Net.peers.clear();
+  Net.avatars.clear();if(msg)toast(msg,'danger');
+  if(wasGuest&&state==='play'){save();const id=heroId,c=heroRecord(id);Net.role=null;Net.host=null;if(c)startGame(c.data,false,id);else openSelect()}
+  else{players=players.filter(p=>!p.isRemote);Net.role=null}renderParty()}
+addEventListener('beforeunload',()=>{if(Net.role)netAll({t:'bye'})});
+
+// ---- Host: remote heroes cast on the host so the hits are real
+function castRemote(p,i,ax,ay){const ab=p.abil[i];if(!ab||p.dead||p.away||p.level<UNLOCK[i])return;p.input.ax=ax;p.input.ay=ay;p.aim=Math.atan2(ay-p.y,ax-p.x);const x0=p.x,y0=p.y,base=p.stats.dmg;
+  p.stats.dmg=base*(1+(p.tm['a'+i]||0))*skillMult(p,i);try{ab.cast(p,ax,ay)}finally{p.stats.dmg=base}p.castAnim=.3;castFx(p,i);sfx(ab.sfx||CASTSFX[p.cls][i]);
+  if(Math.hypot(p.x-x0,p.y-y0)>4)netSend(Net.peers.get(p.uid),{t:'setpos',x:p.x,y:p.y})}
+// More players, tougher monsters: +60% health and +12% damage per extra hero.
+function partyMul(n){return{hp:1+.6*(n-1),dmg:1+.12*(n-1)}}
+function rescaleEnemies(){const n=Net.size();for(const e of enemies){const o=partyMul(e.pn||1),m=partyMul(n);e.maxHp=Math.round(e.maxHp*m.hp/o.hp);e.hp=Math.min(e.maxHp,e.hp*m.hp/o.hp);e.dmg*=m.dmg/o.dmg;e.pn=n}}
+function hostGiveLoot(pe,cid,did){const c=corpsesOf(zone).find(c=>c.id===cid);if(!c)return;const d=c.loot.find(d=>d.id===did);if(!d)return;
+  c.loot.splice(c.loot.indexOf(d),1);Net.corpVer++;netSend(pe,{t:'got',d});if(lootOpen===c)renderLoot()}
+function hostZoneChanged(id,x,y){if(Net.role==='host')netAll({t:'zone',id,x,y})}
+
+// ---- Guest: follow the host, take loot, get quest credit
+function netFollowZone(id,x,y){if(zone.id!==id)enterZone(id,x,y);const p=players[0];if(p){p.x=x+rand(-30,30);p.y=y+rand(10,40)}enemies=[];allies=[];projs=[];areas=[]}
+function guestKillCredit(type){if(quest.state!=='active')return;const q=QUESTS[quest.idx];if(q&&q.target.includes(type)){quest.prog++;if(quest.prog>=q.need){quest.state='ready';toast('Quest complete! Return to the Warden.','gold')}updateQuestUI()}}
+function guestGot(d){const p=players[0];if(!p)return;if(d.kind==='gold'){p.gold+=d.amount;sfx('gold')}else if(d.kind==='sup')addSup(p,d.sup,d.amount||1);else if(d.kind==='mat')p.mats[d.mat]=(p.mats[d.mat]||0)+d.amount;
+  else if(d.item){if(p.bag.length<p.bagSize)p.bag.push(d.item);sfx('loot',{rar:d.item.rar})}if(invOpen)renderInv()}
+// Guests save their own world position, not where they stand in a friend's world.
+function netSaveFix(d){if(Net.role==='guest'&&Net.own){d.p.x=Net.own.x;d.p.y=Net.own.y;d.p.loc=Net.own.loc;d.p.explored=Net.own.explored}return d}
+
+// ---- The steady stream: host sends snapshots (12/s), guests send their hero (15/s)
+function netTick(dt){if(!Net.role)return;const p=players[0];
+  if(Net.role==='guest'){Net.stT-=dt;const pe=[...Net.peers.values()][0];
+    if(pe&&Net.stT<=0&&p){Net.stT=ST_DT;netSend(pe,{t:'st',x:Math.round(p.x),y:Math.round(p.y),a:+p.aim.toFixed(2),w:+p.walk.toFixed(1),hp:Math.ceil(p.hp),mh:p.maxHp,dd:p.dead?1:0,ca:+(p.castAnim||0).toFixed(2),mt:p.mounted?p.mount:0,z:zone.id})}
+    Net.heroT-=dt;if(pe&&Net.heroT<=0&&p){Net.heroT=2;const h=heroNetData(),s=JSON.stringify([h.p.level,h.p.gear,h.p.attr,h.p.talents,h.p.spec]);if(s!==Net.heroSig){Net.heroSig=s;netSend(pe,{t:'hero',p:h.p})}}
+    guestLerp(dt);return}
+  Net.snapT-=dt;if(Net.snapT>0)return;Net.snapT=SNAP_DT;Net.apT-=SNAP_DT;
+  for(const pr of projs)if(!pr.sent){pr.sent=1;Net.ev.push({k:'p',x:Math.round(pr.x),y:Math.round(pr.y),vx:Math.round(pr.vx),vy:Math.round(pr.vy),c:pr.col,kd:pr.kind,r:pr.r,l:+pr.life.toFixed(2),s:pr.side,pi:pr.pierce||0,ex:pr.explode?pr.explode.r:0})}
+  for(const a of areas)if(!a.sent){a.sent=1;Net.ev.push({k:'a',x:Math.round(a.x),y:Math.round(a.y),r:a.r,dl:+a.delay.toFixed(2),du:a.dur,kd:a.kind,s:a.side,an:a.a,ln:a.len,f:a.follow&&a.follow.nid})}
+  const near=e=>{for(const q of players)if(!q.away&&Math.hypot(q.x-e.x,q.y-e.y)<1700)return true;return false};
+  const en=enemies.filter(e=>!e.dead&&near(e)).map(e=>[e.nid,e.type,Math.round(e.x),Math.round(e.y),+(e.aim||0).toFixed(2),+(e.walk||0).toFixed(1),Math.ceil(e.hp),e.maxHp,e.lvl,(e.boss?1:0)|(e.target?2:0)|(e.enraged?4:0)|(e.stunUntil>time?8:0)|(e.slowUntil>time?16:0)|(e.cursedUntil>time?32:0),e.atkT?Math.min(9,+(time-e.atkT).toFixed(2)):9]);
+  const al=allies.filter(a=>!a.dead).map(a=>[a.nid,a.kind,Math.round(a.x),Math.round(a.y),+(a.aim||0).toFixed(2),+(a.walk||0).toFixed(1),Math.ceil(a.hp),a.maxHp]);
+  const ap=Net.apT<=0;if(ap)Net.apT=2;
+  const pl=players.map(q=>({u:q.isRemote?q.uid:Account.user.id,n:q.isRemote?q.netName:(Friends.me?Friends.me.name:q.name),hn:q.name,x:Math.round(q.x),y:Math.round(q.y),a:+(q.aim||0).toFixed(2),w:+(q.walk||0).toFixed(1),hp:Math.ceil(q.hp),mh:q.maxHp,dd:q.dead?1:0,ca:+(q.castAnim||0).toFixed(2),mt:q.mounted?q.mount:0,z:q.away?'-':zone.id,lv:q.level,
+    ap:ap?{cls:q.cls,look:q.look,gear:q.gear,bagSize:q.bagSize,spec:q.spec}:undefined}));
+  const cv=Net.corpVer!==Net.sentCorp,cs=cv?corpsesOf(zone).map(c=>({id:c.id,x:Math.round(c.x),y:Math.round(c.y),u:{type:c.unit.type,name:c.unit.name,r:c.unit.r,h:c.unit.h,aim:c.unit.aim,boss:c.unit.boss},l:+(c.until-time).toFixed(1),lo:c.loot.map(d=>({id:d.id,kind:d.kind,amount:d.amount,mat:d.mat,sup:d.sup,item:d.item}))})):undefined;Net.sentCorp=Net.corpVer;
+  const ev=Net.ev;Net.ev=[];
+  for(const pe of Net.peers.values())if(pe.proxy)netSend(pe,{t:'snap',en,al,pl:pl.filter(x=>x.u!==pe.uid),ev,cs,q:quest.idx})}
+function applySnap(m){Net.hostQ=m.q;const same=zone.id===Net.hostZone;
+  // other heroes
+  const seen=new Set();for(const s of m.pl){seen.add(s.u);let a=Net.avatars.get(s.u);if(!a){a={uid:s.u,isAvatar:true,x:s.x,y:s.y,walk:0,aim:0,look:{},gear:{},cls:'paladin',bagSize:20,r:13,h:52};Net.avatars.set(s.u,a)}
+    Object.assign(a,{name:s.hn,netName:s.n,tx:s.x,ty:s.y,aim:s.a,walk:s.w,hp:s.hp,maxHp:s.mh,dead:!!s.dd,castAnim:s.ca,mounted:!!s.mt,mount:s.mt||a.mount,level:s.lv,away:s.z!==zone.id});if(s.ap)Object.assign(a,s.ap)}
+  for(const k of[...Net.avatars.keys()])if(!seen.has(k))Net.avatars.delete(k);
+  if(!same){enemies=[];allies=[];return}
+  // monsters and minions
+  const em=new Map(enemies.map(e=>[e.nid,e])),ne=[];
+  for(const s of m.en){let e=em.get(s[0]);const b=ETYPES[s[1]];if(!e){e={side:'enemy',nid:s[0],type:s[1],name:b.name,r:b.r,h:b.h,x:s[2],y:s[3],walk:0,aim:0,hitFx:{}}}
+    Object.assign(e,{tx:s[2],ty:s[3],aim:s[4],walk:s[5],hp:s[6],maxHp:s[7],lvl:s[8],boss:!!(s[9]&1),target:s[9]&2?true:null,enraged:!!(s[9]&4),stunUntil:s[9]&8?time+.2:0,slowUntil:s[9]&16?time+.2:0,cursedUntil:s[9]&32?time+.2:0,atkT:s[10]<9?time-s[10]:0});ne.push(e)}
+  enemies=ne;const am=new Map(allies.map(a=>[a.nid,a])),na=[];
+  for(const s of m.al){let a=am.get(s[0]);if(!a)a={side:'player',isAlly:true,nid:s[0],kind:s[1],x:s[2],y:s[3],r:s[1]==='wolf'?14:13,h:s[1]==='wolf'?30:48,walk:0,aim:0};Object.assign(a,{tx:s[2],ty:s[3],aim:s[4],walk:s[5],hp:s[6],maxHp:s[7]});na.push(a)}
+  allies=na;
+  // events: new spells, hits, deaths
+  for(const v of m.ev){if(v.k==='p')projs.push({x:v.x,y:v.y,vx:v.vx,vy:v.vy,col:v.c,kind:v.kd,r:v.r,life:v.l,side:v.s,pierce:v.pi,explode:v.ex?{r:v.ex,dmg:0}:null,hit:new Set(),net:1});
+    else if(v.k==='a'){const f=v.f!=null?enemies.find(e=>e.nid===v.f):null;areas.push(mkArea({x:v.x,y:v.y,r:v.r,delay:v.dl,dur:v.du,kind:v.kd,side:v.s,a:v.an,len:v.ln,follow:f}))}
+    else if(v.k==='h'){const e=enemies.find(e=>e.nid===v.n);if(e){e.hitFlash=.12;floatText(e.x,e.y-(e.h||40)*.6,v.c?v.d+'!':''+v.d,v.c?'#ffd84a':'#fff',v.c?20:15);hitSpark(e,v.col||'#fff3d0',v.c);sfx('hit')}}
+    else if(v.k==='m'){const e=enemies.find(e=>e.nid===v.n);if(e)floatText(e.x,e.y-(e.h||40)*.6,'Miss','#b8b8b8',13)}
+    else if(v.k==='d'){burst(v.x,v.y,v.b?'#cfe':'#a33',v.b?70:16,v.b?220:140);sfx(v.b?'bossdie':'die');if(v.b){shake=14;toast(v.n+' has fallen!','gold')}}
+    else if(v.k==='t')toast(v.s,v.c||'')}
+  // corpses (loot is taken through the host so nobody gets the same item twice)
+  if(m.cs){const z=zone;z.corpses=m.cs.map(c=>({id:c.id,x:c.x,y:c.y,unit:c.u,until:time+c.l,boss:c.u.boss,loot:c.lo}));if(lootOpen){const c=z.corpses.find(c=>c.id===lootOpen.id);if(c){lootOpen=c;renderLoot()}else closeLoot()}}}
+function guestLerp(dt){const k=Math.min(1,dt*12);for(const list of[enemies,allies,Net.avatars.values()])for(const u of list){if(u.tx==null)continue;if(Math.hypot(u.tx-u.x,u.ty-u.y)>300){u.x=u.tx;u.y=u.ty}else{u.x+=(u.tx-u.x)*k;u.y+=(u.ty-u.y)*k}}}
+
+// ---- Party frames: everyone in the world, their health, and teleport (also used when you die)
+function partyMembers(){if(Net.role==='host')return players.filter(p=>p.isRemote).map(p=>({uid:p.uid,name:p.netName,hero:p.name,level:p.level,cls:p.cls,hp:p.hp,maxHp:p.maxHp,dead:p.dead,away:p.away,x:p.x,y:p.y}));
+  if(Net.role==='guest')return[...Net.avatars.values()].map(a=>({uid:a.uid,name:a.netName,hero:a.name,level:a.level,cls:a.cls,hp:a.hp,maxHp:a.maxHp,dead:a.dead,away:a.away,x:a.tx,y:a.ty}));return[]}
+function teleportTo(uid,free){const m=partyMembers().find(q=>q.uid===uid),p=players[0];if(!m||!p)return;if(m.away||m.dead){toast(`You cannot reach ${m.name} right now.`,'danger');return}
+  if(!free){if(Net.tpCd>time){toast(`Teleport is ready in ${Math.ceil(Net.tpCd-time)} s.`);return}if(time-p.lastHurt<4){toast('You cannot teleport while fighting.','danger');return}Net.tpCd=time+TP_CD}
+  if(p.mounted)dismount(p,true);burst(p.x,p.y,'#9fd8ff',24,160);p.x=m.x+rand(-40,40);p.y=m.y+rand(20,50);sfx('blink');burst(p.x,p.y,'#9fd8ff',30,180);fx.push({k:'pillar',x:p.x,y:p.y,life:.8,max:.8,col:'#9fd8ff'})}
+let partyT=0;
+function renderParty(){const el=$('party');if(!el)return;const ms=partyMembers();el.classList.toggle('hidden',!ms.length);el.innerHTML=ms.map(m=>`<div class="pm${m.dead?' dead':''}"><div class="pmn"><span>${CLASSES[m.cls]?CLASSES[m.cls].icon:''} ${escapeHtml(m.name||m.hero||'')}</span><small>Lv ${m.level||'?'}${m.away?' · inside':''}</small>`+
+  `<button title="Teleport to ${escapeHtml(m.name||'')} (every ${TP_CD} s, not in combat)" data-tp="${m.uid}">⇢</button></div><div class="bar hp"><i style="width:${Math.max(0,m.hp/(m.maxHp||1)*100)}%"></i></div></div>`).join('');
+  for(const b of el.querySelectorAll('[data-tp]'))b.onclick=()=>teleportTo(b.dataset.tp)}
+
+// ---- Dying with friends around: return to town, or rise beside a living friend.
+function showDeathChoices(p){const el=$('deathBtns'),sub=$('death').querySelector('.sub');el.innerHTML='';const alive=partyMembers().filter(m=>!m.dead&&!m.away);
+  if(!alive.length){sub.textContent='Returning to '+homeCity(p).name+'…';return}p.deathT=25;sub.textContent='Choose where to rise.';
+  const b=(t,fn)=>{const x=document.createElement('button');x.className='btn';x.textContent=t;x.onclick=fn;el.appendChild(x)};
+  b('Return to '+homeCity(p).name,()=>{if(p.dead)respawn(p)});for(const m of alive)b('Rise beside '+(m.name||m.hero),()=>riseBeside(p,m.uid))}
+function riseBeside(p,uid){if(!p.dead)return;const m=partyMembers().find(q=>q.uid===uid);respawn(p);if(!m)return;if(Net.role==='guest'&&zone.id!==Net.hostZone)enterZone(Net.hostZone,m.x,m.y);teleportTo(uid,true)}
+// ================= Developer test mode for co-op =================
+// Open the game twice on this computer as index.html?nettest=a and index.html?nettest=b: the two tabs act as two
+// friends and introduce each other through the browser (no accounts needed). Ignored without the parameter.
+const NETTEST=(/[?&]nettest=(a|b)\b/.exec(location.search)||[])[1]||null;
+if(NETTEST){const me='test-'+NETTEST,other='test-'+(NETTEST==='a'?'b':'a'),bc=new BroadcastChannel('ef-nettest');
+  Account.user={id:me,email:'tester-'+NETTEST};Friends.me={id:me,name:'Tester'+NETTEST.toUpperCase()};
+  Friends.list=[{fid:1,id:other,name:'Tester'+(NETTEST==='a'?'B':'A'),status:'accepted',online:true,play:{hero:'?',party:1}}];
+  bc.onmessage=e=>{if(e.data.to===me)netSignal(e.data.m)};
+  sig=async(uid,msg)=>{msg.from=me;msg.fname=Friends.me.name;msg.v=NET_VER;bc.postMessage({to:uid,m:msg})};
+  netInit=async()=>{};document.title='Emberfall test '+NETTEST.toUpperCase()}
 ensureWorld(0);
 buildSprites();buildZoneSprites();startScreens();$('profClose').onclick=()=>toggleProf(false);requestAnimationFrame(frame);
 </script>

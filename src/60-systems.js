@@ -5,13 +5,14 @@ function buildZone(id){let z;if(id.startsWith('int_')){const b=zones.over.buildi
   z.terrain=genTerrain();return z}
 function enterZone(id,x,y){const prev=zone;if(prev){prev.enemies=enemies;prev.drops=drops}
   let z=zones[id];if(!z){z=zones[id]=buildZone(id)}useZone(z);
-  closeLoot();if(z.kind==='dungeon'&&(!z.enemies||z.needReset)){z.corpses=[];enemies=[];for(const s of z.spawns)spawnEnemy(s.type,s.x,s.y,s.lvl,{persist:true,dungeonBoss:s.boss});z.enemies=enemies;z.drops=[];z.needReset=false}
+  closeLoot();if(Net.role!=='guest'&&z.kind==='dungeon'&&(!z.enemies||z.needReset)){z.corpses=[];enemies=[];for(const s of z.spawns)spawnEnemy(s.type,s.x,s.y,s.lvl,{persist:true,dungeonBoss:s.boss});z.enemies=enemies;z.drops=[];z.needReset=false}
   enemies=z.enemies||[];drops=z.drops||[];projs=[];areas=[];fx=[];parts=[];texts=[];
   const sp=x!=null?{x,y}:z.start;for(const q of players){q.x=sp.x;q.y=sp.y;q.biome=undefined;if(q.mounted&&(z.kind==='interior'||z.kind==='dungeon'))dismount(q,true)}
   for(const a of allies){a.x=sp.x+rand(-30,30);a.y=sp.y+rand(-20,20);a.path=null}
   if(prev&&prev.kind==='dungeon'&&z.kind==='over')prev.needReset=true;
   sfx('door');if(z.kind!=='over')toast(z.name+(z.ent?` · level ${z.ent.lvl[0]}–${z.ent.lvl[1]}`:''),'gold');
   if(z.kind==='dungeon')toast('The bosses here drop gear made for your class and specialization.');
+  if(Net.role==='host'){const sp2=x!=null?{x,y}:z.start;hostZoneChanged(z.id,sp2.x,sp2.y)}
   if(z.dark&&players[0]&&!players[0].light)toast('It is dark down here. A torch from a General Store would help.','danger')}
 function interactables(p){const r=[];if(zone.id==='over'){r.push({o:warden,d:dist(p,warden),r:95,act:openDialog,own:true});r.push({o:merchant,d:dist(p,merchant),r:95,act:()=>openShop('tilda',null),own:true})}
   for(const n of zone.npcs||[])r.push(n.kind==='innkeeper'?{o:n,d:dist(p,n),r:100,label:'Talk to '+n.name,act:()=>innTalk(n)}:n.kind==='bard'?{o:n,d:dist(p,n),r:100,label:'Listen to '+n.name,act:()=>bardTalk(n)}:{o:n,d:dist(p,n),r:150,label:'Trade with '+n.name,act:()=>openShop(n.shop,n.building)});
@@ -20,7 +21,8 @@ function interactables(p){const r=[];if(zone.id==='over'){r.push({o:warden,d:dis
   for(const s of zone.signs||[])r.push({o:s,d:dist(p,s),r:80,label:'Read the waymark',act:()=>readSign(s)});
   for(const d of zone.doors||[])r.push({o:d,d:dist(p,d),r:75,label:d.label,act:()=>useDoor(d)});
   return r.filter(i=>i.d<i.r).sort((a,b)=>a.d-b.d)}
-function useDoor(d){if(d.to==='over')enterZone('over',d.tx,d.ty);else enterZone(d.to)}
+function useDoor(d){if(Net.role==='guest'&&!(d.to.startsWith('int_')||(d.to==='over'&&Net.hostZone==='over'))){toast(`${Net.host.name} leads the party through this door.`);return}
+  if(d.to==='over')enterZone('over',d.tx,d.ty);else enterZone(d.to)}
 function drawPrompt(){const p=players[0];if(!p||p.dead||isPaused())return;const it=interactables(p)[0];if(!it||it.own)return;const[sx,sy]=S(it.o.x,it.o.y);
   const txt='[E] '+it.label;ctx.font='bold 13px system-ui';const w=ctx.measureText(txt).width+16;ctx.fillStyle='rgba(15,12,9,.85)';rr(ctx,sx-w/2,sy-70,w,22,6);ctx.fill();ctx.strokeStyle='#6b5532';ctx.lineWidth=1;ctx.stroke();ctx.fillStyle='#fff3d0';ctx.textAlign='center';ctx.fillText(txt,sx,sy-54)}
 function edgeTile(x,y){for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,1]])if(!BLOCK.has(getT(x+dx,y+dy)))return true;return false}

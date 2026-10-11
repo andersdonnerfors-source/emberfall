@@ -24,7 +24,7 @@ const Friends={me:null,list:[],seen:new Set(),open:false,lastPoll:0,
   async remove(fid){const sb=await this.sb(),{error}=await sb.from('friendships').delete().eq('id',fid);if(error)throw error},
   // Tells friends you are online and what you are doing (every minute while signed in).
   async heartbeat(){if(Account.mode!=='online'||!this.me)return;const p=players[0];
-    const status=state==='play'&&p?{hero:p.name,level:p.level,cls:p.cls,where:zone.id==='over'?locName(p.x/TILE,p.y/TILE):zone.name}:{menu:true};
+    const status=state==='play'&&p?{hero:p.name,level:p.level,cls:p.cls,where:Net.role==='guest'?`in ${Net.host.name}'s world`:zone.id==='over'?locName(p.x/TILE,p.y/TILE):zone.name,guest:Net.role==='guest',party:Net.size()}:{menu:true};
     try{const sb=await this.sb();await sb.from('profiles').update({last_seen:new Date().toISOString(),status}).eq('id',Account.user.id)}catch(e){}}};
 setInterval(()=>{if(Account.mode==='online'&&Friends.me){Friends.heartbeat();Friends.refresh().then(()=>{if(Friends.open)renderFriends()}).catch(()=>{})}},45000);
 
@@ -53,7 +53,9 @@ function renderFriends(){const el=$('frList');if(!el)return;
       const btn=(t,fn,cls)=>{const b=document.createElement('button');b.textContent=t;if(cls)b.className=cls;b.onclick=async()=>{b.disabled=true;try{await fn()}catch(e){$('frMsg').textContent=e.message}await Friends.refresh().catch(()=>{});renderFriends()};row.appendChild(b)};
       if(f.incoming){btn('Accept',()=>Friends.accept(f.fid).then(()=>toast(`You and ${f.name} are now friends.`,'gold')));btn('Decline',()=>Friends.remove(f.fid),'ghost')}
       else if(f.outgoing)btn('Cancel',()=>Friends.remove(f.fid),'ghost');
-      else{const j=document.createElement('button');j.textContent='Join';j.disabled=true;j.title='Playing together comes in the next update.';row.appendChild(j);
+      else{const canJoin=f.online&&f.play.hero&&!f.play.guest&&(f.play.party||1)<MAX_PARTY,canInv=f.online&&state==='play'&&Net.role!=='guest';
+        if(canInv){const iv=document.createElement('button');iv.textContent='Invite';iv.onclick=()=>netInvite(f.id,f.name);row.appendChild(iv)}
+        const j=document.createElement('button');j.textContent='Join';j.disabled=!canJoin||(Net.role==='guest'&&Net.host&&Net.host.uid===f.id);j.title=canJoin?`Play in ${f.name}'s world`:f.play.guest?`${f.name} is visiting someone else`:`${f.name} is not in a world right now`;j.onclick=()=>{toggleFriends(false);netJoin(f.id,f.name,false)};row.appendChild(j);
         btn('✕',async()=>{if(confirm(`Remove ${f.name} from your friends?`))await Friends.remove(f.fid)},'ghost')}
       el.appendChild(row)}}}
 $('frAddBtn').onclick=async()=>{const n=$('frName').value.trim();$('frMsg').textContent='';if(!n)return;$('frAddBtn').disabled=true;

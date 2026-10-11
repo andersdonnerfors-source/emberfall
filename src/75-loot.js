@@ -3,7 +3,7 @@
 const LOOT_REACH=170,CORPSE_TIME=[120,180];
 function corpsesOf(z){return z.corpses||(z.corpses=[])}
 function makeCorpse(t){const before=drops.length;enemyDrops(t);matDrop(t);if(t.boss&&zone.kind==='dungeon')dungeonLoot(t);
-  const loot=drops.splice(before);corpsesOf(zone).push({x:t.x,y:t.y,unit:Object.assign({},t,{hitFlash:0,stunUntil:0,cursedUntil:0,slowUntil:0,charge:null}),loot,until:time+rand(CORPSE_TIME[0],CORPSE_TIME[1]),boss:t.boss})}
+  const loot=drops.splice(before);for(const d of loot)d.id=++Net.nid;Net.corpVer++;corpsesOf(zone).push({id:++Net.nid,x:t.x,y:t.y,unit:Object.assign({},t,{hitFlash:0,stunUntil:0,cursedUntil:0,slowUntil:0,charge:null}),loot,until:time+rand(CORPSE_TIME[0],CORPSE_TIME[1]),boss:t.boss})}
 function lootable(c){return c.loot.length>0}
 function corpseUnderMouse(){const p=players[0];if(!p||!zone)return null;let best=null,bd=40;for(const c of corpsesOf(zone)){if(!lootable(c))continue;const[sx,sy]=S(c.x,c.y),d=Math.hypot(mouse.x-sx,mouse.y-(sy-8));if(d<bd){bd=d;best=c}}return best}
 function inReach(p,c){return dist(p,c)<=LOOT_REACH}
@@ -13,6 +13,8 @@ function closeLoot(){lootOpen=null;$('loot').classList.add('hidden');hideTip()}
 function lootLabel(d){return d.kind==='gold'?`${d.amount} gold`:d.kind==='sup'?supName(d.sup):d.kind==='mat'?`${d.amount} ${MATS[d.mat].n}`:d.item.name}
 function lootIcon(d){return d.kind==='gold'?'🪙':d.kind==='sup'?supHtml(d.sup):d.kind==='mat'?MATS[d.mat].icon:itemIcon(d.item)}
 function takeLoot(d,quiet){const p=players[0],c=lootOpen;if(!c)return false;
+  if(Net.role==='guest'){if(d.item&&p.bag.length>=p.bagSize){toast('Your bag is full');return false}netSend([...Net.peers.values()][0],{t:'take',cid:c.id,did:d.id});c.loot.splice(c.loot.indexOf(d),1);return true}
+  Net.corpVer++;
   if(d.kind==='gold'){p.gold+=d.amount;if(!quiet)sfx('gold')}else if(d.kind==='sup')addSup(p,d.sup,d.amount||1);else if(d.kind==='mat')p.mats[d.mat]=(p.mats[d.mat]||0)+d.amount;
   else{if(p.bag.length>=p.bagSize){toast('Your bag is full');return false}p.bag.push(d.item);if(!quiet)sfx('loot',{rar:d.item.rar})}
   c.loot.splice(c.loot.indexOf(d),1);return true}
@@ -23,7 +25,7 @@ function renderLoot(){const c=lootOpen,el=$('lootList');if(!c)return;$('lootTitl
     row.innerHTML=`<span class="li">${lootIcon(d)}</span><span style="color:${col};flex:1">${lootLabel(d)}</span>`;
     if(d.item){row.onmouseenter=()=>showTip(itemTip(d.item,players[0].gear[d.item.slot]||null));row.onmouseleave=hideTip}
     row.onclick=()=>{if(takeLoot(d)){hideTip();if(!c.loot.length)closeLoot();else renderLoot();if(invOpen)renderInv();save()}};el.appendChild(row)}}
-function updateCorpses(){const z=zone;if(!z||!z.corpses)return;z.corpses=z.corpses.filter(c=>c.until>time);if(lootOpen){const p=players[0];if(!z.corpses.includes(lootOpen)||!p||p.dead||dist(p,lootOpen)>LOOT_REACH+60)closeLoot()}}
+function updateCorpses(){const z=zone;if(!z||!z.corpses)return;const n0=z.corpses.length;z.corpses=z.corpses.filter(c=>c.until>time);if(z.corpses.length!==n0)Net.corpVer++;if(lootOpen){const p=players[0];if(!z.corpses.includes(lootOpen)||!p||p.dead||dist(p,lootOpen)>LOOT_REACH+60)closeLoot()}}
 function drawCorpse(c){const u=c.unit,[sx,sy]=S(c.x,c.y),fade=Math.min(1,(c.until-time)/8);ctx.save();ctx.globalAlpha=.85*fade;softShadow(ctx,sx,sy,u.r*1.6,u.r*.6,.6);
   ctx.translate(sx,sy);ctx.rotate(Math.cos(u.aim||0)<0?-1.35:1.35);ctx.filter='grayscale(.45) brightness(.75)';
   const kind=u.type;try{if(kind==='wolf'||kind==='frostwolf'||kind==='greyfang'||kind==='rimeclaw'||kind==='direwolf')drawWolf(ctx,0,0,{s:kind==='greyfang'||kind==='rimeclaw'?1.8:1,aim:0,walk:0,col:kind==='frostwolf'||kind==='rimeclaw'?'#dfe8f0':'#7c7f86',eye:'#333'});
@@ -66,5 +68,5 @@ const SAVES_KEY='emberfall-saves-v2',MAX_HEROES=6;let heroId=null;
 function allSaves(){const s=fetchStore(SAVES_KEY)||{heroes:[]};if(!s.migrated){const old=fetchStore(SAVE_KEY);if(old&&old.p)s.heroes.push({id:'h'+Date.now(),t:Date.now(),data:old});s.migrated=true;store(SAVES_KEY,s)}return s}
 function writeHero(data){const s=allSaves();if(!heroId)heroId='h'+Date.now();if(!storageOK())return;const i=s.heroes.findIndex(h=>h.id===heroId),e={id:heroId,t:Date.now(),data};if(i>=0)s.heroes[i]=e;else s.heroes.push(e);store(SAVES_KEY,s)}
 function deleteHero(id){const s=allSaves();s.heroes=s.heroes.filter(h=>h.id!==id);store(SAVES_KEY,s)}
-function saveAndQuit(){save();toast('Game saved');pauseOpen=false;closeLoot();state='title';players=[];$('hud').classList.add('hidden');for(const id of['inv','tal','shop','dialog','prof','pause'])$(id).classList.add('hidden');invOpen=talOpen=shopOpen=dialogOpen=profOpen=false;useZone(zones.over);enemies=[];Account.flush();openSelect()}
+function saveAndQuit(){if(Net.role==='guest'){pauseOpen=false;$('pause').classList.add('hidden');leaveParty();return}if(Net.role==='host')leaveParty();save();toast('Game saved');pauseOpen=false;closeLoot();state='title';players=[];$('hud').classList.add('hidden');for(const id of['inv','tal','shop','dialog','prof','pause'])$(id).classList.add('hidden');invOpen=talOpen=shopOpen=dialogOpen=profOpen=false;useZone(zones.over);enemies=[];Account.flush();openSelect()}
 $('lootClose').onclick=closeLoot;$('lootAll').onclick=takeAll;

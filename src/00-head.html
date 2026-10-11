@@ -49,6 +49,13 @@ h2{margin:0 0 10px;color:var(--gold);font-weight:normal;letter-spacing:.05em}
 .badge{display:inline-block;min-width:16px;padding:0 5px;border-radius:9px;background:#c84a3a;color:#fff;font:bold 11px/16px system-ui,sans-serif;text-align:center;margin-left:4px}
 #namePick{position:fixed;inset:0;z-index:41;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center}
 #npName{width:100%;box-sizing:border-box;padding:10px;background:#15110d;color:var(--text);border:1px solid var(--line);border-radius:6px;font-family:inherit;font-size:16px}
+#netAsks{position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:45;display:flex;flex-direction:column;gap:8px;align-items:center}
+.netask{padding:12px 16px;text-align:center;min-width:280px;max-width:90vw}.netask .row{display:flex;gap:8px;justify-content:center;margin-top:10px}.netask .btn{min-width:0;margin:0;padding:7px 18px;font-size:15px}
+#party{position:absolute;left:14px;top:150px;width:210px;display:flex;flex-direction:column;gap:6px;pointer-events:auto}
+.pm{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:5px 8px}.pm.dead{opacity:.5}
+.pmn{display:flex;align-items:center;gap:6px;font-size:13px}.pmn span{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pmn small{color:var(--muted);font-size:11px}
+.pmn button{background:none;border:1px solid var(--line);color:var(--text);border-radius:5px;cursor:pointer;font-size:12px;padding:0 6px}.pmn button:hover{border-color:var(--gold)}
+.pm .bar{height:6px;margin-top:4px}
 #confirm{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center}
 .cfbox{width:min(420px,92vw);padding:20px 22px}.cfbox p{line-height:1.5}.cfbox .row{display:flex;gap:8px;margin-top:14px;justify-content:flex-end}.cfbox .btn{min-width:0}
 @media (max-width:700px){#selPanel{top:auto;bottom:90px;transform:none;width:auto;left:12px;max-height:40vh}#selBottom{left:50%}.logo{font-size:34px}}
@@ -182,12 +189,14 @@ h2{margin:0 0 10px;color:var(--gold);font-weight:normal;letter-spacing:.05em}
     <div class="gold"><span>🪙 <span id="hGold">0</span></span><span id="pts" class="hidden"></span><span class="badge hidden" id="frBadge2" title="Friend requests (O)"></span></div>
     <div id="buffs"></div>
   </div>
+  <div id="party" class="hidden"></div>
   <div id="right"><canvas id="mini" width="200" height="200" class="panel"></canvas><div id="quest" class="panel"></div></div>
   <div id="bossbar" class="hidden"><div id="bossName"></div><div class="bar boss"><i id="bossF"></i></div></div>
   <div id="abar"></div>
   <div id="hint">WASD / arrows: move · Mouse: aim · Left click: attack · Right click / 1–4: abilities · Q: heal potion · Z: mana potion · X: eat · E: talk, trade, enter · F: mount · H: teleport home · N: world map · O: friends · I: character · T: talents · P: professions · Esc: pause</div>
 </div>
 <div id="toasts"></div>
+<div id="netAsks"></div>
 
 <div id="login" class="screen hidden">
   <div class="logo">EMBERFALL<small>A tale of the Westmark</small></div>
@@ -267,7 +276,7 @@ h2{margin:0 0 10px;color:var(--gold);font-weight:normal;letter-spacing:.05em}
   <p>You arrive in Emberfall at dusk, a stranger with a weapon and nothing to lose. Old Warden Bram is waiting by the fire.</p>
   <div class="row"><button class="btn primary" id="btnIntro">Begin</button></div></div></div>
 <div id="victory" class="screen hidden"><h1 style="color:var(--gold);font-size:56px;margin:0;font-weight:normal;letter-spacing:.06em">Victory</h1><div class="sub" id="vicText" style="max-width:560px;line-height:1.6"></div><button class="btn primary" id="btnVic">Keep exploring</button></div>
-<div id="death" class="screen hidden"><h1>You have fallen</h1><div class="sub">Returning to Emberfall…</div></div>
+<div id="death" class="screen hidden"><h1>You have fallen</h1><div class="sub">Returning to Emberfall…</div><div id="deathBtns" class="row" style="flex-wrap:wrap;justify-content:center"></div></div>
 <div id="pause" class="screen hidden"><h1>Paused</h1><button class="btn primary" id="btnResume">Resume</button><button class="btn" id="btnSaveG">Save game</button><button class="btn" id="btnSet2">Settings</button><button class="btn" id="btnQuit">Save &amp; quit to menu</button><button class="btn" id="btnNew2">New hero</button></div>
 <div id="settings" class="screen hidden"><div class="panel" style="width:min(440px,100%);padding:20px 24px">
   <h2>Settings</h2>

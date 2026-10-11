@@ -3,7 +3,7 @@ const VISION=480;// how far your character can see (world pixels)
 const FOGS=2;// tiles per fog cell
 // ---- Exploration: each zone remembers which cells you have seen
 function fogOf(z){if(!z.fog){const w=Math.ceil(z.MW/FOGS),h=Math.ceil(z.MH/FOGS);const cv=document.createElement('canvas');cv.width=w;cv.height=h;const g=cv.getContext('2d');g.fillStyle='#07070a';g.fillRect(0,0,w,h);
-  z.fog={w,h,grid:new Uint8Array(w*h),cv,g};if(z.kind==='interior')revealAll(z);const saved=players[0]&&players[0].explored&&players[0].explored[z.id];if(saved)unpackFog(z,saved)}return z.fog}
+  z.fog={w,h,grid:new Uint8Array(w*h),cv,g};if(z.kind==='interior')revealAll(z);const saved=Net.role!=='guest'&&players[0]&&players[0].explored&&players[0].explored[z.id];if(saved)unpackFog(z,saved)}return z.fog}
 function revealCell(f,i){if(f.grid[i])return;f.grid[i]=1;f.g.clearRect(i%f.w,Math.floor(i/f.w),1,1)}
 function revealAll(z){const f=z.fog;for(let i=0;i<f.grid.length;i++)revealCell(f,i)}
 function revealAround(p){const f=fogOf(zone),r=(zone.dark?Math.min(VISION,lightRadius(p)+80):VISION)/TILE/FOGS,cx=p.x/TILE/FOGS,cy=p.y/TILE/FOGS;

@@ -1,5 +1,5 @@
 // ================= Helpers =================
-function friendlies(){const r=[];for(const p of players)if(!p.dead)r.push(p);for(const a of allies)if(!a.dead)r.push(a);return r}
+function friendlies(){const r=[];for(const p of players)if(!p.dead&&!p.away)r.push(p);for(const a of allies)if(!a.dead)r.push(a);return r}
 function inRadius(list,x,y,r){return list.filter(e=>!e.dead&&Math.hypot(e.x-x,e.y-y)<=r+e.r)}
 function wrapA(a){while(a>Math.PI)a-=TAU;while(a<-Math.PI)a+=TAU;return a}
 function mkArea(o){return Object.assign({t:0,delay:0,dur:0,tick:0,nt:0,tickDmg:0},o,{delay0:o.delay||0})}
@@ -8,10 +8,10 @@ function burst(x,y,col,n,spd){for(let i=0;i<n;i++){const a=rand(0,TAU),s=rand(.2
 function floatText(x,y,txt,col,size){texts.push({x:x+rand(-8,8),y,z:44,txt,col,size:size||15,life:1})}
 function toast(msg,cls){const d=document.createElement('div');d.className='toast '+(cls||'');d.textContent=msg;const tc=$('toasts');tc.appendChild(d);while(tc.children.length>4)tc.firstChild.remove();setTimeout(()=>d.remove(),3500)}
 function swing(u,a,col,r){fx.push({k:'swing',x:u.x,y:u.y,a,life:.18,max:.18,col,r:r||60})}
-function heal(t,amt,silent){const b=t.hp;t.hp=Math.min(t.maxHp,t.hp+amt);const g=Math.round(t.hp-b);if(g>=1&&!silent)floatText(t.x,t.y,'+'+g,'#7dff7a',14)}
+function heal(t,amt,silent){if(t.isRemote){if(!t.away&&!t.dead)netSend(Net.peers.get(t.uid),{t:'heal',a:Math.round(amt)});return}const b=t.hp;t.hp=Math.min(t.maxHp,t.hp+amt);const g=Math.round(t.hp-b);if(g>=1&&!silent)floatText(t.x,t.y,'+'+g,'#7dff7a',14)}
 function melee(p,a,range,arc,dmg,o){for(const e of enemies){if(e.dead)continue;const d=dist(p,e);if(d>range+e.r)continue;if(Math.abs(wrapA(Math.atan2(e.y-p.y,e.x-p.x)-a))>arc/2&&d>e.r+p.r)continue;dealDamage(e,dmg,p,o);if(o.knock&&!e.boss)moveEnt(e,Math.cos(a)*o.knock,Math.sin(a)*o.knock)}}
 function explosion(x,y,r,dmg,src,side){sfx('boom');const list=side==='player'?enemies:friendlies();for(const t of inRadius(list,x,y,r))dealDamage(t,dmg,src,{});burst(x,y,'#ffae4a',24,260);boomFx(x,y,r,'#ff9a3a');shake=Math.max(shake,7)}
-function summon(p,kind,x,y,dur,temp){const w=kind==='wolf';sfx('summon');const a={side:'player',isAlly:true,kind,owner:p,temp:!!temp,x,y,r:w?14:13,maxHp:Math.round(p.maxHp*(w?.6:.4)*(p.petMult||1)),dmg:p.stats.dmg*(w?.75:.55)*(p.petMult||1),speed:w?205:150,range:26,atkCd:w?.8:1,cd:0,until:time+dur,walk:0,aim:0,h:w?30:48};a.hp=a.maxHp;allies.push(a);burst(x,y,w?'#cfd8e0':'#9fffaa',20,100);return a}
+function summon(p,kind,x,y,dur,temp){const w=kind==='wolf';sfx('summon');const a={side:'player',isAlly:true,kind,owner:p,temp:!!temp,x,y,r:w?14:13,maxHp:Math.round(p.maxHp*(w?.6:.4)*(p.petMult||1)),dmg:p.stats.dmg*(w?.75:.55)*(p.petMult||1),speed:w?205:150,range:26,atkCd:w?.8:1,cd:0,until:time+dur,walk:0,aim:0,h:w?30:48};a.hp=a.maxHp;a.nid=++Net.nid;allies.push(a);burst(x,y,w?'#cfd8e0':'#9fffaa',20,100);return a}
 function xpNeed(l){return Math.round(70*Math.pow(l,1.7))}
 
 // ================= Items =================
@@ -53,6 +53,7 @@ function chooseSpec(p,key){p.spec=key;p.abil=abilList(p);calcStats(p);buildAbar(
 function useAbility(p,i){const ab=p.abil[i];if(p.level<UNLOCK[i])return;if(p.cds[i]>0||p.stunUntil>time)return;const cost=abilCost(p,i);
   if(p.mana<cost){if(i>0&&rt>noManaT){noManaT=rt+1;floatText(p.x,p.y-30,'Not enough mana','#8fb8ff',13)}return}
   if(p.mounted||p.mountCast>0)dismount(p,true);
+  if(Net.role==='guest'){netSend([...Net.peers.values()][0],{t:'cast',i,ax:Math.round(p.input.ax),ay:Math.round(p.input.ay)});p.mana-=cost;p.cds[i]=p.cdMax[i]=abilCd(p,i);p.castAnim=.3;castFx(p,i);if(i===0)trainSkill(p,wtypeOf(p),.12);else trainSkill(p,'spell',.25);sfx(ab.sfx||CASTSFX[p.cls][i]);return}
   const base=p.stats.dmg;p.stats.dmg=base*(1+(p.tm['a'+i]||0))*skillMult(p,i);const r=ab.cast(p,p.input.ax,p.input.ay);p.stats.dmg=base;
   if(r===false)return;p.mana-=cost;p.cds[i]=p.cdMax[i]=abilCd(p,i);p.castAnim=.3;castFx(p,i);if(i===0)trainSkill(p,wtypeOf(p),.12);else trainSkill(p,'spell',.25);sfx(ab.sfx||CASTSFX[p.cls][i])}
 const CASTSFX={paladin:['swing','bash','holy','holy','shieldup'],sorcerer:['fire','frost','blink','fire','meteor'],hunter:['arrow','arrow','trap','howl','arrow'],necromancer:['shadow','summon','drain','curse','bone']};
@@ -67,12 +68,13 @@ function updatePlayer(p,dt){p.playT=(p.playT||0)+dt;
   p.mana=Math.min(p.maxMana,p.mana+p.stats.mregen*dt);
   if(time-p.lastHurt>5&&p.hp<p.maxHp)p.hp=Math.min(p.maxHp,p.hp+p.maxHp*.03*dt);
   if(i.fire)useAbility(p,0);for(let k=1;k<6;k++)if(i.abil[k])useAbility(p,k);i.abil.fill(false)}
-function respawn(p){p.dead=false;p.hp=p.maxHp;p.mana=p.maxMana;const hs=homeSpot(p);if(zone.id!=='over')enterZone('over',hs.x,hs.y);p.x=hs.x;p.y=hs.y;p.gold=Math.floor(p.gold*.9);p.invulnUntil=time+2;$('death').classList.add('hidden');for(const e of enemies)if(e.target===p){e.target=null;e.returning=true}}
+function respawn(p){$('deathBtns').innerHTML='';p.dead=false;p.hp=p.maxHp;p.mana=p.maxMana;const hs=homeSpot(p);if(zone.id!=='over')enterZone('over',hs.x,hs.y);p.x=hs.x;p.y=hs.y;p.gold=Math.floor(p.gold*.9);p.invulnUntil=time+2;$('death').classList.add('hidden');for(const e of enemies)if(e.target===p){e.target=null;e.returning=true}}
 
 // ================= Enemies =================
 function spawnEnemy(type,x,y,lvl,extra){const b=ETYPES[type],m=1+.45*(lvl-1),dm=1+.3*(lvl-1);
   const e=Object.assign({side:'enemy',type,name:b.name,x,y,hx:x,hy:y,r:b.r,h:b.h,lvl,maxHp:Math.round(b.hp*m),dmg:b.dmg*dm,speed:b.speed,range:b.range,atkCd:b.atkCd,cd:rand(.3,1),
     xp:Math.round(b.xp*(1+.35*(lvl-1))),ranged:!!b.ranged,windupT:b.windup||0,boss:!!b.boss,hitFx:b.hitFx||{},aggroR:b.boss?440:320,walk:0,aim:0,wander:0,wdx:0,wdy:0,pat:2,lastSummon:-99},extra||{});
+  e.nid=++Net.nid;e.pn=Net.size();if(e.pn>1){const m=partyMul(e.pn);e.maxHp=Math.round(e.maxHp*m.hp);e.dmg*=m.dmg}
   e.hp=e.maxHp;enemies.push(e);return e}
 function updateEnemy(e,dt){
   e.cd-=dt;if(e.charge){doCharge(e,dt);return}
@@ -128,15 +130,18 @@ function updateAlly(a,dt){if(time>a.until||a.hp<=0||a.owner.dead){a.dead=true;bu
   else{const d=dist(a,o);if(d>80){navMove(a,o.x,o.y,a.speed*dt*(d>300?1.6:1));a.walk+=dt*12;a.aim=Math.atan2(o.y-a.y,o.x-a.x)}if(d>900){a.x=o.x+rand(-30,30);a.y=o.y+rand(-30,30)}}}
 
 // ================= Combat =================
-function dealDamage(t,amt,src,o){if(t.dead)return;if(t.invulnUntil>time){if(rt>(t.immT||0)){t.immT=rt+.4;floatText(t.x,t.y-20,'Immune','#ffe9a0',13)}return}
+function dealDamage(t,amt,src,o){o=o||{};if(t.dead)return;if(t.invulnUntil>time){if(rt>(t.immT||0)){t.immT=rt+.4;floatText(t.x,t.y-20,'Immune','#ffe9a0',13)}return}
+  if(Net.role==='guest'&&!o.raw)return;// guests only show spells; the host decides what hits
+  if(t.isRemote){if(t.away)return;let d=amt*(t.cursedUntil>time?1.4:1)*100/(100+t.stats.armor);d=Math.max(1,Math.round(d));t.hp=Math.max(1,t.hp-d);t.hitFlash=.12;floatText(t.x,t.y-30,''+d,'#ff6a5a',15);
+    netSend(Net.peers.get(t.uid),{t:'dmg',d,sl:o.slow,sf:o.slowF,st:o.stun,kx:o.knockFrom?o.knockFrom.x:null,ky:o.knockFrom?o.knockFrom.y:null});return}
   let d=amt,crit=false;if(t.cursedUntil>time)d*=1.4;
   // Your attacks (and your minions') can miss higher-level monsters. Crits only happen at 75%+ hit chance.
   const own=src&&(src.isPlayer?src:src.owner&&src.owner.isPlayer?src.owner:null);
   if(own&&t.side==='enemy'){const hc=hitChance(own,t);
-    if(Math.random()>hc){if(!t.target&&!src.dead){t.target=own;t.returning=false}if(rt>(t.missT||0)){t.missT=rt+.25;floatText(t.x,t.y-(t.h||40)*.6,'Miss','#b8b8b8',13)}return}
+    if(Math.random()>hc){if(!t.target&&!src.dead){t.target=own;t.returning=false}if(rt>(t.missT||0)){t.missT=rt+.25;floatText(t.x,t.y-(t.h||40)*.6,'Miss','#b8b8b8',13);if(Net.role)Net.ev.push({k:'m',n:t.nid})}return}
     if(hc>=CRIT_MIN_HIT&&Math.random()<own.stats.crit){d*=1.75;crit=true}}
   if(t.isPlayer&&t.eat){t.eat=null;floatText(t.x,t.y-50,'Meal interrupted','#ffb08a',12)}
-  if(t.isPlayer)d*=100/(100+t.stats.armor);d=Math.max(1,Math.round(d));
+  if(t.isPlayer&&!o.raw)d*=100/(100+t.stats.armor);d=Math.max(1,Math.round(d));if(Net.role==='host'&&t.side==='enemy')Net.ev.push({k:'h',n:t.nid,d,c:crit?1:0,col:o.hc});
   t.hp-=d;t.hitFlash=.12;t.lastHurt=time;if(t.isPlayer&&(t.mounted||t.mountCast>0)&&!(t.fly&&!free(t.x,t.y,t.r)))dismount(t,true);if(t.isPlayer&&t.hearthCast>0){t.hearthCast=0;toast('Teleport interrupted!')}
   floatText(t.x,t.y-(t.h||40)*.6,(crit?d+'!':''+d),t.side==='player'?'#ff6a5a':crit?'#ffd84a':'#fff',crit?20:15);
   if(t.side==='enemy'&&own)hitSpark(t,o.hc||weaponCol(own),crit);else if(t.isPlayer)sparks(t.x,t.y,26,'#ff5a4a',5,120,.25);
@@ -151,15 +156,16 @@ function dealDamage(t,amt,src,o){if(t.dead)return;if(t.invulnUntil>time){if(rt>(
   if(t.hp<=0)kill(t,src)}
 function kill(t){t.dead=true;
   if(t.side==='enemy'){sfx(t.boss?'bossdie':'die');burst(t.x,t.y,t.boss?'#cfe':'#a33',t.boss?70:16,t.boss?220:140);
-    {let shown=0;for(const p of players)if(!p.dead){const xp=xpFor(p,t);gainXp(p,xp);p.kills=(p.kills||0)+1;shown=xp}floatText(t.x,t.y-(t.h||40),'+'+shown+' XP',shown<t.xp*.5?'#8a8a8a':'#c9a6ff',13)}makeCorpse(t);if(t.cellRef){t.cellRef.alive=null;t.cellRef.pending=time+rand(120,180)}
+    {let shown=0;for(const p of players)if(!p.dead){const xp=xpFor(p,t);if(p.isRemote){if(!p.away)netSend(Net.peers.get(p.uid),{t:'xp',a:xp})}else{gainXp(p,xp);p.kills=(p.kills||0)+1;shown=xp}}
+      if(Net.role==='host'){netAll({t:'kill',k:t.type});Net.ev.push({k:'d',x:Math.round(t.x),y:Math.round(t.y),b:t.boss?1:0,n:t.name})}floatText(t.x,t.y-(t.h||40),'+'+shown+' XP',shown<t.xp*.5?'#8a8a8a':'#c9a6ff',13)}makeCorpse(t);if(t.cellRef){t.cellRef.alive=null;t.cellRef.pending=time+rand(120,180)}
     if(quest.state==='active'){const q=QUESTS[quest.idx];if(q&&q.target.includes(t.type)){quest.prog++;if(quest.prog>=q.need){quest.state='ready';toast('Quest complete! Return to the Warden.','gold')}updateQuestUI()}}
     if(t.boss){toast(t.name+' has fallen!','gold');shake=14;for(const e of enemies)if(e.persist&&!e.boss&&dist(e,t)<700)e.target=e.target}
-  }else if(t.isPlayer){sfx('death');t.dead=true;t.deathT=4;t.deaths=(t.deaths||0)+1;t.hearthCast=0;deathPenalty(t);burst(t.x,t.y,'#a22',30,120);$('death').classList.remove('hidden');for(const a of allies)if(a.owner===t)a.until=0}
+  }else if(t.isPlayer){sfx('death');t.dead=true;t.deathT=4;t.deaths=(t.deaths||0)+1;t.hearthCast=0;deathPenalty(t);burst(t.x,t.y,'#a22',30,120);$('death').classList.remove('hidden');showDeathChoices(t);for(const a of allies)if(a.owner===t)a.until=0}
   else burst(t.x,t.y,'#ccc',12,80)}
 function enemyDrops(e){const b=e.boss;const drop=(kind,extra)=>drops.push(Object.assign({kind,x:e.x+rand(-26,26),y:e.y+rand(-18,18),t:rand(0,6)},extra));
   if(b||Math.random()<.5)drop('gold',{amount:Math.max(1,Math.round(rand(1.5,4)*e.lvl*(b?20:1)))});
   const pot=()=>drop('sup',{sup:(Math.random()<.65?'hp':'mp')+potTier(e.lvl),amount:1});if(Math.random()<(b?1:.05))pot();if(b)pot();
-  const cls=players[0]?players[0].cls:'paladin';
+  const cls=players.length?pick(players).cls:'paladin';// shared loot: items fit a random hero in the party
   const lb=1+(players[0]?players[0].lootBonus||0:0);
   // Quest bosses: one boss roll (epic or better at most 18%, the Barrow King 50%) plus one bonus item that is never above rare.
   if(b&&zone.kind!=='dungeon'){drop('item',{item:genItem(e.lvl+1,0,cls,null,e.type==='barrowking'?RAR_W.finalBoss:RAR_W.boss)});drop('item',{item:genItem(e.lvl,0,cls,null,RAR_W.bonus)})}
@@ -175,29 +181,32 @@ function pickupDrops(){for(const d of drops){if(d.dead)continue;for(const p of p
 
 // ================= Update =================
 function update(dt){time+=dt;
-  for(const p of players){if(p.id===0)readInput(p);updatePlayer(p,dt)}
-  for(const a of allies)if(!a.dead)updateAlly(a,dt);
+  const GU=Net.role==='guest';
+  for(const p of players){if(p.isRemote){p.castAnim=Math.max(0,(p.castAnim||0)-dt);continue}if(p.id===0)readInput(p);updatePlayer(p,dt)}
+  if(!GU){for(const a of allies)if(!a.dead)updateAlly(a,dt);
   for(const e of enemies)if(!e.dead)updateEnemy(e,dt);
-  separate();
+  separate()}
   for(const pr of projs){if(pr.dead)continue;pr.life-=dt;pr.x+=pr.vx*dt;pr.y+=pr.vy*dt;
     if(PBLOCK.has(tileAt(pr.x,pr.y))){projEnd(pr);continue}
-    const list=pr.side==='player'?enemies:friendlies();
+    if(GU){const hitList=pr.side==='player'?enemies:[players[0],...Net.avatars.values()];for(const t of hitList)if(t&&!t.dead&&Math.hypot(t.x-pr.x,t.y-pr.y)<(t.r||13)+pr.r&&!pr.hit.has(t)){pr.hit.add(t);if(pr.pierce>0)pr.pierce--;else{projEnd(pr);break}}}
+    const list=GU?[]:pr.side==='player'?enemies:friendlies();
     for(const t of list){if(t.dead||pr.hit.has(t))continue;if(Math.hypot(t.x-pr.x,t.y-pr.y)<t.r+pr.r){pr.hit.add(t);dealDamage(t,pr.dmg,pr.src,Object.assign({hc:pr.col},pr.fx));if(pr.explode){projEnd(pr);break}if(pr.pierce>0)pr.pierce--;else{projEnd(pr);break}}}
     if(!pr.dead&&pr.life<=0)projEnd(pr);
     if(!pr.dead){(pr.tr||(pr.tr=[])).push(pr.x,pr.y);if(pr.tr.length>16)pr.tr.splice(0,2);
       if(pr.kind==='orb')for(let k=0;k<(pr.side==='player'?2:1);k++)parts.push({x:pr.x+rand(-3,3),y:pr.y+rand(-3,3),z:22+rand(-3,3),vx:rand(-25,25)-pr.vx*.08,vy:rand(-25,25)-pr.vy*.08,vz:rand(-10,25),life:.35,max:.35,col:pr.col,size:rand(1.6,3.2),gl:true})}}
   for(const a of areas){if(a.dead)continue;if(a.follow){a.x=a.follow.x;a.y=a.follow.y}
-    if(a.delay>0){a.delay-=dt;if(a.delay<=0){if(a.side==='enemy'&&a.burst)sfx('slam');if(a.burst){const list=a.side==='player'?enemies:friendlies();for(const t of inRadius(list,a.x,a.y,a.r))dealDamage(t,a.burst.dmg,a.src,Object.assign({hc:AREA_COL[a.kind]},a.burst))}if(a.onBurst)a.onBurst(a)}continue}
+    if(GU){if(a.delay>0){a.delay-=dt;if(a.delay<=0){if(a.side==='enemy')sfx('slam');fx.push({k:'ring',x:a.x,y:a.y,r:a.r,life:.3,max:.3,col:a.side==='enemy'?'#ffb080':'#ffe0a0'});if(a.kind==='boulder'){shake=8;burst(a.x,a.y,'#8a7a5a',30,200)}}continue}}
+    else if(a.delay>0){a.delay-=dt;if(a.delay<=0){if(a.side==='enemy'&&a.burst)sfx('slam');if(a.burst){const list=a.side==='player'?enemies:friendlies();for(const t of inRadius(list,a.x,a.y,a.r))dealDamage(t,a.burst.dmg,a.src,Object.assign({hc:AREA_COL[a.kind]},a.burst))}if(a.onBurst)a.onBurst(a)}continue}
     a.t+=dt;const list=a.side==='player'?enemies:friendlies();
-    if(a.kind==='trap'&&inRadius(enemies,a.x,a.y,a.r).length){for(const t of inRadius(enemies,a.x,a.y,85))dealDamage(t,a.trapDmg,a.src,{stun:2});burst(a.x,a.y,'#c8b890',26,180);fx.push({k:'ring',x:a.x,y:a.y,r:85,life:.3,max:.3,col:'#e8d8a0'});a.dead=true;continue}
-    if(a.tick&&a.tickDmg){a.nt-=dt;if(a.nt<=0){a.nt=a.tick;for(const t of inRadius(list,a.x,a.y,a.r))dealDamage(t,a.tickDmg,a.src,Object.assign({hc:AREA_COL[a.kind]},a.tickFx));if(a.healTick)for(const q of inRadius(friendlies(),a.x,a.y,a.r))heal(q,a.healTick)}}
+    if(!GU&&a.kind==='trap'&&inRadius(enemies,a.x,a.y,a.r).length){for(const t of inRadius(enemies,a.x,a.y,85))dealDamage(t,a.trapDmg,a.src,{stun:2});burst(a.x,a.y,'#c8b890',26,180);fx.push({k:'ring',x:a.x,y:a.y,r:85,life:.3,max:.3,col:'#e8d8a0'});a.dead=true;continue}
+    if(!GU&&a.tick&&a.tickDmg){a.nt-=dt;if(a.nt<=0){a.nt=a.tick;for(const t of inRadius(list,a.x,a.y,a.r))dealDamage(t,a.tickDmg,a.src,Object.assign({hc:AREA_COL[a.kind]},a.tickFx));if(a.healTick)for(const q of inRadius(friendlies(),a.x,a.y,a.r))heal(q,a.healTick)}}
     if(a.kind==='blizzard')for(let k=0;k<3;k++){const an=rand(0,TAU),rr2=Math.sqrt(Math.random())*a.r;parts.push({x:a.x+Math.cos(an)*rr2,y:a.y+Math.sin(an)*rr2,z:120,vx:rand(-60,-20),vy:0,vz:-200,life:.6,max:.6,col:'#f0f8ff',size:2.5,ng:true})}
     if(a.kind==='plague'&&Math.random()<.7){const an=rand(0,TAU),rr2=Math.sqrt(Math.random())*a.r;parts.push({x:a.x+Math.cos(an)*rr2,y:a.y+Math.sin(an)*rr2,z:4,vx:0,vy:0,vz:30,life:1,max:1,col:Math.random()<.5?'#8aff6a':'#b06aff',size:3,ng:true})}
     if(a.kind==='rain')for(let k=0;k<3;k++){const an=rand(0,TAU),rr2=Math.sqrt(Math.random())*a.r;parts.push({x:a.x+Math.cos(an)*rr2,y:a.y+Math.sin(an)*rr2,z:160,vx:0,vy:0,vz:-700,life:.25,max:.25,col:'#e8dcc0',size:1.5,streak:true,ng:true})}
     if(a.kind==='holy'&&Math.random()<.5){const an=rand(0,TAU),rr2=Math.sqrt(Math.random())*a.r;parts.push({x:a.x+Math.cos(an)*rr2,y:a.y+Math.sin(an)*rr2,z:2,vx:0,vy:0,vz:60,life:.8,max:.8,col:'#ffe08a',size:2,ng:true})}
     if(a.kind==='meteor'&&Math.random()<.6){const an=rand(0,TAU),rr2=Math.sqrt(Math.random())*a.r;parts.push({x:a.x+Math.cos(an)*rr2,y:a.y+Math.sin(an)*rr2,z:2,vx:0,vy:0,vz:50,life:.6,max:.6,col:'#ff7a2a',size:3,ng:true})}
     if(a.t>=a.dur)a.dead=true}
-  pickupDrops();updateCorpses();fogTick(dt);
+  if(!GU)pickupDrops();updateCorpses();fogTick(dt);
   for(const q of parts){q.life-=dt;q.x+=q.vx*dt;q.y+=q.vy*dt;q.z+=q.vz*dt;if(!q.ng)q.vz-=320*dt;if(q.z<0){q.z=0;q.vz*=-.3;q.vx*=.6;q.vy*=.6}}
   for(const t of texts){t.life-=dt;t.z+=40*dt}
   for(const f of fx)f.life-=dt;
@@ -205,9 +214,9 @@ function update(dt){time+=dt;
   enemies=enemies.filter(e=>!e.dead&&!e.remove);allies=allies.filter(a=>!a.dead);projs=projs.filter(p=>!p.dead);areas=areas.filter(a=>!a.dead);
   parts=parts.filter(q=>q.life>0);texts=texts.filter(t=>t.life>0);fx=fx.filter(f=>f.life>0);drops=drops.filter(d=>!d.dead);
   if(parts.length>1400)parts.splice(0,parts.length-1400);
-  spawner(dt);questTick();
+  if(!GU){spawner(dt);questTick()}else updateBarrowGate();netTick(dt);
   saveT+=dt;if(saveT>15){saveT=0;save()}}
-function projEnd(pr){if(pr.dead)return;pr.dead=true;if(pr.explode)explosion(pr.x,pr.y,pr.explode.r,pr.explode.dmg,pr.src,pr.side);else burst(pr.x,pr.y,pr.col,6,80)}
+function projEnd(pr){if(pr.dead)return;pr.dead=true;if(pr.explode&&Net.role==='guest'){boomFx(pr.x,pr.y,pr.explode.r,'#ff9a3a');shake=Math.max(shake,5)}else if(pr.explode)explosion(pr.x,pr.y,pr.explode.r,pr.explode.dmg,pr.src,pr.side);else burst(pr.x,pr.y,pr.col,6,80)}
 function separate(){const list=[...players.filter(p=>!p.dead),...allies,...enemies];for(let i=0;i<list.length;i++){const a=list[i];for(let j=i+1;j<list.length;j++){const b=list[j];const dx=b.x-a.x,dy=b.y-a.y,m=a.r+b.r;if(Math.abs(dx)>m||Math.abs(dy)>m)continue;const d=Math.hypot(dx,dy);if(d>0&&d<m){const p=(m-d)/2,nx=dx/d,ny=dy/d;const fa=a.isPlayer?.3:1,fb=b.isPlayer?.3:1;moveEnt(a,-nx*p*fa,-ny*p*fa);moveEnt(b,nx*p*fb,ny*p*fb)}}}}
 // Each region follows the story: Meadows → Gloomwood → Frostfells → Sunscar → Mirefen → Barrow-downs.
 // Monsters get stronger the deeper you go into a region.
@@ -230,13 +239,13 @@ function spawnSite(boss){const ok=(x,y)=>free(x,y,16);const ring=(type,c,n,r,lvl
     barrowking:()=>{const c=tw(BARROW);spawnEnemy('barrowking',c.x,c.y,15,{persist:true});ring('wight',c,4,150,13);sfx('roar');toast('A cold voice echoes from the barrow…')}};
   if(S2[boss])S2[boss]()}
 // Once the Lamp burns again (the Barrow King quest is reached), the ward breaks and the barrow gate opens.
-function updateBarrowGate(){const z=zones.over;if(!z||z.gateOpen||quest.idx<8||!z.barrowGate)return;z.gateOpen=true;for(const i of z.barrowGate)z.map[i]=T.PATH;
+function updateBarrowGate(){const z=zones.over,qi=Net.role==='guest'?Net.hostQ:quest.idx;if(!z||z.gateOpen||qi<8||!z.barrowGate)return;z.gateOpen=true;for(const i of z.barrowGate)z.map[i]=T.PATH;
   if(z.terrain)for(const i of z.barrowGate)z.terrain.chunks.delete(Math.floor(i%z.MW/TCH)+','+Math.floor(i/z.MW/TCH));if(zone===z&&rt>5)toast('Far away, the ward on the barrow-downs shatters. The way to the Barrow King is open.','gold')}
 function questTick(){updateBarrowGate();const p=players[0];if(!p||quest.state!=='active'||zone.id!=='over')return;const q=QUESTS[quest.idx];if(!q||!q.boss||flags['site'+quest.idx])return;
   if(Math.hypot(p.x/TILE-q.site.x,p.y/TILE-q.site.y)<22){flags['site'+quest.idx]=true;spawnSite(q.boss)}}
 
 // ================= Input =================
-function readInput(p){const i=p.input;i.mx=((keys.KeyD||keys.ArrowRight)?1:0)-((keys.KeyA||keys.ArrowLeft)?1:0);i.my=((keys.KeyS||keys.ArrowDown)?1:0)-((keys.KeyW||keys.ArrowUp)?1:0);i.ax=mouse.x+camX;i.ay=mouse.y/TILT+camY;i.fire=mouse.l}
+function readInput(p){const i=p.input;if(isPaused()){i.mx=i.my=0;i.fire=false;return}i.mx=((keys.KeyD||keys.ArrowRight)?1:0)-((keys.KeyA||keys.ArrowLeft)?1:0);i.my=((keys.KeyS||keys.ArrowDown)?1:0)-((keys.KeyW||keys.ArrowUp)?1:0);i.ax=mouse.x+camX;i.ay=mouse.y/TILT+camY;i.fire=mouse.l}
 addEventListener('keydown',e=>{if(storyOpen){if(e.code==='Enter'||e.code==='Escape'){if(!$('intro').classList.contains('hidden'))$('btnIntro').click();else $('btnVic').click()}return}if(e.target.tagName==='INPUT'){if(e.code==='Enter'&&state==='creator')beginGame();return}keys[e.code]=true;if(state!=='play')return;
   const p=players[0];if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code))e.preventDefault();
   if(e.code==='Escape'){if(Friends.open){toggleFriends(false);return}if(mapOpen)toggleMap(false);else if(lootOpen)closeLoot();else if(profOpen)toggleProf(false);else if(invOpen)toggleInv(false);else if(talOpen)toggleTal(false);else if(shopOpen)closeShop();else if(dialogOpen)closeDialog();else togglePause();return}
@@ -330,7 +339,7 @@ function drawUnit(u){let[sx,sy]=S(u.x,u.y);softShadow(ctx,sx,sy,u.r*1.5,u.r*.62)
     ctx.fillStyle=players[0]?lvlColor(players[0],u.lvl):'#eee';ctx.font='bold 10px system-ui';ctx.textAlign='center';ctx.fillText('Lv '+u.lvl,sx,y0-3)}
   drawAwareness(u,sx,sy);
   if(u.isAlly){const w=28,y0=sy-u.h-10;ctx.fillStyle='rgba(0,0,0,.6)';ctx.fillRect(sx-w/2-1,y0-1,w+2,5);ctx.fillStyle='#5ac85a';ctx.fillRect(sx-w/2,y0,w*Math.max(0,u.hp/u.maxHp),3)}}
-function drawPlayer(p){if(p.dead)return;const[sx,sy]=S(p.x,p.y);softShadow(ctx,sx,sy,20,8);
+function drawPlayer(p){if(p.dead||p.away||(p.isAvatar&&!(p.look&&p.look.skin)))return;const[sx,sy]=S(p.x,p.y);softShadow(ctx,sx,sy,20,8);
   const o=playerLook(p);o.aim=p.aim;o.aimS=aimScreen(p.aim);o.walk=p.walk;const moved=p.walk!==p._lw;p._lw=p.walk;p._mv=moved?.15:Math.max(0,(p._mv||0)-1/60);o.moving=p._mv>0&&!p.mounted;o.atk=(p.castAnim||0)/.3;let seat=0;
   if(p.mounted){drawMount(ctx,p.mount,sx,sy,p.aim,p.walk);seat=mountSeat(p.mount)+(p.mount==='dragon'?Math.sin(rt*3)*3:0);o.walk=0}
   if(p.mountCast>0){ctx.fillStyle='rgba(0,0,0,.6)';ctx.fillRect(sx-20,sy+10,40,5);ctx.fillStyle='#e8c26a';ctx.fillRect(sx-20,sy+10,40*(1-p.mountCast),5)}
@@ -504,7 +513,7 @@ function render(){
   for(const d of drops)if(inView(d,80))dl.push([d.y,()=>drawDrop(d)]);
   {const pv=players[0];for(const e of enemies)if(inView(e,150)){const a=pv&&!pv.dead&&state==='play'?visAlpha(pv,e):1;if(a>0)dl.push([e.y,()=>{ctx.globalAlpha=a;drawUnit(e);ctx.globalAlpha=1}])}}
   for(const a of allies)if(inView(a,100))dl.push([a.y,()=>drawUnit(a)]);
-  for(const p of players)dl.push([p.y,()=>drawPlayer(p)]);
+  for(const p of players)dl.push([p.y,()=>drawPlayer(p)]);for(const a of Net.avatars.values())dl.push([a.y,()=>drawPlayer(a)]);
   if(zone.id==='over'&&inView(warden,150))dl.push([warden.y,drawWarden]);
   if(zone.id==='over'&&inView(merchant,150))dl.push([merchant.y,drawMerchant]);
   for(const pr of projs)if(inView(pr,60))dl.push([pr.y+2,()=>drawProj(pr)]);
@@ -552,6 +561,7 @@ function updateHud(){const p=players[0];if(!p)return;
   {const h=$('hearthSlot');if(h){const cd=Math.max(0,(p.hearthCd||0)-time);h.children[2].style.height=(p.hearthCast>0?(1-p.hearthCast/HEARTH_CAST)*100:cd/HEARTH_CD*100)+'%';h.children[2].style.background=p.hearthCast>0?'rgba(120,200,255,.5)':'rgba(0,0,0,.68)';h.children[3].textContent=cd>0?Math.ceil(cd)+'':''}}
   let boss=null,bd=900;for(const e of enemies)if(e.boss&&e.target&&dist(e,p)<bd){bd=dist(e,p);boss=e}
   const bb=$('bossbar');if(boss){bb.classList.remove('hidden');$('bossName').textContent=boss.name+' · Level '+boss.lvl+(boss.enraged?' · ENRAGED':'');$('bossF').style.width=(boss.hp/boss.maxHp*100)+'%'}else bb.classList.add('hidden');
+  partyT-=1/60;if(partyT<=0){partyT=.25;renderParty()}
   drawMini()}
 function updateQuestUI(){const q=QUESTS[quest.idx],el=$('quest');
   if(!q||quest.state==='done'){el.innerHTML='<b>The road goes on</b><br>All quests complete. Roam the wilds, grow stronger and hunt for gear. More adventures are coming.';return}
@@ -637,7 +647,7 @@ function drawMerchant(){const[sx,sy]=S(merchant.x,merchant.y);const p=players[0]
   const b=Math.sin(rt*3)*3;ctx.font='20px system-ui';ctx.textAlign='center';ctx.fillText('🪙',sx,sy-70+b);ctx.font='12px Georgia';ctx.fillStyle='#e8dcb8';ctx.fillText('Tilda the Trader',sx,sy-56);
   if(p&&!p.dead&&dist(p,merchant)<95&&!shopOpen&&!(dist(p,warden)<95)){ctx.font='bold 13px system-ui';ctx.fillStyle='#fff';ctx.fillText('[E] Trade',sx,sy+22)}}
 function toggleInv(v){invOpen=v===undefined?!invOpen:v;if(invOpen){talOpen=false;$('tal').classList.add('hidden');closeShop()}$('inv').classList.toggle('hidden',!invOpen);hideTip();if(invOpen){mouse.l=false;renderInv()}}
-function togglePause(){pauseOpen=!pauseOpen;$('pause').classList.toggle('hidden',!pauseOpen);mouse.l=false;if(pauseOpen)save()}
+function togglePause(){$('btnQuit').textContent=Net.role==='guest'?'Leave party':Net.role==='host'?'Save & quit (ends the party)':'Save & quit to menu';pauseOpen=!pauseOpen;$('pause').classList.toggle('hidden',!pauseOpen);mouse.l=false;if(pauseOpen)save()}
 function openDialog(){const q=QUESTS[quest.idx];dialogOpen=true;$('dWho').textContent='Old Warden Bram';mouse.l=false;$('dialog').classList.remove('hidden');const btns=$('dBtns');btns.innerHTML='';
   const btn=(txt,fn,pri)=>{const b=document.createElement('button');b.className='btn'+(pri?' primary':'');b.textContent=txt;b.onclick=fn;btns.appendChild(b)};$('dGoal').textContent='';
   if(!q||quest.state==='done'){$('dTitle').textContent='Peace, for now';$('dText').textContent='The lamps burn again, thanks to you. But the world is wide, and darker things stir beyond the hills. Rest, grow stronger, and be ready. More adventures are coming.';btn('Farewell',closeDialog,true);return}
@@ -651,7 +661,7 @@ function closeDialog(){dialogOpen=false;$('dialog').classList.add('hidden')}
 
 // ================= Save =================
 const SAVE_KEY='emberfall-save-v1';
-function save(){const p=players[0];if(!p||state!=='play')return;storeExplored(p);Account.write(heroId,{p:{name:p.name,loc:zone.id==='over'?locName(p.x/TILE,p.y/TILE):zone.name,cls:p.cls,look:p.look,level:p.level,xp:p.xp,gold:p.gold,sup:p.sup,buffs:p.buffs,gear:p.gear,bag:p.bag,attr:p.attr,points:p.points,talents:p.talents,tpoints:p.tpoints,spec:p.spec,shop:p.shop,skills:p.skills,prof:p.prof,mats:p.mats,mounts:p.mounts,mount:p.mount,light:p.light,bagSize:p.bagSize,lootBonus:p.lootBonus,bagName:p.bagName,home:p.home,explored:p.explored,ws:OW,seed:p.seed,kills:p.kills,deaths:p.deaths,playT:p.playT,x:p.dead||zone.id!=='over'?0:p.x,y:p.dead||zone.id!=='over'?0:p.y},quest})}
+function save(){const p=players[0];if(!p||state!=='play')return;storeExplored(p);Account.write(heroId,netSaveFix({p:{name:p.name,loc:zone.id==='over'?locName(p.x/TILE,p.y/TILE):zone.name,cls:p.cls,look:p.look,level:p.level,xp:p.xp,gold:p.gold,sup:p.sup,buffs:p.buffs,gear:p.gear,bag:p.bag,attr:p.attr,points:p.points,talents:p.talents,tpoints:p.tpoints,spec:p.spec,shop:p.shop,skills:p.skills,prof:p.prof,mats:p.mats,mounts:p.mounts,mount:p.mount,light:p.light,bagSize:p.bagSize,lootBonus:p.lootBonus,bagName:p.bagName,home:p.home,explored:p.explored,ws:OW,seed:p.seed,kills:p.kills,deaths:p.deaths,playT:p.playT,x:p.dead||zone.id!=='over'?0:p.x,y:p.dead||zone.id!=='over'?0:p.y},quest}))}
 
 // ================= Screens =================
 const LOOKS={skin:['#f6d5b8','#f1c9a5','#d9a47a','#b47a52','#8a5a3a','#5e3d26'],hair:['#1e1510','#4a2e1a','#6b4423','#c9a25a','#e8d8b0','#d8d4cc','#8a2d1c','#3a4a6a'],
@@ -676,7 +686,7 @@ function drawPreview(){const c=$('prev').getContext('2d');c.clearRect(0,0,260,28
   const o=playerLook({cls:cr.cls,look:cr.look});o.s=2.6;o.aim=Math.sin(rt*.8)*.6;o.aimS=o.aim;o.walk=rt*4;drawHumanoid(c,130,236,o)}
 function show(id){for(const s of['login','title','creator','death','pause'])$(s).classList.toggle('hidden',s!==id)}
 function resetWorld(){if(zones.over&&zones.over.gateOpen){for(const i of zones.over.barrowGate)zones.over.map[i]=T.WALL;zones.over.gateOpen=false;zones.over.terrain.chunks.clear()}for(const d of zones.over.decor)delete d.next;for(const k in zones)if(k!=='over')delete zones[k];zones.over.fog=null;zones.over.cells=null;zones.over.corpses=[];for(const b of zones.over.buildings)b.stock=null;zones.over.enemies=[];zones.over.drops=[];useZone(zones.over);enemies=[];allies=[];projs=[];areas=[];parts=[];texts=[];drops=[];fx=[];players=[];flags={};time=0}
-function startGame(data,isNew,id){heroId=id||Account.newId();ensureWorld(data.p.seed||0);resetWorld();closeLoot();quest=data.quest||{idx:0,state:'offer',prog:0};const p=createPlayer(data.p);p.id=0;players=[p];
+function startGame(data,isNew,id){heroId=id||Account.newId();ensureWorld(Net.role==='guest'?Net.host.seed:data.p.seed||0);resetWorld();closeLoot();quest=data.quest||{idx:0,state:'offer',prog:0};const p=createPlayer(data.p);p.id=0;players=[p];
   state='play';show(null);$('hud').classList.remove('hidden');buildAbar(p);updateQuestUI();invOpen=dialogOpen=pauseOpen=talOpen=shopOpen=storyOpen=false;for(const id of['inv','tal','shop','dialog','intro','victory'])$(id).classList.add('hidden');
   if(isNew)showStory('intro',true);save()}
 function beginGame(){const name=($('nameIn').value||'').trim().slice(0,16)||pick(NAMES);startGame({p:{name,cls:cr.cls,look:Object.assign({},cr.look),seed:newWorldSeed()}},true)}
@@ -705,7 +715,7 @@ let last=performance.now();
 // One frame. If anything throws, keep the loop alive and show the error instead of freezing the game.
 let errT=0;function frame(now){try{frameStep(now)}catch(e){console.error(e);if(rt>errT){errT=rt+5;toast('Something went wrong: '+e.message,'danger')}}requestAnimationFrame(frame)}
 function frameStep(now){const dt=Math.min(.05,(now-last)/1000);last=now;rt+=dt;
-  if(state==='play'&&!isPaused())update(dt);
+  if(state==='play'&&(!isPaused()||Net.role))update(dt);
   const p=players[0];let tx,ty;
   if(state==='play'&&p){tx=p.x-W/2;ty=p.y-H/2/TILT}else{tx=(VC.x+.5)*TILE+Math.cos(rt*.06)*380-W/2;ty=(VC.y+.5)*TILE+Math.sin(rt*.06)*300-H/2/TILT}
   const zw=MW*TILE,zh=MH*TILE;camX=zw<W?(zw-W)/2:clamp(tx,0,zw-W);camY=zh<H/TILT?(zh-H/TILT)/2:clamp(ty,0,zh-H/TILT);
