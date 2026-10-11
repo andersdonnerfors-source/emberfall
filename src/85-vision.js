@@ -29,10 +29,13 @@ function aggroRange(e,t){const d=clamp(e.lvl-viewerLevel(t),-5,6),night=zone&&zo
 function alertRate(e,t,dd,range){const d=e.lvl-viewerLevel(t);let r=1/1.15;r*=d>0?1+.35*d:1/(1+.22*-d);return r*(1+.8*(1-dd/range))}
 function senseTargets(e,dt){let best=null,bd=1e9,br=0;for(const t of friendlies()){const d=dist(e,t),r=aggroRange(e,t);if(d<r&&d<bd&&(zone.kind!=='over'||lineClear(e.x,e.y,t.x,t.y,PBLOCK)||d<120)){bd=d;best=t;br=r}}
   if(best){e.alert=(e.alert||0)+dt*alertRate(e,best,bd,br);if(e.alert>=1){e.target=best;e.alert=0;e.aggroFlash=time+.7;if(best.isPlayer)sfx('enemyshot')}}else e.alert=Math.max(0,(e.alert||0)-dt*.6)}
-function drawAwareness(u,sx,sy){if(u.side!=='enemy')return;const y=sy-u.h-28;
-  if(u.aggroFlash>time){ctx.font='bold 20px Georgia';ctx.textAlign='center';ctx.fillStyle='rgba(0,0,0,.6)';ctx.fillText('!',sx+1,y+1);ctx.fillStyle='#ff4a3a';ctx.fillText('!',sx,y)}
-  else if(!u.target&&u.alert>0){ctx.font='bold 18px Georgia';ctx.textAlign='center';ctx.fillStyle='rgba(0,0,0,.55)';ctx.fillText('?',sx+1,y+1);ctx.fillStyle=`rgb(255,${Math.round(230-150*u.alert)},${Math.round(80-60*u.alert)})`;ctx.fillText('?',sx,y);
-    ctx.fillStyle='rgba(0,0,0,.6)';ctx.fillRect(sx-12,y+4,24,3);ctx.fillStyle='#ffb03a';ctx.fillRect(sx-12,y+4,24*u.alert,3)}}
+// A "!" warns while a monster is noticing you (amber → red as it fills), then pulses big and red when it attacks.
+function awarenessMark(u,now){if(u.side!=='enemy')return null;
+  if(u.aggroFlash>now){const el=now-(u.aggroFlash-.7);return{ch:'!',col:'#ff4a3a',size:Math.round(20+8*Math.max(0,1-el/.3)),bar:null}}
+  if(!u.target&&u.alert>0){const a=Math.min(1,u.alert);return{ch:'!',col:`rgb(255,${Math.round(200-126*a)},${Math.round(60-2*a)})`,size:18,bar:u.alert}}return null}
+function drawAwareness(u,sx,sy){const m=awarenessMark(u,time);if(!m)return;const y=sy-u.h-28;
+  ctx.font=`bold ${m.size}px Georgia`;ctx.textAlign='center';ctx.fillStyle='rgba(0,0,0,.6)';ctx.fillText(m.ch,sx+1,y+1);ctx.fillStyle=m.col;ctx.fillText(m.ch,sx,y);
+  if(m.bar!=null){ctx.fillStyle='rgba(0,0,0,.6)';ctx.fillRect(sx-12,y+4,24,3);ctx.fillStyle='#ffb03a';ctx.fillRect(sx-12,y+4,24*m.bar,3)}}
 // ---- World map (N or click the minimap)
 let mapOpen=false;
 function toggleMap(v){mapOpen=v===undefined?!mapOpen:v;$('worldmap').classList.toggle('hidden',!mapOpen);if(mapOpen){mouse.l=false;drawWorldMap()}}

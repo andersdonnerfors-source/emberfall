@@ -1,3 +1,4 @@
 # Notes and temporary files
 *.tmp
 *.log
+.superpowers/
