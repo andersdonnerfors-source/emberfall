@@ -12,19 +12,19 @@ function openLoot(c){const p=players[0];if(!inReach(p,c)){floatText(p.x,p.y-40,'
 function closeLoot(){lootOpen=null;$('loot').classList.add('hidden');hideTip()}
 function lootLabel(d){return d.kind==='gold'?`${d.amount} gold`:d.kind==='sup'?supName(d.sup):d.kind==='mat'?`${d.amount} ${MATS[d.mat].n}`:d.item.name}
 function lootIcon(d){return d.kind==='gold'?'🪙':d.kind==='sup'?supHtml(d.sup):d.kind==='mat'?MATS[d.mat].icon:itemIcon(d.item)}
-function takeLoot(d,quiet){const p=players[0],c=lootOpen;if(!c)return false;
-  if(Net.role==='guest'){if(d.item&&p.bag.length>=p.bagSize){toast('Your bag is full');return false}netSend([...Net.peers.values()][0],{t:'take',cid:c.id,did:d.id});c.loot.splice(c.loot.indexOf(d),1);return true}
+function takeLoot(c,d,quiet){const p=players[0];if(!c)return false;
+  if(Net.role==='guest'){if(d.item&&p.bag.length>=p.bagSize){if(!quiet)toast('Your bag is full');return false}Loot.pending.add(d.id);netSend([...Net.peers.values()][0],{t:'take',cid:c.id,did:d.id});c.loot.splice(c.loot.indexOf(d),1);return true}
   Net.corpVer++;
   if(d.kind==='gold'){p.gold+=d.amount;if(!quiet)sfx('gold')}else if(d.kind==='sup')addSup(p,d.sup,d.amount||1);else if(d.kind==='mat')p.mats[d.mat]=(p.mats[d.mat]||0)+d.amount;
   else{if(p.bag.length>=p.bagSize){toast('Your bag is full');return false}p.bag.push(d.item);if(!quiet)sfx('loot',{rar:d.item.rar})}
   c.loot.splice(c.loot.indexOf(d),1);return true}
-function takeAll(){const c=lootOpen;if(!c)return;let any=false;for(const d of[...c.loot])if(takeLoot(d,true))any=true;if(any)sfx('loot',{rar:Math.max(0,...c.loot.filter(d=>d.item).map(d=>d.item.rar),1)});if(!c.loot.length)closeLoot();else renderLoot();if(invOpen)renderInv();save()}
+function takeAll(){const c=lootOpen;if(!c)return;let any=false;for(const d of[...c.loot])if(takeLoot(c,d,true))any=true;if(any)sfx('loot',{rar:Math.max(0,...c.loot.filter(d=>d.item).map(d=>d.item.rar),1)});if(!c.loot.length)closeLoot();else renderLoot();if(invOpen)renderInv();save()}
 function renderLoot(){const c=lootOpen,el=$('lootList');if(!c)return;$('lootTitle').textContent=(c.unit.name||'Corpse');el.innerHTML='';
   if(!c.loot.length){el.innerHTML='<div class="muted">Nothing left.</div>';return}
   for(const d of c.loot){const row=document.createElement('div');row.className='lrow2';const col=d.item?RAR[d.item.rar].c:d.kind==='gold'?'#ffd84a':'#efe6d2';
     row.innerHTML=`<span class="li">${lootIcon(d)}</span><span style="color:${col};flex:1">${lootLabel(d)}</span>`;
     if(d.item){row.onmouseenter=()=>showTip(itemTip(d.item,players[0].gear[d.item.slot]||null));row.onmouseleave=hideTip}
-    row.onclick=()=>{if(takeLoot(d)){hideTip();if(!c.loot.length)closeLoot();else renderLoot();if(invOpen)renderInv();save()}};el.appendChild(row)}}
+    row.onclick=()=>{if(takeLoot(c,d)){hideTip();if(!c.loot.length)closeLoot();else renderLoot();if(invOpen)renderInv();save()}};el.appendChild(row)}}
 function updateCorpses(){const z=zone;if(!z||!z.corpses)return;const n0=z.corpses.length;z.corpses=z.corpses.filter(c=>c.until>time);if(z.corpses.length!==n0)Net.corpVer++;if(lootOpen){const p=players[0];if(!z.corpses.includes(lootOpen)||!p||p.dead||dist(p,lootOpen)>LOOT_REACH+60)closeLoot()}}
 function drawCorpse(c){const u=c.unit,[sx,sy]=S(c.x,c.y),fade=Math.min(1,(c.until-time)/8);ctx.save();ctx.globalAlpha=.85*fade;softShadow(ctx,sx,sy,u.r*1.6,u.r*.6,.6);
   ctx.translate(sx,sy);ctx.rotate(Math.cos(u.aim||0)<0?-1.35:1.35);ctx.filter='grayscale(.45) brightness(.75)';
@@ -70,3 +70,15 @@ function writeHero(data){const s=allSaves();if(!heroId)heroId='h'+Date.now();if(
 function deleteHero(id){const s=allSaves();s.heroes=s.heroes.filter(h=>h.id!==id);store(SAVES_KEY,s)}
 function saveAndQuit(){if(Net.role==='guest'){pauseOpen=false;$('pause').classList.add('hidden');leaveParty();return}if(Net.role==='host')leaveParty();save();toast('Game saved');pauseOpen=false;closeLoot();state='title';players=[];$('hud').classList.add('hidden');for(const id of['inv','tal','shop','dialog','prof','pause'])$(id).classList.add('hidden');invOpen=talOpen=shopOpen=dialogOpen=profOpen=false;useZone(zones.over);enemies=[];Account.flush();openSelect()}
 $('lootClose').onclick=closeLoot;$('lootAll').onclick=takeAll;
+// ---- Auto loot (personal setting, also in co-op): walk near corpses to pick up coins, potions, materials and items of a chosen rarity
+const Settings=loadSettings(),Loot={pending:new Set(),t:0,fullAt:-99};
+function loadSettings(){return Object.assign({autoLoot:false,lootMinRar:1},fetchStore('emberfall-settings')||{})}
+function saveSettings(){store('emberfall-settings',Settings)}
+function autoLootPick(loot,minRar,bagFree,pending){const take=[];let blocked=false;
+  for(const d of loot){if(pending.has(d.id))continue;if(!d.item){take.push(d);continue}if(d.item.rar<minRar)continue;if(bagFree>0){take.push(d);bagFree--}else blocked=true}return{take,blocked}}
+function autoLootTick(dt){const p=players[0];if(!Settings.autoLoot||!p||p.dead||p.fly||!zone||zone.kind==='interior'||isPaused())return;if((Loot.t-=dt)>0)return;Loot.t=.25;
+  const got=[];let blocked=false;
+  for(const c of corpsesOf(zone)){if(!lootable(c)||!inReach(p,c))continue;const r=autoLootPick(c.loot,Settings.lootMinRar,p.bagSize-p.bag.length,Loot.pending);if(r.blocked)blocked=true;
+    for(const d of r.take){const label=lootLabel(d);if(takeLoot(c,d,true))got.push(label)}}
+  if(got.length){sfx('gold');toast('+'+got.slice(0,4).join(', ')+(got.length>4?` +${got.length-4} more`:''));if(lootOpen)renderLoot();if(invOpen)renderInv();save()}
+  if(blocked&&time-Loot.fullAt>10){Loot.fullAt=time;toast('Your bag is full')}}
