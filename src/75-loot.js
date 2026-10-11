@@ -7,8 +7,12 @@ function makeCorpse(t){const before=drops.length;enemyDrops(t);matDrop(t);if(t.b
 function lootable(c){return c.loot.length>0}
 function corpseUnderMouse(){const p=players[0];if(!p||!zone)return null;let best=null,bd=40;for(const c of corpsesOf(zone)){if(!lootable(c))continue;const[sx,sy]=S(c.x,c.y),d=Math.hypot(mouse.x-sx,mouse.y-(sy-8));if(d<bd){bd=d;best=c}}return best}
 function inReach(p,c){return dist(p,c)<=LOOT_REACH}
+// The loot window lists every corpse within reach (lootOpen = {ids}); corpses are looked up by id, so co-op syncs never leave stale ones.
 let lootOpen=null;
-function openLoot(c){const p=players[0];if(!inReach(p,c)){floatText(p.x,p.y-40,'Too far away','#ffb08a',13);return}lootOpen=c;$('loot').classList.remove('hidden');renderLoot();sfx('click')}
+function corpsesInReach(p,cs){return cs.filter(c=>lootable(c)&&dist(p,c)<=LOOT_REACH).sort((a,b)=>dist(p,a)-dist(p,b))}
+function lootGroupsRefresh(ids,cs,p){return ids.filter(id=>{const c=cs.find(c=>c.id===id);return c&&lootable(c)&&dist(p,c)<=LOOT_REACH+60})}
+function openCorpses(){return lootOpen&&zone?lootOpen.ids.map(id=>corpsesOf(zone).find(c=>c.id===id)).filter(Boolean):[]}
+function openLoot(c){const p=players[0];if(!inReach(p,c)){floatText(p.x,p.y-40,'Too far away','#ffb08a',13);return}const near=corpsesInReach(p,corpsesOf(zone));if(!near.includes(c))near.unshift(c);lootOpen={ids:near.map(c=>c.id)};$('loot').classList.remove('hidden');renderLoot();sfx('click')}
 function closeLoot(){lootOpen=null;$('loot').classList.add('hidden');hideTip()}
 function lootLabel(d){return d.kind==='gold'?`${d.amount} gold`:d.kind==='sup'?supName(d.sup):d.kind==='mat'?`${d.amount} ${MATS[d.mat].n}`:d.item.name}
 function lootIcon(d){return d.kind==='gold'?'🪙':d.kind==='sup'?supHtml(d.sup):d.kind==='mat'?MATS[d.mat].icon:itemIcon(d.item)}
@@ -18,14 +22,16 @@ function takeLoot(c,d,quiet){const p=players[0];if(!c)return false;
   if(d.kind==='gold'){p.gold+=d.amount;if(!quiet)sfx('gold')}else if(d.kind==='sup')addSup(p,d.sup,d.amount||1);else if(d.kind==='mat')p.mats[d.mat]=(p.mats[d.mat]||0)+d.amount;
   else{if(p.bag.length>=p.bagSize){toast('Your bag is full');return false}p.bag.push(d.item);if(!quiet)sfx('loot',{rar:d.item.rar})}
   c.loot.splice(c.loot.indexOf(d),1);return true}
-function takeAll(){const c=lootOpen;if(!c)return;let any=false;for(const d of[...c.loot])if(takeLoot(c,d,true))any=true;if(any)sfx('loot',{rar:Math.max(0,...c.loot.filter(d=>d.item).map(d=>d.item.rar),1)});if(!c.loot.length)closeLoot();else renderLoot();if(invOpen)renderInv();save()}
-function renderLoot(){const c=lootOpen,el=$('lootList');if(!c)return;$('lootTitle').textContent=(c.unit.name||'Corpse');el.innerHTML='';
-  if(!c.loot.length){el.innerHTML='<div class="muted">Nothing left.</div>';return}
+function lootChanged(){if(!lootOpen)return;const p=players[0];lootOpen.ids=p?lootGroupsRefresh(lootOpen.ids,corpsesOf(zone),p):[];if(!lootOpen.ids.length)closeLoot();else renderLoot();if(invOpen)renderInv()}
+function takeAll(){const cs=openCorpses();if(!cs.length)return;let any=false,rar=1;for(const c of cs)for(const d of[...c.loot]){if(d.item)rar=Math.max(rar,d.item.rar);if(takeLoot(c,d,true))any=true}if(any)sfx('loot',{rar});lootChanged();save()}
+function renderLoot(){const cs=openCorpses(),el=$('lootList');if(!lootOpen)return;$('lootTitle').textContent=cs.length===1?(cs[0].unit.name||'Corpse'):'Loot';el.innerHTML='';
+  if(!cs.some(lootable)){el.innerHTML='<div class="muted">Nothing left.</div>';return}
+  for(const c of cs){if(!lootable(c))continue;if(cs.length>1){const h=document.createElement('div');h.className='lgroup';h.textContent=c.unit.name||'Corpse';el.appendChild(h)}
   for(const d of c.loot){const row=document.createElement('div');row.className='lrow2';const col=d.item?RAR[d.item.rar].c:d.kind==='gold'?'#ffd84a':'#efe6d2';
     row.innerHTML=`<span class="li">${lootIcon(d)}</span><span style="color:${col};flex:1">${lootLabel(d)}</span>`;
     if(d.item){row.onmouseenter=()=>showTip(itemTip(d.item,players[0].gear[d.item.slot]||null));row.onmouseleave=hideTip}
-    row.onclick=()=>{if(takeLoot(c,d)){hideTip();if(!c.loot.length)closeLoot();else renderLoot();if(invOpen)renderInv();save()}};el.appendChild(row)}}
-function updateCorpses(){const z=zone;if(!z||!z.corpses)return;const n0=z.corpses.length;z.corpses=z.corpses.filter(c=>c.until>time);if(z.corpses.length!==n0)Net.corpVer++;if(lootOpen){const p=players[0];if(!z.corpses.includes(lootOpen)||!p||p.dead||dist(p,lootOpen)>LOOT_REACH+60)closeLoot()}}
+    row.onclick=()=>{if(takeLoot(c,d)){hideTip();lootChanged();save()}};el.appendChild(row)}}}
+function updateCorpses(){const z=zone;if(!z||!z.corpses)return;const n0=z.corpses.length;z.corpses=z.corpses.filter(c=>c.until>time);if(z.corpses.length!==n0)Net.corpVer++;if(lootOpen){const p=players[0];if(!p||p.dead)closeLoot();else{const ids=lootGroupsRefresh(lootOpen.ids,z.corpses,p);if(ids.length!==lootOpen.ids.length)lootChanged()}}}
 function drawCorpse(c){const u=c.unit,[sx,sy]=S(c.x,c.y),fade=Math.min(1,(c.until-time)/8);ctx.save();ctx.globalAlpha=.85*fade;softShadow(ctx,sx,sy,u.r*1.6,u.r*.6,.6);
   ctx.translate(sx,sy);ctx.rotate(Math.cos(u.aim||0)<0?-1.35:1.35);ctx.filter='grayscale(.45) brightness(.75)';
   const kind=u.type;try{if(kind==='wolf'||kind==='frostwolf'||kind==='greyfang'||kind==='rimeclaw'||kind==='direwolf')drawWolf(ctx,0,0,{s:kind==='greyfang'||kind==='rimeclaw'?1.8:1,aim:0,walk:0,col:kind==='frostwolf'||kind==='rimeclaw'?'#dfe8f0':'#7c7f86',eye:'#333'});
@@ -80,5 +86,5 @@ function autoLootTick(dt){const p=players[0];if(!Settings.autoLoot||!p||p.dead||
   const got=[];let blocked=false;
   for(const c of corpsesOf(zone)){if(!lootable(c)||!inReach(p,c))continue;const r=autoLootPick(c.loot,Settings.lootMinRar,p.bagSize-p.bag.length,Loot.pending);if(r.blocked)blocked=true;
     for(const d of r.take){const label=lootLabel(d);if(takeLoot(c,d,true))got.push(label)}}
-  if(got.length){sfx('gold');toast('+'+got.slice(0,4).join(', ')+(got.length>4?` +${got.length-4} more`:''));if(lootOpen)renderLoot();if(invOpen)renderInv();save()}
+  if(got.length){sfx('gold');toast("+"+got.slice(0,4).join(", ")+(got.length>4?` +${got.length-4} more`:""));lootChanged();if(invOpen)renderInv();save()}
   if(blocked&&time-Loot.fullAt>10){Loot.fullAt=time;toast('Your bag is full')}}

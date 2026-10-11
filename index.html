@@ -72,6 +72,7 @@ h2{margin:0 0 10px;color:var(--gold);font-weight:normal;letter-spacing:.05em}
 .cyb{background:#2a2016;border:1px solid var(--line);color:var(--text);border-radius:6px;width:30px;height:28px;cursor:pointer;font-size:12px}
 .cyb:hover{border-color:var(--gold)}.cyv{flex:1;text-align:center;font-size:15px}
 .lrow .sw b{width:24px;height:24px}
+.lgroup{margin:10px 0 4px;padding-bottom:3px;border-bottom:1px solid rgba(255,255,255,.12);font-size:13px;color:#cbbf9f;letter-spacing:.3px}
 .set{display:flex;justify-content:space-between;align-items:center;gap:14px;margin:14px 0;font-size:15px}
 .set input[type=range]{width:55%;accent-color:#e8c26a}.set input[type=checkbox]{width:20px;height:20px;accent-color:#e8c26a}
 #creator label{display:block;margin:12px 0 5px;color:var(--muted);font-size:13px;letter-spacing:.05em;text-transform:uppercase}
@@ -2322,8 +2323,12 @@ function makeCorpse(t){const before=drops.length;enemyDrops(t);matDrop(t);if(t.b
 function lootable(c){return c.loot.length>0}
 function corpseUnderMouse(){const p=players[0];if(!p||!zone)return null;let best=null,bd=40;for(const c of corpsesOf(zone)){if(!lootable(c))continue;const[sx,sy]=S(c.x,c.y),d=Math.hypot(mouse.x-sx,mouse.y-(sy-8));if(d<bd){bd=d;best=c}}return best}
 function inReach(p,c){return dist(p,c)<=LOOT_REACH}
+// The loot window lists every corpse within reach (lootOpen = {ids}); corpses are looked up by id, so co-op syncs never leave stale ones.
 let lootOpen=null;
-function openLoot(c){const p=players[0];if(!inReach(p,c)){floatText(p.x,p.y-40,'Too far away','#ffb08a',13);return}lootOpen=c;$('loot').classList.remove('hidden');renderLoot();sfx('click')}
+function corpsesInReach(p,cs){return cs.filter(c=>lootable(c)&&dist(p,c)<=LOOT_REACH).sort((a,b)=>dist(p,a)-dist(p,b))}
+function lootGroupsRefresh(ids,cs,p){return ids.filter(id=>{const c=cs.find(c=>c.id===id);return c&&lootable(c)&&dist(p,c)<=LOOT_REACH+60})}
+function openCorpses(){return lootOpen&&zone?lootOpen.ids.map(id=>corpsesOf(zone).find(c=>c.id===id)).filter(Boolean):[]}
+function openLoot(c){const p=players[0];if(!inReach(p,c)){floatText(p.x,p.y-40,'Too far away','#ffb08a',13);return}const near=corpsesInReach(p,corpsesOf(zone));if(!near.includes(c))near.unshift(c);lootOpen={ids:near.map(c=>c.id)};$('loot').classList.remove('hidden');renderLoot();sfx('click')}
 function closeLoot(){lootOpen=null;$('loot').classList.add('hidden');hideTip()}
 function lootLabel(d){return d.kind==='gold'?`${d.amount} gold`:d.kind==='sup'?supName(d.sup):d.kind==='mat'?`${d.amount} ${MATS[d.mat].n}`:d.item.name}
 function lootIcon(d){return d.kind==='gold'?'🪙':d.kind==='sup'?supHtml(d.sup):d.kind==='mat'?MATS[d.mat].icon:itemIcon(d.item)}
@@ -2333,14 +2338,16 @@ function takeLoot(c,d,quiet){const p=players[0];if(!c)return false;
   if(d.kind==='gold'){p.gold+=d.amount;if(!quiet)sfx('gold')}else if(d.kind==='sup')addSup(p,d.sup,d.amount||1);else if(d.kind==='mat')p.mats[d.mat]=(p.mats[d.mat]||0)+d.amount;
   else{if(p.bag.length>=p.bagSize){toast('Your bag is full');return false}p.bag.push(d.item);if(!quiet)sfx('loot',{rar:d.item.rar})}
   c.loot.splice(c.loot.indexOf(d),1);return true}
-function takeAll(){const c=lootOpen;if(!c)return;let any=false;for(const d of[...c.loot])if(takeLoot(c,d,true))any=true;if(any)sfx('loot',{rar:Math.max(0,...c.loot.filter(d=>d.item).map(d=>d.item.rar),1)});if(!c.loot.length)closeLoot();else renderLoot();if(invOpen)renderInv();save()}
-function renderLoot(){const c=lootOpen,el=$('lootList');if(!c)return;$('lootTitle').textContent=(c.unit.name||'Corpse');el.innerHTML='';
-  if(!c.loot.length){el.innerHTML='<div class="muted">Nothing left.</div>';return}
+function lootChanged(){if(!lootOpen)return;const p=players[0];lootOpen.ids=p?lootGroupsRefresh(lootOpen.ids,corpsesOf(zone),p):[];if(!lootOpen.ids.length)closeLoot();else renderLoot();if(invOpen)renderInv()}
+function takeAll(){const cs=openCorpses();if(!cs.length)return;let any=false,rar=1;for(const c of cs)for(const d of[...c.loot]){if(d.item)rar=Math.max(rar,d.item.rar);if(takeLoot(c,d,true))any=true}if(any)sfx('loot',{rar});lootChanged();save()}
+function renderLoot(){const cs=openCorpses(),el=$('lootList');if(!lootOpen)return;$('lootTitle').textContent=cs.length===1?(cs[0].unit.name||'Corpse'):'Loot';el.innerHTML='';
+  if(!cs.some(lootable)){el.innerHTML='<div class="muted">Nothing left.</div>';return}
+  for(const c of cs){if(!lootable(c))continue;if(cs.length>1){const h=document.createElement('div');h.className='lgroup';h.textContent=c.unit.name||'Corpse';el.appendChild(h)}
   for(const d of c.loot){const row=document.createElement('div');row.className='lrow2';const col=d.item?RAR[d.item.rar].c:d.kind==='gold'?'#ffd84a':'#efe6d2';
     row.innerHTML=`<span class="li">${lootIcon(d)}</span><span style="color:${col};flex:1">${lootLabel(d)}</span>`;
     if(d.item){row.onmouseenter=()=>showTip(itemTip(d.item,players[0].gear[d.item.slot]||null));row.onmouseleave=hideTip}
-    row.onclick=()=>{if(takeLoot(c,d)){hideTip();if(!c.loot.length)closeLoot();else renderLoot();if(invOpen)renderInv();save()}};el.appendChild(row)}}
-function updateCorpses(){const z=zone;if(!z||!z.corpses)return;const n0=z.corpses.length;z.corpses=z.corpses.filter(c=>c.until>time);if(z.corpses.length!==n0)Net.corpVer++;if(lootOpen){const p=players[0];if(!z.corpses.includes(lootOpen)||!p||p.dead||dist(p,lootOpen)>LOOT_REACH+60)closeLoot()}}
+    row.onclick=()=>{if(takeLoot(c,d)){hideTip();lootChanged();save()}};el.appendChild(row)}}}
+function updateCorpses(){const z=zone;if(!z||!z.corpses)return;const n0=z.corpses.length;z.corpses=z.corpses.filter(c=>c.until>time);if(z.corpses.length!==n0)Net.corpVer++;if(lootOpen){const p=players[0];if(!p||p.dead)closeLoot();else{const ids=lootGroupsRefresh(lootOpen.ids,z.corpses,p);if(ids.length!==lootOpen.ids.length)lootChanged()}}}
 function drawCorpse(c){const u=c.unit,[sx,sy]=S(c.x,c.y),fade=Math.min(1,(c.until-time)/8);ctx.save();ctx.globalAlpha=.85*fade;softShadow(ctx,sx,sy,u.r*1.6,u.r*.6,.6);
   ctx.translate(sx,sy);ctx.rotate(Math.cos(u.aim||0)<0?-1.35:1.35);ctx.filter='grayscale(.45) brightness(.75)';
   const kind=u.type;try{if(kind==='wolf'||kind==='frostwolf'||kind==='greyfang'||kind==='rimeclaw'||kind==='direwolf')drawWolf(ctx,0,0,{s:kind==='greyfang'||kind==='rimeclaw'?1.8:1,aim:0,walk:0,col:kind==='frostwolf'||kind==='rimeclaw'?'#dfe8f0':'#7c7f86',eye:'#333'});
@@ -2395,7 +2402,7 @@ function autoLootTick(dt){const p=players[0];if(!Settings.autoLoot||!p||p.dead||
   const got=[];let blocked=false;
   for(const c of corpsesOf(zone)){if(!lootable(c)||!inReach(p,c))continue;const r=autoLootPick(c.loot,Settings.lootMinRar,p.bagSize-p.bag.length,Loot.pending);if(r.blocked)blocked=true;
     for(const d of r.take){const label=lootLabel(d);if(takeLoot(c,d,true))got.push(label)}}
-  if(got.length){sfx('gold');toast('+'+got.slice(0,4).join(', ')+(got.length>4?` +${got.length-4} more`:''));if(lootOpen)renderLoot();if(invOpen)renderInv();save()}
+  if(got.length){sfx('gold');toast("+"+got.slice(0,4).join(", ")+(got.length>4?` +${got.length-4} more`:""));lootChanged();if(invOpen)renderInv();save()}
   if(blocked&&time-Loot.fullAt>10){Loot.fullAt=time;toast('Your bag is full')}}
 // ================= Spell and combat effects =================
 // Magic particles glow (drawn additively from cached soft sprites), spells leave trails, hits spark,
@@ -2922,7 +2929,7 @@ function castRemote(p,i,ax,ay){const ab=p.abil[i];if(!ab||p.dead||p.away||p.leve
 function partyMul(n){return{hp:1+.6*(n-1),dmg:1+.12*(n-1)}}
 function rescaleEnemies(){const n=Net.size();for(const e of enemies){const o=partyMul(e.pn||1),m=partyMul(n);e.maxHp=Math.round(e.maxHp*m.hp/o.hp);e.hp=Math.min(e.maxHp,e.hp*m.hp/o.hp);e.dmg*=m.dmg/o.dmg;e.pn=n}}
 function hostGiveLoot(pe,cid,did){const c=corpsesOf(zone).find(c=>c.id===cid);if(!c)return;const d=c.loot.find(d=>d.id===did);if(!d)return;
-  c.loot.splice(c.loot.indexOf(d),1);Net.corpVer++;netSend(pe,{t:'got',d});if(lootOpen===c)renderLoot()}
+  c.loot.splice(c.loot.indexOf(d),1);Net.corpVer++;netSend(pe,{t:'got',d});if(lootOpen&&lootOpen.ids.includes(c.id))lootChanged()}
 function hostZoneChanged(id,x,y){if(Net.role==='host')netAll({t:'zone',id,x,y})}
 
 // ---- Guest: follow the host, take loot, get quest credit
@@ -2972,7 +2979,7 @@ function applySnap(m){Net.hostQ=m.q;if(m.wc!=null)worldClock=m.wc;const same=zon
     else if(v.k==='d'){bloodAt(v.x,v.y,true,v.ty);burst(v.x,v.y,v.b?'#cfe':'#a33',v.b?70:16,v.b?220:140);sfx(v.b?'bossdie':'die');if(v.b){shake=14;toast(v.n+' has fallen!','gold')}}
     else if(v.k==='t')toast(v.s,v.c||'')}
   // corpses (loot is taken through the host so nobody gets the same item twice)
-  if(m.cs){const z=zone;z.corpses=m.cs.map(c=>({id:c.id,x:c.x,y:c.y,unit:c.u,until:time+c.l,boss:c.u.boss,loot:c.lo}));{const live=new Set();for(const c of z.corpses)for(const d of c.loot)live.add(d.id);for(const id of Loot.pending)if(!live.has(id))Loot.pending.delete(id)}if(lootOpen){const c=z.corpses.find(c=>c.id===lootOpen.id);if(c){lootOpen=c;renderLoot()}else closeLoot()}}}
+  if(m.cs){const z=zone;z.corpses=m.cs.map(c=>({id:c.id,x:c.x,y:c.y,unit:c.u,until:time+c.l,boss:c.u.boss,loot:c.lo}));{const live=new Set();for(const c of z.corpses)for(const d of c.loot)live.add(d.id);for(const id of Loot.pending)if(!live.has(id))Loot.pending.delete(id)}if(lootOpen)lootChanged()}}
 function guestLerp(dt){const k=Math.min(1,dt*12);for(const list of[enemies,allies,Net.avatars.values()])for(const u of list){if(u.tx==null)continue;if(Math.hypot(u.tx-u.x,u.ty-u.y)>300){u.x=u.tx;u.y=u.ty}else{u.x+=(u.tx-u.x)*k;u.y+=(u.ty-u.y)*k}}}
 
 // ---- Party frames: everyone in the world, their health, and teleport (also used when you die)
@@ -3011,6 +3018,10 @@ test('auto loot takes coins, mats and good items',()=>{const r=autoLootPick(TL()
 test('auto loot with a full bag',()=>{const r=autoLootPick(TL(),1,0,new Set());eq(r.take.map(d=>d.id),[1,2]);eq(r.blocked,true)});
 test('auto loot skips pending takes',()=>eq(autoLootPick(TL(),1,5,new Set([1])).take.map(d=>d.id),[2,4]));
 test('settings default without storage',()=>{const f=fetchStore;fetchStore=()=>null;try{eq(loadSettings(),{autoLoot:false,lootMinRar:1})}finally{fetchStore=f}});
+
+// ---- Area loot
+test('corpses in reach, nearest first',()=>eq(corpsesInReach({x:0,y:0},[{x:100,y:0,loot:[1]},{x:300,y:0,loot:[1]},{x:50,y:0,loot:[1]},{x:20,y:0,loot:[]}]).map(c=>c.x),[50,100]));
+test('loot groups drop empty and missing corpses',()=>eq(lootGroupsRefresh([1,2,3],[{id:1,x:0,y:0,loot:[1]},{id:3,x:0,y:0,loot:[]}],{x:0,y:0}),[1]));
 // ================= Developer test mode for co-op =================
 // Open the game twice on this computer as index.html?nettest=a and index.html?nettest=b: the two tabs act as two
 // friends and introduce each other through the browser (no accounts needed). Ignored without the parameter.

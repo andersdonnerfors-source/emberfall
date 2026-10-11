@@ -114,7 +114,7 @@ function castRemote(p,i,ax,ay){const ab=p.abil[i];if(!ab||p.dead||p.away||p.leve
 function partyMul(n){return{hp:1+.6*(n-1),dmg:1+.12*(n-1)}}
 function rescaleEnemies(){const n=Net.size();for(const e of enemies){const o=partyMul(e.pn||1),m=partyMul(n);e.maxHp=Math.round(e.maxHp*m.hp/o.hp);e.hp=Math.min(e.maxHp,e.hp*m.hp/o.hp);e.dmg*=m.dmg/o.dmg;e.pn=n}}
 function hostGiveLoot(pe,cid,did){const c=corpsesOf(zone).find(c=>c.id===cid);if(!c)return;const d=c.loot.find(d=>d.id===did);if(!d)return;
-  c.loot.splice(c.loot.indexOf(d),1);Net.corpVer++;netSend(pe,{t:'got',d});if(lootOpen===c)renderLoot()}
+  c.loot.splice(c.loot.indexOf(d),1);Net.corpVer++;netSend(pe,{t:'got',d});if(lootOpen&&lootOpen.ids.includes(c.id))lootChanged()}
 function hostZoneChanged(id,x,y){if(Net.role==='host')netAll({t:'zone',id,x,y})}
 
 // ---- Guest: follow the host, take loot, get quest credit
@@ -164,7 +164,7 @@ function applySnap(m){Net.hostQ=m.q;if(m.wc!=null)worldClock=m.wc;const same=zon
     else if(v.k==='d'){bloodAt(v.x,v.y,true,v.ty);burst(v.x,v.y,v.b?'#cfe':'#a33',v.b?70:16,v.b?220:140);sfx(v.b?'bossdie':'die');if(v.b){shake=14;toast(v.n+' has fallen!','gold')}}
     else if(v.k==='t')toast(v.s,v.c||'')}
   // corpses (loot is taken through the host so nobody gets the same item twice)
-  if(m.cs){const z=zone;z.corpses=m.cs.map(c=>({id:c.id,x:c.x,y:c.y,unit:c.u,until:time+c.l,boss:c.u.boss,loot:c.lo}));{const live=new Set();for(const c of z.corpses)for(const d of c.loot)live.add(d.id);for(const id of Loot.pending)if(!live.has(id))Loot.pending.delete(id)}if(lootOpen){const c=z.corpses.find(c=>c.id===lootOpen.id);if(c){lootOpen=c;renderLoot()}else closeLoot()}}}
+  if(m.cs){const z=zone;z.corpses=m.cs.map(c=>({id:c.id,x:c.x,y:c.y,unit:c.u,until:time+c.l,boss:c.u.boss,loot:c.lo}));{const live=new Set();for(const c of z.corpses)for(const d of c.loot)live.add(d.id);for(const id of Loot.pending)if(!live.has(id))Loot.pending.delete(id)}if(lootOpen)lootChanged()}}
 function guestLerp(dt){const k=Math.min(1,dt*12);for(const list of[enemies,allies,Net.avatars.values()])for(const u of list){if(u.tx==null)continue;if(Math.hypot(u.tx-u.x,u.ty-u.y)>300){u.x=u.tx;u.y=u.ty}else{u.x+=(u.tx-u.x)*k;u.y+=(u.ty-u.y)*k}}}
 
 // ---- Party frames: everyone in the world, their health, and teleport (also used when you die)
