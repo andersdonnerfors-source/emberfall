@@ -9,6 +9,8 @@ function aimScore(p,e,face){const dx=e.x-p.x,dy=e.y-p.y,d=Math.hypot(dx,dy),fl=M
 // Keeps cur while it is still a candidate, unless another one scores under 70% of its score.
 function aimPick(p,cands,face,cur){let best=null,bs=1e9;for(const e of cands){const s=aimScore(p,e,face);if(s<bs){bs=s;best=e}}
   if(cur&&cands.includes(cur)&&!(bs<.7*aimScore(p,cur,face)))return cur;return best}
+// While idle on touch: re-pick the preview target every 0.2 s (the ring under it shows what the next tap will hit).
+function aimPreview(p){if(!Touch.on||isPaused()||rt<(Aim.pt||0))return;Aim.pt=rt+.2;if(Touch.fire||Touch.drag)return;Aim.target=aimPick(p,aimCands(p,aimRange(p,0)),aimFace(p),Aim.target)}
 function aimCands(p,range,list=enemies,los=(a,b)=>lineClear(a.x,a.y,b.x,b.y,PBLOCK)){return list.filter(e=>!e.dead&&e.hp>0&&dist(p,e)<=range&&los(p,e))}
 // Most hurt party member in reach (for heals), else the caster.
 function aimFriendly(p,range){let best=p,bf=2;for(const q of players){if(q.dead||q.away||dist(p,q)>range)continue;const f=q.hp/q.maxHp;if(f<bf){bf=f;best=q}}return best}
@@ -64,7 +66,7 @@ function holdEnd(e){const h=Touch.hold;if(!h||e.pointerId!==h.id)return;clearTim
 function touchBuild(p){Touch.built=p.abil;document.querySelectorAll('#arc .tslot').forEach(s=>{const i=+s.dataset.i,a=p.abil[i],src=$('abar').children[i];s.innerHTML=`<div class="ic">${a?a.icon:''}</div><div class="cd"></div><div class="cdt"></div>`;s.onmouseenter=i&&src?src.onmouseenter:null;// no hold-tooltip on the attack button: holding it is attacking
   if(i){const g=ARC_ANG[i]*Math.PI/180,c=42-28;s.style.left=(c+Math.cos(g)*ARC_R)+'px';s.style.top=(c-Math.sin(g)*ARC_R)+'px'}})}
 // Per frame (from updateHud): cooldowns and counts mirror the action bar; the context button follows interactables(); the menu button sits left of the minimap.
-function touchFrame(p){if(Touch.built!==p.abil)touchBuild(p);const ab=$('abar').children;
+function touchFrame(p){if(Touch.built!==p.abil)touchBuild(p);if(!p.dead)aimPreview(p);else Aim.target=null;const ab=$('abar').children;
   document.querySelectorAll('#arc .tslot').forEach(s=>{const a=ab[+s.dataset.i];if(!a)return;for(const c of['locked','poor','rdy'])s.classList.toggle(c,a.classList.contains(c));s.style.setProperty('--e',a.style.getPropertyValue('--e'));s.children[2].textContent=a.children[3].textContent});
   document.querySelectorAll('#quick .qb').forEach(b=>{const src=b.dataset.src&&$(b.dataset.src),n=b.querySelector('.cnt');if(src){b.classList.toggle('nomana',src.classList.contains('nomana'));if(n)n.textContent=(src.querySelector('.cnt')||src.querySelector('.cdt')).textContent}
     else if(b.dataset.q==='mount')b.firstChild.textContent=p.mount?MOUNTS[p.mount].icon:'🐎'});

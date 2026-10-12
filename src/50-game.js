@@ -345,7 +345,7 @@ function drawUnit(u){let[sx,sy]=S(u.x,u.y);softShadow(ctx,sx,sy,u.r*1.5,u.r*.62)
 // A 4 s speech bubble over a hero who just chatted (canvas text only, never HTML).
 function drawBubble(p,sx,sy){const k=p.isRemote||p.isAvatar?p.uid:myUid(),b=Chat.bub.get(k);if(!b)return;if(b.until<rt){Chat.bub.delete(k);return}
   ctx.font='13px Georgia';const w=Math.min(220,ctx.measureText(b.m).width+16);ctx.globalAlpha=Math.min(1,(b.until-rt)*2);ctx.fillStyle='rgba(20,18,14,.85)';ctx.strokeStyle='rgba(232,194,106,.7)';ctx.lineWidth=1;
-  ctx.beginPath();ctx.roundRect(sx-w/2,sy-22,w,22,6);ctx.fill();ctx.stroke();ctx.fillStyle='#fff3d0';ctx.textAlign='center';ctx.fillText(b.m,sx,sy-6,w-12);ctx.globalAlpha=1}
+  if(ctx.roundRect){ctx.beginPath();ctx.roundRect(sx-w/2,sy-22,w,22,6)}else rr(ctx,sx-w/2,sy-22,w,22,6);ctx.fill();ctx.stroke();ctx.fillStyle='#fff3d0';ctx.textAlign='center';ctx.fillText(b.m,sx,sy-6,w-12);ctx.globalAlpha=1}
 function drawPlayer(p){if(p.dead||p.away||(p.isAvatar&&!(p.look&&p.look.skin)))return;const[sx,sy]=S(p.x,p.y);softShadow(ctx,sx,sy,20,8);
   const o=playerLook(p);o.aim=p.aim;o.aimS=aimScreen(p.aim);o.walk=p.walk;const moved=p.walk!==p._lw;p._lw=p.walk;p._mv=moved?.15:Math.max(0,(p._mv||0)-1/60);o.moving=p._mv>0&&!p.mounted;o.atk=(p.castAnim||0)/.3;let seat=0;
   if(p.mounted){drawMount(ctx,p.mount,sx,sy,p.aim,p.walk);seat=mountSeat(p.mount)+(p.mount==='dragon'?Math.sin(rt*3)*3:0);o.walk=0}
@@ -361,7 +361,7 @@ function drawWarden(){const[sx,sy]=S(warden.x,warden.y);const p=players[0];if(p)
   let mark=null,col='#ffd84a';if(quest.state==='offer')mark='!';else if(quest.state==='ready')mark='?';else if(quest.state==='active'){mark='…';col='#aaa'}
   if(mark){const b=Math.sin(rt*3)*3;ctx.font='bold 28px Georgia';ctx.textAlign='center';ctx.fillStyle='rgba(0,0,0,.6)';ctx.fillText(mark,sx+2,sy-74+b);ctx.fillStyle=col;ctx.fillText(mark,sx,sy-76+b)}
   ctx.font='12px Georgia';ctx.fillStyle='#e8dcb8';ctx.fillText('Old Warden Bram',sx,sy-60);
-  if(p&&!p.dead&&dist(p,warden)<95&&!dialogOpen){ctx.font='bold 13px system-ui';ctx.fillStyle='#fff';ctx.fillText('[E] Talk',sx,sy+22)}}
+  if(p&&!p.dead&&dist(p,warden)<95&&!dialogOpen){ctx.font='bold 13px system-ui';ctx.fillStyle='#fff';ctx.fillText(keyHint('Talk'),sx,sy+22)}}
 
 // ================= Drawing: world =================
 // ---- Smooth graphics: a pre-painted high-resolution terrain, shaded tree sprites and soft shadows.
@@ -520,6 +520,7 @@ function render(){
   for(const d of drops)if(inView(d,80))dl.push([d.y,()=>drawDrop(d)]);
   {const pv=players[0];for(const e of enemies)if(inView(e,150)){const a=pv&&!pv.dead&&state==='play'?visAlpha(pv,e):1;if(a>0)dl.push([e.y,()=>{ctx.globalAlpha=a;drawUnit(e);ctx.globalAlpha=1}])}}
   for(const a of allies)if(inView(a,100))dl.push([a.y,()=>drawUnit(a)]);
+  {const t=Touch.on&&!isPaused()&&Aim.target;if(t&&!t.dead&&t.hp>0&&inView(t,150))dl.push([t.y-1,()=>{const[sx,sy]=S(t.x,t.y);ctx.strokeStyle='rgba(255,224,138,.8)';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(sx,sy,t.r*1.5+4,(t.r*1.5+4)*.45,0,0,6.2832);ctx.stroke()}])}
   for(const p of players)dl.push([p.y,()=>drawPlayer(p)]);for(const a of Net.avatars.values())dl.push([a.y,()=>drawPlayer(a)]);
   if(zone.id==='over'&&inView(warden,150))dl.push([warden.y,drawWarden]);
   if(zone.id==='over'&&inView(merchant,150))dl.push([merchant.y,drawMerchant]);
@@ -667,7 +668,7 @@ function drawMerchant(){const[sx,sy]=S(merchant.x,merchant.y);const p=players[0]
   ctx.fillStyle='rgba(0,0,0,.3)';ell(ctx,sx,sy,14,6);ctx.fill();
   drawHumanoid(ctx,sx,sy,{s:1,skin:'#d9a47a',hair:'#8a2d1c',cloth:'#8a5a2a',hat:'hood',hatColor:'#b8402a',aim:merchant.aim,walk:0,legs:'#3a2a1a'});
   const b=Math.sin(rt*3)*3;ctx.font='20px system-ui';ctx.textAlign='center';ctx.fillText('🪙',sx,sy-70+b);ctx.font='12px Georgia';ctx.fillStyle='#e8dcb8';ctx.fillText('Tilda the Trader',sx,sy-56);
-  if(p&&!p.dead&&dist(p,merchant)<95&&!shopOpen&&!(dist(p,warden)<95)){ctx.font='bold 13px system-ui';ctx.fillStyle='#fff';ctx.fillText('[E] Trade',sx,sy+22)}}
+  if(p&&!p.dead&&dist(p,merchant)<95&&!shopOpen&&!(dist(p,warden)<95)){ctx.font='bold 13px system-ui';ctx.fillStyle='#fff';ctx.fillText(keyHint('Trade'),sx,sy+22)}}
 function toggleInv(v){invOpen=v===undefined?!invOpen:v;invSel=null;if(invOpen){talOpen=false;$('tal').classList.add('hidden');closeShop()}$('inv').classList.toggle('hidden',!invOpen);hideTip();if(invOpen){mouse.l=false;renderInv()}}
 function togglePause(){$('btnQuit').textContent=Net.role==='guest'?'Leave party':Net.role==='host'?'Save & quit (ends the party)':'Save & quit to menu';pauseOpen=!pauseOpen;$('pause').classList.toggle('hidden',!pauseOpen);mouse.l=false;if(pauseOpen)save()}
 function openDialog(){const q=QUESTS[quest.idx];dialogOpen=true;$('dWho').textContent='Old Warden Bram';mouse.l=false;$('dialog').classList.remove('hidden');const btns=$('dBtns');btns.innerHTML='';

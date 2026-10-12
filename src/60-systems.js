@@ -23,8 +23,9 @@ function interactables(p){const r=[];if(zone.id==='over'){r.push({o:warden,d:dis
   return r.filter(i=>i.d<i.r).sort((a,b)=>a.d-b.d)}
 function useDoor(d){if(Net.role==='guest'&&!(d.to.startsWith('int_')||(d.to==='over'&&Net.hostZone==='over'))){toast(`${Net.host.name} leads the party through this door.`);return}
   if(d.to==='over')enterZone('over',d.tx,d.ty);else enterZone(d.to)}
+const keyHint=t=>Touch.on?t:'[E] '+t;// the context button covers the key on touch
 function drawPrompt(){const p=players[0];if(!p||p.dead||isPaused())return;const it=interactables(p)[0];if(!it||it.own)return;const[sx,sy]=S(it.o.x,it.o.y);
-  const txt='[E] '+it.label;ctx.font='bold 13px system-ui';const w=ctx.measureText(txt).width+16;ctx.fillStyle='rgba(15,12,9,.85)';rr(ctx,sx-w/2,sy-70,w,22,6);ctx.fill();ctx.strokeStyle='#6b5532';ctx.lineWidth=1;ctx.stroke();ctx.fillStyle='#fff3d0';ctx.textAlign='center';ctx.fillText(txt,sx,sy-54)}
+  const txt=keyHint(it.label);ctx.font='bold 13px system-ui';const w=ctx.measureText(txt).width+16;ctx.fillStyle='rgba(15,12,9,.85)';rr(ctx,sx-w/2,sy-70,w,22,6);ctx.fill();ctx.strokeStyle='#6b5532';ctx.lineWidth=1;ctx.stroke();ctx.fillStyle='#fff3d0';ctx.textAlign='center';ctx.fillText(txt,sx,sy-54)}
 function edgeTile(x,y){for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,1]])if(!BLOCK.has(getT(x+dx,y+dy)))return true;return false}
 
 // ================= Lighting (caves and dungeons) =================
