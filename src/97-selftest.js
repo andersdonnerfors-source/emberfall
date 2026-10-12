@@ -62,7 +62,7 @@ test('friendly aim falls back to self',()=>{const pl=players.slice(),a=AU(0,0);p
 test('playerLook tolerates empty look',()=>{const o=playerLook({cls:'paladin',look:{},gear:{},bagSize:20});eq(typeof o.hatColor,'string');eq(typeof o.cloth,'string')});
 
 // ---- Touch controls (B7)
-const TP=cls=>({x:0,y:0,aim:0,hp:10,maxHp:10,level:20,abil:ABIL[cls],input:{mx:0,my:0,ax:0,ay:0,fire:false,abil:[false,false,false,false,false,false]}});
+const inPlay=fn=>{const s=state;state='play';try{fn()}finally{state=s}},TP=cls=>({x:0,y:0,aim:0,hp:10,maxHp:10,level:20,abil:ABIL[cls],input:{mx:0,my:0,ax:0,ay:0,fire:false,abil:[false,false,false,false,false,false]}});
 test('stickVec dead zone',()=>eq(stickVec(5,0),{x:0,y:0}));
 test('stickVec clamps',()=>eq(stickVec(120,0),{x:1,y:0}));
 test('drag threshold',()=>{eq(touchIsDrag(17,0),false);eq(touchIsDrag(19,0),true)});
@@ -70,7 +70,13 @@ test('second pointer ignored by stick',()=>{touchReset();try{eq(stickDown({point
 test('touchReset clears inputs',()=>{Touch.ptr={stick:1,atk:2};Touch.mx=.5;Touch.my=-.3;Touch.fire=true;Touch.aimOverride={x:1,y:2};touchReset();eq([Touch.ptr,Touch.mx,Touch.my,Touch.fire,Touch.aimOverride],[{},0,0,false,null])});
 test('stick walks under 0.5 and runs past it',()=>{const p=TP('paladin'),on=Touch.on;Touch.on=true;try{Touch.mx=.25;Touch.my=0;readInput(p);eq(p.input.mx,.5);Touch.mx=.8;readInput(p);eq(p.input.mx,1)}finally{Touch.on=on;touchReset()}});
 test('tap casts, drag aims, back onto the slot cancels',()=>{const pl=players.slice(),p=TP('sorcerer'),on=Touch.on,e=enemies.slice();players.length=0;players.push(p);enemies.length=0;Touch.on=true;touchReset();const ev=(x,y)=>({pointerId:3,clientX:x,clientY:y});
-  try{slotDown(2,ev(500,300));slotUp(ev(505,300));eq(p.input.abil[2],true);eq(Touch.aimOverride,null);p.input.abil.fill(false);
+  try{inPlay(()=>{slotDown(2,ev(500,300));slotUp(ev(505,300));eq(p.input.abil[2],true);eq(Touch.aimOverride,null);p.input.abil.fill(false);
     slotDown(2,ev(500,300));slotMove(ev(400,300));eq(Touch.aimOverride.x<0,true);slotUp(ev(400,300));eq(p.input.abil[2],true);const q=Touch.aimOverride;readInput(p);eq([p.input.ax,p.input.ay],[q.x,q.y]);eq(Touch.aimOverride,null);p.input.abil.fill(false);
-    slotDown(2,ev(500,300));slotMove(ev(400,300));slotMove(ev(502,300));slotUp(ev(502,300));eq(p.input.abil[2],false);eq(Touch.aimOverride,null)}
+    slotDown(2,ev(500,300));slotMove(ev(400,300));slotMove(ev(502,300));slotUp(ev(502,300));eq(p.input.abil[2],false);eq(Touch.aimOverride,null)})}
   finally{players.length=0;players.push(...pl);enemies.push(...e);Touch.on=on;touchReset()}});
+test('taps ignored while paused',()=>{const pl=players.slice(),p=TP('sorcerer'),io=invOpen;players.length=0;players.push(p);touchReset();invOpen=true;const ev={pointerId:4,clientX:500,clientY:300};
+  try{inPlay(()=>{eq(slotDown(2,ev),false);eq(atkDown(ev),false);slotUp(ev);eq(p.input.abil[2],false);eq(Touch.fire,false);eq(Touch.ptr,{})})}finally{invOpen=io;players.length=0;players.push(...pl);touchReset()}});
+test('hold then drag still aims and casts',()=>{const pl=players.slice(),p=TP('sorcerer'),e=enemies.slice();players.length=0;players.push(p);enemies.length=0;touchReset();const ev=(x,y)=>({pointerId:3,clientX:x,clientY:y});
+  try{inPlay(()=>{slotDown(2,ev(500,300));Touch.hold={id:3,x:500,y:300,fired:true,t:0};slotUp(ev(502,300));eq(p.input.abil[2],false);
+    slotDown(2,ev(500,300));Touch.hold={id:3,x:500,y:300,fired:true,t:0};const m=ev(400,300);slotMove(m);holdMove(m);eq(Touch.hold,null);slotUp(m);eq(p.input.abil[2],true);eq(Touch.aimOverride.x<0,true)})}
+  finally{players.length=0;players.push(...pl);enemies.push(...e);touchReset()}});
