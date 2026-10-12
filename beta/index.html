@@ -224,9 +224,11 @@ body.touch #bottom,body.touch #hint{display:none}
 .tslot.act{border-color:var(--accent);box-shadow:0 0 12px rgba(232,194,106,.5)}.tslot.cancel{border-color:var(--hp)}
 #quick{position:fixed;right:calc(140px + env(safe-area-inset-right));bottom:calc(184px + env(safe-area-inset-bottom));display:flex;gap:6px;pointer-events:auto}
 .slot.qb{width:var(--t-q);height:var(--t-q);border-radius:50%;font-size:20px;cursor:pointer}
-#ctx,#menuBtn{pointer-events:auto;position:fixed;min-height:44px;color:var(--text);font-family:var(--ui-font);font-size:var(--fs);font-weight:600;cursor:pointer}
+#ctx,#menuBtn,#fsBtn{pointer-events:auto;position:fixed;min-height:44px;color:var(--text);font-family:var(--ui-font);font-size:var(--fs);font-weight:600;cursor:pointer}
 #ctx{right:calc(140px + env(safe-area-inset-right));bottom:calc(232px + env(safe-area-inset-bottom));max-width:200px;padding:0 14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-color:var(--accent)}
-#menuBtn{width:44px;height:44px;font-size:20px;padding:0}
+#menuBtn,#fsBtn{width:44px;height:44px;font-size:20px;padding:0}
+body.phone .sheet.fssheet{display:grid;grid-template-columns:repeat(var(--n),1fr);gap:4px 8px;width:min(640px,100%);margin:0 auto}.fssheet>.g-head{grid-column:1/-1}.fssheet .g-row{flex-direction:column;align-items:flex-start;text-align:left}
+#iab{position:fixed;left:50%;bottom:8px;transform:translateX(-50%);z-index:30;display:flex;align-items:center;gap:8px;max-width:min(420px,56vw);padding:6px 8px 6px 12px;font-size:13px;line-height:1.3;pointer-events:auto}#iab .g-btn{min-height:44px;flex:none}#iab .x{min-width:44px;min-height:44px;background:none;border:0;color:var(--text);font-size:16px;cursor:pointer}
 #tmenu{pointer-events:auto;position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:27;display:grid;grid-template-columns:repeat(3,112px);gap:8px;padding:12px}
 #tmenu button{min-height:48px;background:var(--field);color:var(--text);border:1px solid var(--edge);border-radius:var(--r);font-family:var(--ui-font);font-size:var(--fs);cursor:pointer}
 /* ---- Phone layout (src/88-layout.js): body.phone when touch is present and the short screen side is under 500 px */
@@ -313,6 +315,7 @@ body.phone #chatLog{top:76px;width:min(360px,44vw)}
   <div id="quick"><div class="slot qb" data-q="hp" data-src="potSlot"><div class="ic">🧪</div><div class="cnt"></div></div><div class="slot qb" data-q="mp" data-src="manaSlot"><div class="ic"><span style="filter:hue-rotate(200deg)">🧪</span></div><div class="cnt"></div></div><div class="slot qb" data-q="food" data-src="foodSlot"><div class="ic">🍖</div><div class="cnt"></div></div><div class="slot qb" data-q="mount"><div class="ic">🐎</div></div><div class="slot qb" data-q="hearth" data-src="hearthSlot"><div class="ic">🏠</div><div class="cnt"></div></div></div>
   <button id="ctx" class="glass hidden"></button>
   <button id="menuBtn" class="glass" aria-label="Menu">☰</button>
+  <button id="fsBtn" class="glass hidden" aria-label="Fullscreen">⛶</button>
   <div id="tmenu" class="glass hidden"><button data-m="inv">Inventory</button><button data-m="tal">Talents</button><button data-m="prof">Professions</button><button data-m="map">Map</button><button data-m="quest">Quests</button><button data-m="friends">Friends</button><button data-m="settings">Settings</button><button data-m="food" class="pq">Eat food</button><button data-m="mount" class="pq">Mount</button><button data-m="hearth" class="pq">Hearthstone</button><button data-m="mute">Mute</button><button data-m="pause">Pause</button></div>
 </div>
 <div id="toasts"></div>
@@ -2895,7 +2898,7 @@ function touchFrame(p){if(Touch.built!==p.abil)touchBuild(p);touchLayout(p);if(!
   document.querySelectorAll('#quick .qb').forEach(b=>{const src=b.dataset.src&&$(b.dataset.src),n=b.querySelector('.cnt');if(src){b.classList.toggle('nomana',src.classList.contains('nomana'));if(n)n.textContent=(src.querySelector('.cnt')||src.querySelector('.cdt')).textContent}
     else if(b.dataset.q==='mount')b.firstChild.textContent=p.mount?MOUNTS[p.mount].icon:'🐎'});
   const it=!p.dead&&interactables(p)[0],cx=$('ctx');cx.classList.toggle('hidden',!it);if(it){cx._act=it.act;const t=it.label||(it.o===warden?'Talk':it.o===merchant?'Shop':'Use');if(cx.textContent!==t)cx.textContent=t}
-  const r=$('mini').getBoundingClientRect(),mb=$('menuBtn');mb.style.right=(innerWidth-r.left+8)+'px';mb.style.top=r.top+'px';
+  const r=$('mini').getBoundingClientRect(),mb=$('menuBtn');mb.style.right=(innerWidth-r.left+8)+'px';mb.style.top=r.top+'px';const fb=$('fsBtn'),fm=Layout.phone?fsMode(fsEnv()):'none';fb.classList.toggle('hidden',fm==='none');if(fm==='inapp'&&Layout.phone&&state==='play')fsBanner();fb.style.right=(innerWidth-r.left+8+44+6)+'px';fb.style.top=r.top+'px';
   if(isPaused()&&!Touch.paused){touchReset();p.input.abil.fill(false);p.input.fire=false}Touch.paused=isPaused();if(Touch.drag)touchDrawAim()}
 const TMENU={inv:()=>toggleInv(true),tal:()=>toggleTal(true),prof:()=>toggleProf(true),map:()=>toggleMap(true),friends:()=>toggleFriends(true),
   quest:()=>uiSheet('Quest',[...$('quest').querySelectorAll('.ql')].map(e=>({label:e.textContent}))),
@@ -2915,7 +2918,7 @@ function touchMenu(v){const m=$('tmenu');m.classList.toggle('hidden',v===undefin
   const Q={hp:p=>drinkPotion(p,'hp'),mp:p=>drinkPotion(p,'mp'),food:p=>eatFood(p),mount:p=>{if(!p.dead)toggleMount(p)},hearth:p=>startHearth(p)};
   document.querySelectorAll('#quick .qb').forEach(b=>b.onclick=()=>{const p=players[0];if(p&&!isPaused())Q[b.dataset.q](p)});
   $('ctx').onclick=()=>{const p=players[0];if(p&&!p.dead&&!isPaused()&&$('ctx')._act)$('ctx')._act()};
-  $('menuBtn').onclick=()=>touchMenu();document.querySelectorAll('#tmenu button').forEach(b=>b.onclick=()=>{touchMenu(false);if(!isPaused()||b.dataset.m==='pause'||b.dataset.m==='mute')TMENU[b.dataset.m]()})}
+  $('menuBtn').onclick=()=>touchMenu();$('fsBtn').onclick=fsClick;document.querySelectorAll('#tmenu button').forEach(b=>b.onclick=()=>{touchMenu(false);if(!isPaused()||b.dataset.m==='pause'||b.dataset.m==='mute')TMENU[b.dataset.m]()})}
 // ================= Phone or desktop layout, orientation card, graphics =================
 // Phone = touch present (a coarse pointer, or a touch has happened) and the short screen side under 500 px.
 // env is window, or a fake {innerWidth, innerHeight, matchMedia, touchSeen} in the self-tests.
@@ -2939,6 +2942,30 @@ function touchPlace(o){const{W,H,atk,ab,q,limit,n}=o,mr=o.mr??8,mb=o.mb??4,cx=W-
       if(y-ab/2<limit||x-ab/2<0||near(x,y)||rect(x,y)||out.abil.some(c=>hit(x,y,c)))continue;put={x,y};break}
     out.abil.push(put||{x:cx-R1,y:cy})}
   out.left=Math.min(cx-atk/2,out.quick.x,...out.abil.map(c=>c.x-ab/2));return out}
+// ---- Fullscreen (phone): a button next to the menu button, and a notice inside in-app browsers (Messenger, Instagram...), which cannot go fullscreen at all.
+// fsMode: 'inapp' (open it in Safari/Chrome first), 'ios-a2hs' (iPhone: Add to Home Screen), 'api' (element fullscreen works), 'none' (already fullscreen/standalone, or no way).
+const IAB_RE=/FBAN|FBAV|FB_IAB|Instagram|Messenger|Line\/|Snapchat|TikTok/;
+function isInAppBrowser(ua){return IAB_RE.test(ua)||/iPhone|iPad|iPod/.test(ua)&&!/Safari\//.test(ua)}
+function fsMode(o){if(o.standalone)return'none';if(isInAppBrowser(o.ua))return'inapp';if(/iPhone|iPod/.test(o.ua))return'ios-a2hs';return o.hasFsApi?'api':'none'}
+const fsEl=()=>document.fullscreenElement||document.webkitFullscreenElement||null;
+// While we are in element fullscreen the mode stays 'api' so the button can toggle back out.
+function fsEnv(){const d=document.documentElement,mm=q=>{try{return matchMedia(q).matches}catch(e){return false}};
+  return{ua:navigator.userAgent||'',hasFsApi:!!(d.requestFullscreen||d.webkitRequestFullscreen),standalone:!fsEl()&&(!!navigator.standalone||mm('(display-mode: fullscreen), (display-mode: standalone)'))}}
+function copyLink(){const u=location.href;try{navigator.clipboard.writeText(u).then(()=>toast('Link copied'),()=>prompt('Copy this link',u))}catch(e){prompt('Copy this link',u)}}
+function fsRequest(){const d=document.documentElement,r=d.requestFullscreen||d.webkitRequestFullscreen;if(!r)return;let pr;try{pr=r.call(d)}catch(e){return}
+  const lock=()=>{try{const l=screen.orientation&&screen.orientation.lock&&screen.orientation.lock('landscape');if(l&&l.catch)l.catch(()=>{})}catch(e){}};if(pr&&pr.then)pr.then(lock,()=>{});else lock()}
+// The steps sit side by side (one column each) so the whole sheet fits a 220 px high screen.
+function fsSheet(rows){const sh=uiSheet('Play in fullscreen',rows);sh.el.classList.add('fssheet');sh.el.style.setProperty('--n',rows.length)}
+function fsClick(){const m=fsMode(fsEnv());
+  if(m==='api'){if(fsEl()){Settings.fullscreen=false;saveSettings();(document.exitFullscreen||document.webkitExitFullscreen).call(document)}else{Settings.fullscreen=true;saveSettings();fsRequest()}}
+  else if(m==='ios-a2hs')fsSheet([{icon:'1',label:'Tap the Share button in Safari'},{icon:'2',label:'Choose "Add to Home Screen"'},{icon:'3',label:'Open Emberfall from the new icon'}]);
+  else if(m==='inapp')fsSheet([{icon:'!',label:'For the full screen, open Emberfall in Safari/Chrome'},{icon:'🔗',label:'Copy link',onTap:copyLink}])}
+// Once per session, in an in-app browser: a dismissible banner with Copy link.
+function fsBanner(){if(fsBanner.done)return;fsBanner.done=true;try{if(sessionStorage.getItem('ef-iab'))return;sessionStorage.setItem('ef-iab','1')}catch(e){}
+  const b=uiEl('div','glass'),t=uiEl('span','','For the full screen, open Emberfall in Safari/Chrome'),c=uiEl('button','g-btn','Copy link'),x=uiEl('button','x','✕');b.id='iab';x.setAttribute('aria-label','Close');
+  c.onclick=copyLink;x.onclick=()=>b.remove();b.append(t,c,x);document.body.appendChild(b);setTimeout(()=>b.remove(),20000)}
+// After load: with Fullscreen chosen earlier, the first touch goes fullscreen again (browsers only allow it inside a gesture).
+addEventListener('pointerup',e=>{if(e.pointerType==='touch'&&Settings.fullscreen&&Layout.phone&&!fsEl()&&fsMode(fsEnv())==='api')fsRequest()},true);
 // Particle counts: halved on a phone unless Graphics is High.
 const Layout={phone:null,turn:false};
 function fxScale(){return Layout.phone&&Settings.gfx!=='high'?.5:1}
@@ -3591,6 +3618,15 @@ test('locked abilities hidden on phone',()=>{const lp=Layout.phone,pl=players.sl
     p.abil=ABIL.sorcerer.concat([SPEC_LOCKED]);touchLayout(p);eq(ds()[5],false,'spec slot without a spec');
     Layout.phone=false;touchLayout(p);eq(ds().every(Boolean),true,'desktop touch keeps all slots')}
   finally{Layout.phone=lp;players.length=0;players.push(...pl);Touch.built=null;touchLayout.key=null}});
+
+// ---- Fullscreen button and in-app browser notice
+const UA_MSG='Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 [FBAN/MessengerForiOS;FBAV/430.0;FBBV/1;FBDV/iPhone15,2]',
+  UA_SAF='Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
+  UA_AND='Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
+  UA_IG='Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/120.0.0.0 Mobile Safari/537.36 Instagram 300.0.0';
+test('Messenger iOS is an in-app browser, Safari and Chrome are not',()=>{eq(isInAppBrowser(UA_MSG),true);eq(isInAppBrowser(UA_IG),true);eq(isInAppBrowser(UA_SAF),false);eq(isInAppBrowser(UA_AND),false);eq(isInAppBrowser('Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148'),true,'WKWebView without Safari')});
+test('fsMode picks inapp, ios-a2hs, api or none',()=>{eq(fsMode({ua:UA_MSG,hasFsApi:false,standalone:false}),'inapp');eq(fsMode({ua:UA_SAF,hasFsApi:false,standalone:false}),'ios-a2hs');
+  eq(fsMode({ua:UA_AND,hasFsApi:true,standalone:false}),'api');eq(fsMode({ua:UA_SAF,hasFsApi:false,standalone:true}),'none');eq(fsMode({ua:UA_AND,hasFsApi:true,standalone:true}),'none');eq(fsMode({ua:UA_AND,hasFsApi:false,standalone:false}),'none')});
 // ================= Developer test mode for co-op =================
 // Open the game twice on this computer as index.html?nettest=a and index.html?nettest=b: the two tabs act as two
 // friends and introduce each other through the browser (no accounts needed). Ignored without the parameter.
