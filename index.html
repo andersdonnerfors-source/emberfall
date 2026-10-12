@@ -207,6 +207,25 @@ h2{margin:0 0 10px;color:var(--gold);font-weight:normal;letter-spacing:.05em}
 #hud>*,#inv,#tal,#shop,#prof,#loot,#worldmap,#dialog,#friends,#toasts,#netAsks,#settings>.panel,#howto>.panel,.cfbox{zoom:var(--ui)}
 #settings>.panel,#howto>.panel,.cfbox{max-width:calc(100%/var(--ui))}
 #inv,#tal,#shop,#prof,#friends,#worldmap,#dialog{max-width:calc(96vw/var(--ui));max-height:calc(94vh/var(--ui))}
+/* Touch controls (src/87-touch.js): shown while body.touch and the HUD is up. Attack in the bottom-right corner, abilities on an arc round it (positions set in touchBuild), quick row and context button above-left of the arc */
+:root{--t-atk:84px;--t-ab:56px;--t-q:40px;--t-stick:120px}
+canvas#game,#touch{touch-action:none;-webkit-touch-callout:none}
+#touch{display:none;position:fixed;inset:0;z-index:6;pointer-events:none}body.touch #touch{display:block}#hud.hidden~#touch{display:none}
+body.touch #bottom,body.touch #hint{display:none}
+#stick{position:fixed;left:calc(96px + env(safe-area-inset-left));top:calc(100% - 96px - env(safe-area-inset-bottom));width:var(--t-stick);height:var(--t-stick);margin:calc(var(--t-stick)/-2) 0 0 calc(var(--t-stick)/-2);border-radius:50%;border:2px solid rgba(255,255,255,.22);background:rgba(10,12,16,.25);opacity:.4}
+#stick.on{opacity:1}#stick i{position:absolute;left:50%;top:50%;width:52px;height:52px;margin:-26px 0 0 -26px;border-radius:50%;background:rgba(255,255,255,.32);border:1px solid rgba(255,255,255,.4);transform:translate(var(--kx,0),var(--ky,0))}
+#aimSvg{position:fixed;inset:0;width:100%;height:100%;overflow:visible}#aimSvg line{stroke:rgba(255,224,138,.85);stroke-width:3;stroke-dasharray:8 6}#aimSvg ellipse{fill:rgba(255,224,138,.16);stroke:rgba(255,224,138,.85);stroke-width:2}
+#arc{position:fixed;right:calc(32px + env(safe-area-inset-right));bottom:calc(36px + env(safe-area-inset-bottom));width:var(--t-atk);height:var(--t-atk)}
+.slot.tslot{position:absolute;width:var(--t-ab);height:var(--t-ab);border-radius:50%;font-size:26px;background:rgba(10,12,16,.55);pointer-events:auto}
+#atk.tslot{left:0;top:0;width:var(--t-atk);height:var(--t-atk);font-size:36px;border-color:rgba(255,255,255,.35)}
+.tslot.act{border-color:var(--accent);box-shadow:0 0 12px rgba(232,194,106,.5)}.tslot.cancel{border-color:var(--hp)}
+#quick{position:fixed;right:calc(140px + env(safe-area-inset-right));bottom:calc(184px + env(safe-area-inset-bottom));display:flex;gap:6px;pointer-events:auto}
+.slot.qb{width:var(--t-q);height:var(--t-q);border-radius:50%;font-size:20px;cursor:pointer}
+#ctx,#menuBtn{pointer-events:auto;position:fixed;min-height:44px;color:var(--text);font-family:var(--ui-font);font-size:var(--fs);font-weight:600;cursor:pointer}
+#ctx{right:calc(140px + env(safe-area-inset-right));bottom:calc(232px + env(safe-area-inset-bottom));max-width:200px;padding:0 14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-color:var(--accent)}
+#menuBtn{width:44px;height:44px;font-size:20px;padding:0}
+#tmenu{pointer-events:auto;position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:27;display:grid;grid-template-columns:repeat(3,112px);gap:8px;padding:12px}
+#tmenu button{min-height:48px;background:var(--field);color:var(--text);border:1px solid var(--edge);border-radius:var(--r);font-family:var(--ui-font);font-size:var(--fs);cursor:pointer}
 </style>
 </head>
 <body>
@@ -229,6 +248,15 @@ h2{margin:0 0 10px;color:var(--gold);font-weight:normal;letter-spacing:.05em}
   <div id="tframe" class="panel hidden"><canvas id="tPort" width="112" height="112"></canvas><div class="tf-tx"><div class="uname"><span id="tName"></span><span id="tLvl"></span></div><div class="bar hp"><i id="tF"></i><span id="tT"></span></div></div></div>
   <div id="bottom"><div id="abar"></div></div>
   <div id="hint">WASD / arrows: move · Mouse: aim · Left click: attack · Right click / 1–4: abilities · Q: heal potion · Z: mana potion · X: eat · E: talk, trade, enter · F: mount · H: teleport home · N: world map · O: friends · I: character · T: talents · P: professions · Esc: pause · F1: show this help</div>
+</div>
+<div id="touch">
+  <div id="stick"><i></i></div>
+  <svg id="aimSvg" class="hidden"><line></line><ellipse></ellipse></svg>
+  <div id="arc"><div id="atk" class="slot sw tslot" data-i="0"></div><div class="slot sw tslot" data-i="1"></div><div class="slot sw tslot" data-i="2"></div><div class="slot sw tslot" data-i="3"></div><div class="slot sw tslot" data-i="4"></div><div class="slot sw tslot" data-i="5"></div></div>
+  <div id="quick"><div class="slot qb" data-q="hp" data-src="potSlot"><div class="ic">🧪</div><div class="cnt"></div></div><div class="slot qb" data-q="mp" data-src="manaSlot"><div class="ic"><span style="filter:hue-rotate(200deg)">🧪</span></div><div class="cnt"></div></div><div class="slot qb" data-q="food" data-src="foodSlot"><div class="ic">🍖</div><div class="cnt"></div></div><div class="slot qb" data-q="mount"><div class="ic">🐎</div></div><div class="slot qb" data-q="hearth" data-src="hearthSlot"><div class="ic">🏠</div><div class="cnt"></div></div></div>
+  <button id="ctx" class="glass hidden"></button>
+  <button id="menuBtn" class="glass" aria-label="Menu">☰</button>
+  <div id="tmenu" class="glass hidden"><button data-m="inv">Inventory</button><button data-m="tal">Talents</button><button data-m="prof">Professions</button><button data-m="map">Map</button><button data-m="quest">Quests</button><button data-m="friends">Friends</button><button data-m="settings">Settings</button><button data-m="mute">Mute</button><button data-m="pause">Pause</button></div>
 </div>
 <div id="toasts"></div>
 <div id="netAsks"></div>
@@ -1040,9 +1068,9 @@ function useAbility(p,i){const ab=p.abil[i];if(p.level<UNLOCK[i])return;if(p.cds
 const CASTSFX={paladin:['swing','bash','holy','holy','shieldup'],sorcerer:['fire','frost','blink','fire','meteor'],hunter:['arrow','arrow','trap','howl','arrow'],necromancer:['shadow','summon','drain','curse','bone']};
 function updatePlayer(p,dt){p.playT=(p.playT||0)+dt;
   if(p.dead){p.deathT-=dt;if(p.deathT<=0)respawn(p);return}
-  const i=p.input;let mx=i.mx,my=i.my;const l=Math.hypot(mx,my);if(l>0){mx/=l;my/=l}
+  const i=p.input;let mx=i.mx,my=i.my;const l=Math.hypot(mx,my);if(l>1){mx/=l;my/=l}// keys give length 1 or 1.4 (diagonal); the touch stick gives 0-1 (walk to run)
   updateMount(p,dt,l>0);updateHearth(p,dt,l>0);const spd=p.stats.speed*(p.slowUntil>time?p.slowF:1)*(tileAt(p.x,p.y)===T.BOG&&!p.fly?.65:1)*(p.mounted?1+MOUNTS[p.mount].speed:1);
-  if(!(p.stunUntil>time)&&l>0){moveEnt(p,mx*spd*dt,my*spd*dt);p.walk+=dt*12}
+  if(!(p.stunUntil>time)&&l>0){moveEnt(p,mx*spd*dt,my*spd*dt);p.walk+=dt*12*Math.min(1,l)}
   const bNow=biomeAtW(p.x,p.y)+(isDeep(p.x/TILE,p.y/TILE,biomeAtW(p.x,p.y))?10:0);if(zone.kind==='over'&&p.id===0&&bNow!==p.biome&&rt>(p.bT||0)){if(p.biome!==undefined){const zr=zoneRange(p.x/TILE,p.y/TILE,bNow%10);toast((isDeep(p.x/TILE,p.y/TILE,bNow%10)?'The Deep Wilds of '+BIOME_NAME[bNow%10].replace(/^The /,''):BIOME_NAME[bNow%10])+' · Levels '+zr[0]+'–'+zr[1]+(zr[0]>p.level+2?' · Dangerous!':''),zr[0]>p.level+2?'danger':'')}p.biome=bNow;p.bT=rt+5}
   p.aim=Math.atan2(i.ay-p.y,i.ax-p.x);
   for(let k=0;k<6;k++)p.cds[k]=Math.max(0,p.cds[k]-dt);p.potCd=Math.max(0,p.potCd-dt);updateSupplies(p,dt);gearFx(p,dt);p.castAnim=Math.max(0,(p.castAnim||0)-dt);
@@ -1227,7 +1255,7 @@ function questTick(){updateBarrowGate();const p=players[0];if(!p||quest.state!==
   if(Math.hypot(p.x/TILE-q.site.x,p.y/TILE-q.site.y)<22){flags['site'+quest.idx]=true;spawnSite(q.boss)}}
 
 // ================= Input =================
-function readInput(p){const i=p.input;if(isPaused()){i.mx=i.my=0;i.fire=false;return}i.mx=((keys.KeyD||keys.ArrowRight)?1:0)-((keys.KeyA||keys.ArrowLeft)?1:0);i.my=((keys.KeyS||keys.ArrowDown)?1:0)-((keys.KeyW||keys.ArrowUp)?1:0);i.ax=mouse.x+camX;i.ay=mouse.y/TILT+camY;i.fire=mouse.l}
+function readInput(p){const i=p.input;if(isPaused()){i.mx=i.my=0;i.fire=false;return}if(Touch.on){touchInput(p);return}i.mx=((keys.KeyD||keys.ArrowRight)?1:0)-((keys.KeyA||keys.ArrowLeft)?1:0);i.my=((keys.KeyS||keys.ArrowDown)?1:0)-((keys.KeyW||keys.ArrowUp)?1:0);i.ax=mouse.x+camX;i.ay=mouse.y/TILT+camY;i.fire=mouse.l}
 addEventListener('keydown',e=>{if(storyOpen){if(e.code==='Enter'||e.code==='Escape'){if(!$('intro').classList.contains('hidden'))$('btnIntro').click();else $('btnVic').click()}return}if(e.target.tagName==='INPUT'){if(e.code==='Enter'&&state==='creator')beginGame();return}keys[e.code]=true;if(state!=='play')return;
   const p=players[0];if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code))e.preventDefault();
   if(e.code==='Escape'){if(Friends.open){toggleFriends(false);return}if(mapOpen)toggleMap(false);else if(lootOpen)closeLoot();else if(profOpen)toggleProf(false);else if(invOpen)toggleInv(false);else if(talOpen)toggleTal(false);else if(shopOpen)closeShop();else if(dialogOpen)closeDialog();else togglePause();return}
@@ -1553,7 +1581,7 @@ function updateHud(){const p=players[0];if(!p)return;
     $('tF').style.width=Math.max(0,tg.hp/tg.maxHp*100)+'%';$('tT').textContent=Math.max(0,Math.ceil(tg.hp))+' / '+tg.maxHp;
     const k=monsterKey(tg);if(k!==updateHud.tk){updateHud.tk=k;const c=$('tPort').getContext('2d');c.clearRect(0,0,112,112);c.drawImage(monsterPortrait(tg),0,0)}}else tf.classList.add('hidden');
   partyT-=1/60;if(partyT<=0){partyT=.25;renderParty()}
-  layoutHud();drawMini()}
+  if(Touch.on)touchFrame(p);layoutHud();drawMini()}
 function updateQuestUI(){const q=QUESTS[quest.idx],el=$('quest');
   if(!q||quest.state==='done'){el.innerHTML='<b>The road goes on</b><br>All quests complete. Roam the wilds, grow stronger and hunt for gear. More adventures are coming.';return}
   if(quest.state==='offer'){el.innerHTML=`<b>New quest</b><br>Speak with Old Warden Bram in Emberfall (E).`;return}
@@ -2720,6 +2748,78 @@ function aimPoint(p,i){const a=p.abil[i],r=aimRange(p,i);if(a&&a.heal)return aim
   const f=aimFace(p);Aim.target=aimPick(p,aimCands(p,r),f,Aim.target);
   if(Aim.target){hudTarget=Aim.target;return{x:Aim.target.x,y:Aim.target.y}}
   return{x:p.x+f.x*200,y:p.y+f.y*200}}
+
+// ---- Touch controls: stick (left thumb), attack + ability arc + quick row (right thumb), context and menu buttons, hold for tooltips.
+// Shown after a touch (or on a coarse-pointer device); any mouse movement or key press hides them, so keyboard and mouse play is unchanged.
+const Touch={on:false,mx:0,my:0,fire:false,aimOverride:null,ptr:{}},STICK_R=60,STICK_DEAD=.1,STICK_RUN=.5,STICK_ZONE=.45,DRAG_PX=18,HOLD_MS=450,SLOT_R=28,ARC_R=104,ARC_ANG=[0,205,171,136,102,67];
+// Stick offset in px -> vector of length <= 1 (60 px radius, the inner 10% is dead).
+function stickVec(dx,dy){const d=Math.hypot(dx,dy),n=d/STICK_R;if(n<=STICK_DEAD)return{x:0,y:0};const m=Math.min(1,(n-STICK_DEAD)/(1-STICK_DEAD));return{x:dx/d*m,y:dy/d*m}}
+const touchIsDrag=(dx,dy)=>Math.hypot(dx,dy)>DRAG_PX;
+function touchReset(){Touch.ptr={};Touch.mx=Touch.my=0;Touch.fire=false;Touch.aimOverride=null;Touch.drag=null;Touch.kx=Touch.ky=0;if(Touch.hold)clearTimeout(Touch.hold.t);Touch.hold=null;touchDrawStick();touchDrawAim()}
+function touchShow(on){if(Touch.on===on)return;Touch.on=on;document.body.classList.toggle('touch',on);touchReset();$('tmenu').classList.add('hidden')}
+// Stick: one owner pointer; it appears where the thumb lands in the left 45%.
+function stickDown(e){if(Touch.ptr.stick!=null||e.clientX>innerWidth*STICK_ZONE)return false;Touch.ptr.stick=e.pointerId;Touch.sx=e.clientX;Touch.sy=e.clientY;Touch.mx=Touch.my=Touch.kx=Touch.ky=0;touchDrawStick();return true}
+// The thumb moves on screen; the world is squashed by TILT, so the move vector is turned to match what the player sees.
+function stickMove(e){if(e.pointerId!==Touch.ptr.stick)return;const dx=e.clientX-Touch.sx,dy=e.clientY-Touch.sy,d=Math.hypot(dx,dy),v=stickVec(dx,dy),m=Math.hypot(v.x,v.y),wy=dy/TILT,wl=Math.hypot(dx,wy)||1,k=Math.min(d,STICK_R)/(d||1);
+  Touch.mx=dx/wl*m;Touch.my=wy/wl*m;Touch.kx=dx*k;Touch.ky=dy*k;touchDrawStick()}
+function stickUp(e){if(e.pointerId!==Touch.ptr.stick)return;delete Touch.ptr.stick;Touch.mx=Touch.my=Touch.kx=Touch.ky=0;touchDrawStick()}
+function touchDrawStick(){const s=$('stick'),on=Touch.ptr.stick!=null;s.classList.toggle('on',on);s.style.left=on?Touch.sx+'px':'';s.style.top=on?Touch.sy+'px':'';s.style.setProperty('--kx',(Touch.kx||0)+'px');s.style.setProperty('--ky',(Touch.ky||0)+'px')}
+// Attack: held = attacking the auto-target, like holding the left mouse button.
+function atkDown(e){if(Touch.ptr.atk!=null)return false;Touch.ptr.atk=e.pointerId;Touch.fire=true;return true}
+function atkUp(e){if(e.pointerId!==Touch.ptr.atk)return;delete Touch.ptr.atk;Touch.fire=false}
+// Ability slots: a tap casts at aimPoint; a drag past 18 px aims (aimOverride) and casts on release; leaving the slot and coming back onto it cancels.
+function slotDown(i,e){if(Touch.ptr.abil!=null)return false;const el=document.querySelector('#arc [data-i="'+i+'"]'),r=el&&el.getBoundingClientRect(),c=r&&r.width?{x:r.left+r.width/2,y:r.top+r.height/2}:{x:e.clientX,y:e.clientY};
+  Touch.ptr.abil=e.pointerId;Touch.drag={i,x0:e.clientX,y0:e.clientY,cx:c.x,cy:c.y,on:false,out:false,cancel:false};Touch.aimOverride=null;return true}
+function slotMove(e){const d=Touch.drag,p=players[0];if(!d||e.pointerId!==Touch.ptr.abil||!p)return;const dx=e.clientX-d.x0,dy=e.clientY-d.y0;if(!d.on&&touchIsDrag(dx,dy))d.on=true;if(!d.on)return;
+  const dc=Math.hypot(e.clientX-d.cx,e.clientY-d.cy);if(dc>SLOT_R)d.out=true;d.cancel=d.out&&dc<=SLOT_R;Touch.aimOverride=d.cancel?null:touchAimAt(p,d.i,dx,dy);touchDrawAim()}
+function slotUp(e,lost){const d=Touch.drag,p=players[0];if(!d||e.pointerId!==Touch.ptr.abil)return;delete Touch.ptr.abil;Touch.drag=null;const held=Touch.hold&&Touch.hold.fired&&Touch.hold.id===e.pointerId;
+  if(p&&!lost&&!held&&!d.cancel&&(!d.on||Touch.aimOverride))p.input.abil[d.i]=true;if(!d.on||d.cancel||lost||held)Touch.aimOverride=null;touchDrawAim()}
+// A drag of 120 px reaches the ability's full range, in the dragged direction (as seen on screen).
+function touchAimAt(p,i,dx,dy){const r=aimRange(p,i),wy=dy/TILT,l=Math.hypot(dx,wy)||1,k=Math.min(1,Math.hypot(dx,dy)/120)*r;return{x:p.x+dx/l*k,y:p.y+wy/l*k}}
+// Aim line from the hero, plus a ground circle for spells (melee shows the line only).
+function touchDrawAim(){const g=$('aimSvg'),d=Touch.drag,p=players[0],q=Touch.aimOverride;document.querySelectorAll('#arc .tslot').forEach(s=>{const me=!!d&&+s.dataset.i===d.i;s.classList.toggle('act',me&&d.on&&!d.cancel);s.classList.toggle('cancel',me&&d.cancel)});
+  if(!d||!d.on||!q||!p){g.classList.add('hidden');return}g.classList.remove('hidden');const[a,b]=S(p.x,p.y),[x,y]=S(q.x,q.y),L=g.children[0],E=g.children[1],sp=aimRange(p,d.i)>AIM_MELEE;
+  L.setAttribute('x1',a);L.setAttribute('y1',b-24);L.setAttribute('x2',x);L.setAttribute('y2',sp?y:y-24);E.style.display=sp?'':'none';E.setAttribute('cx',x);E.setAttribute('cy',y);E.setAttribute('rx',44);E.setAttribute('ry',44*TILT)}
+// Touch version of readInput: stick -> move (walks below 0.5, runs from 0.5), then the aim for whatever fires this frame.
+function touchInput(p){const i=p.input,v=Math.hypot(Touch.mx,Touch.my),s=Math.min(1,v/STICK_RUN);i.mx=v>0?Touch.mx/v*s:0;i.my=v>0?Touch.my/v*s:0;i.fire=Touch.fire;
+  const k=i.abil.findIndex((b,j)=>j>0&&b),d=Touch.drag;let q=null;if(k>0){q=Touch.aimOverride||aimPoint(p,k);Touch.aimOverride=null}else if(i.fire)q=aimPoint(p,0);else if(d&&d.on&&Touch.aimOverride)q=Touch.aimOverride;else if(v>0)q={x:p.x+Touch.mx/v*100,y:p.y+Touch.my/v*100};
+  if(q){i.ax=q.x;i.ay=q.y}}
+// Hold 450 ms on anything with a tooltip ([data-tip] or a mouse-enter tooltip) to show it; lifting hides it. It also stands in for right-click.
+function tipEl(t){for(let e=t;e&&e!==document.body&&e.nodeType===1;e=e.parentElement)if(e.dataset.tip!=null||e.onmouseenter)return e;return null}
+function holdStart(e){const el=tipEl(e.target);if(!el)return;if(Touch.hold)clearTimeout(Touch.hold.t);const h=Touch.hold={id:e.pointerId,x:e.clientX,y:e.clientY,el,fired:false};
+  h.t=setTimeout(()=>{if(Touch.hold!==h)return;h.fired=true;mouse.x=h.x;mouse.y=h.y;if(el.dataset.tip!=null)showTip(el.dataset.tip);else el.onmouseenter({target:el});if(el.oncontextmenu)el.oncontextmenu({target:el,preventDefault(){},stopPropagation(){}})},HOLD_MS)}
+function holdMove(e){const h=Touch.hold;if(h&&!h.fired&&e.pointerId===h.id&&touchIsDrag(e.clientX-h.x,e.clientY-h.y)){clearTimeout(h.t);Touch.hold=null}}
+function holdEnd(e){const h=Touch.hold;if(!h||e.pointerId!==h.id)return;clearTimeout(h.t);Touch.hold=null;if(h.fired){hideTip();Touch.noClick=performance.now()+500}}
+// Builds the arc for the hero's class (again whenever the class changes): attack in the corner, abilities 1-4 round it, R on top.
+function touchBuild(p){Touch.built=p.abil;document.querySelectorAll('#arc .tslot').forEach(s=>{const i=+s.dataset.i,a=p.abil[i],src=$('abar').children[i];s.innerHTML=`<div class="ic">${a?a.icon:''}</div><div class="cd"></div><div class="cdt"></div>`;s.onmouseenter=i&&src?src.onmouseenter:null;// no hold-tooltip on the attack button: holding it is attacking
+  if(i){const g=ARC_ANG[i]*Math.PI/180,c=42-28;s.style.left=(c+Math.cos(g)*ARC_R)+'px';s.style.top=(c-Math.sin(g)*ARC_R)+'px'}})}
+// Per frame (from updateHud): cooldowns and counts mirror the action bar; the context button follows interactables(); the menu button sits left of the minimap.
+function touchFrame(p){if(Touch.built!==p.abil)touchBuild(p);const ab=$('abar').children;
+  document.querySelectorAll('#arc .tslot').forEach(s=>{const a=ab[+s.dataset.i];if(!a)return;for(const c of['locked','poor','rdy'])s.classList.toggle(c,a.classList.contains(c));s.style.setProperty('--e',a.style.getPropertyValue('--e'));s.children[2].textContent=a.children[3].textContent});
+  document.querySelectorAll('#quick .qb').forEach(b=>{const src=b.dataset.src&&$(b.dataset.src),n=b.querySelector('.cnt');if(src){b.classList.toggle('nomana',src.classList.contains('nomana'));if(n)n.textContent=(src.querySelector('.cnt')||src.querySelector('.cdt')).textContent}
+    else if(b.dataset.q==='mount')b.firstChild.textContent=p.mount?MOUNTS[p.mount].icon:'🐎'});
+  const it=!p.dead&&interactables(p)[0],cx=$('ctx');cx.classList.toggle('hidden',!it);if(it){cx._act=it.act;const t=it.label||(it.o===warden?'Talk':it.o===merchant?'Shop':'Use');if(cx.textContent!==t)cx.textContent=t}
+  const r=$('mini').getBoundingClientRect(),mb=$('menuBtn');mb.style.right=(innerWidth-r.left+8)+'px';mb.style.top=r.top+'px';
+  if(isPaused()&&!Touch.paused)touchReset();Touch.paused=isPaused();if(Touch.drag)touchDrawAim()}
+const TMENU={inv:()=>toggleInv(true),tal:()=>toggleTal(true),prof:()=>toggleProf(true),map:()=>toggleMap(true),friends:()=>toggleFriends(true),
+  quest:()=>uiSheet('Quest',[{label:$('quest').innerText.replace(/\s*\n+\s*/g,' · ')}]),
+  settings:()=>{if(!pauseOpen)togglePause();openOverlay('settings','pause')},mute:()=>{Snd.vol.muted=!Snd.vol.muted;applyVol();saveAudio();toast(Snd.vol.muted?'Sound off':'Sound on')},pause:()=>togglePause()};
+function touchMenu(v){const m=$('tmenu');m.classList.toggle('hidden',v===undefined?!m.classList.contains('hidden'):!v);touchReset()}
+{// Wiring. Each control captures its own pointer, so moving and casting work at the same time.
+  const cap=e=>{try{e.target.setPointerCapture(e.pointerId)}catch(_){}e.preventDefault()};touchShow(matchMedia('(pointer:coarse)').matches);
+  addEventListener('pointerdown',e=>{Touch.lastType=e.pointerType;if(e.pointerType==='touch'){touchShow(true);holdStart(e)}},true);
+  addEventListener('pointermove',e=>{if(e.pointerType==='mouse'&&Touch.on&&(e.movementX||e.movementY))touchShow(false);stickMove(e);slotMove(e);holdMove(e)});
+  const up=lost=>e=>{stickUp(e);atkUp(e);slotUp(e,lost);holdEnd(e)};addEventListener('pointerup',up(false));addEventListener('pointercancel',up(true));
+  addEventListener('keydown',()=>{if(Touch.on)touchShow(false)},true);addEventListener('blur',touchReset);addEventListener('orientationchange',touchReset);if(screen.orientation)screen.orientation.addEventListener('change',touchReset);
+  addEventListener('click',e=>{if(performance.now()<(Touch.noClick||0)){Touch.noClick=0;e.stopPropagation();e.preventDefault()}},true);
+  addEventListener('contextmenu',e=>{if(Touch.lastType==='touch'){e.preventDefault();e.stopPropagation()}},true);
+  cvs.addEventListener('pointerdown',e=>{if(Touch.on&&e.pointerType==='touch'&&state==='play'&&!isPaused()&&stickDown(e))cap(e)});
+  $('atk').addEventListener('pointerdown',e=>{if(atkDown(e))cap(e)});
+  document.querySelectorAll('#arc .tslot:not(#atk)').forEach(s=>s.addEventListener('pointerdown',e=>{if(slotDown(+s.dataset.i,e))cap(e)}));
+  const Q={hp:p=>drinkPotion(p,'hp'),mp:p=>drinkPotion(p,'mp'),food:p=>eatFood(p),mount:p=>{if(!p.dead)toggleMount(p)},hearth:p=>startHearth(p)};
+  document.querySelectorAll('#quick .qb').forEach(b=>b.onclick=()=>{const p=players[0];if(p&&!isPaused())Q[b.dataset.q](p)});
+  $('ctx').onclick=()=>{const p=players[0];if(p&&!p.dead&&!isPaused()&&$('ctx')._act)$('ctx')._act()};
+  $('menuBtn').onclick=()=>touchMenu();document.querySelectorAll('#tmenu button').forEach(b=>b.onclick=()=>{touchMenu(false);if(!isPaused()||b.dataset.m==='pause'||b.dataset.m==='mute')TMENU[b.dataset.m]()})}
 // ================= Accounts and hero storage =================
 // Online: heroes are stored in Supabase, and database rules (supabase-setup.sql) make sure each player can only
 // read, change and delete their own heroes. Offline: heroes stay in this browser, as before.
@@ -3168,6 +3268,20 @@ test('friendly aim falls back to self',()=>{const pl=players.slice(),a=AU(0,0);p
 
 // ---- Avatars before their look arrives
 test('playerLook tolerates empty look',()=>{const o=playerLook({cls:'paladin',look:{},gear:{},bagSize:20});eq(typeof o.hatColor,'string');eq(typeof o.cloth,'string')});
+
+// ---- Touch controls (B7)
+const TP=cls=>({x:0,y:0,aim:0,hp:10,maxHp:10,level:20,abil:ABIL[cls],input:{mx:0,my:0,ax:0,ay:0,fire:false,abil:[false,false,false,false,false,false]}});
+test('stickVec dead zone',()=>eq(stickVec(5,0),{x:0,y:0}));
+test('stickVec clamps',()=>eq(stickVec(120,0),{x:1,y:0}));
+test('drag threshold',()=>{eq(touchIsDrag(17,0),false);eq(touchIsDrag(19,0),true)});
+test('second pointer ignored by stick',()=>{touchReset();try{eq(stickDown({pointerId:1,clientX:40,clientY:300}),true);eq(stickDown({pointerId:2,clientX:60,clientY:320}),false);eq(Touch.ptr.stick,1);eq([Touch.sx,Touch.sy],[40,300])}finally{touchReset()}});
+test('touchReset clears inputs',()=>{Touch.ptr={stick:1,atk:2};Touch.mx=.5;Touch.my=-.3;Touch.fire=true;Touch.aimOverride={x:1,y:2};touchReset();eq([Touch.ptr,Touch.mx,Touch.my,Touch.fire,Touch.aimOverride],[{},0,0,false,null])});
+test('stick walks under 0.5 and runs past it',()=>{const p=TP('paladin'),on=Touch.on;Touch.on=true;try{Touch.mx=.25;Touch.my=0;readInput(p);eq(p.input.mx,.5);Touch.mx=.8;readInput(p);eq(p.input.mx,1)}finally{Touch.on=on;touchReset()}});
+test('tap casts, drag aims, back onto the slot cancels',()=>{const pl=players.slice(),p=TP('sorcerer'),on=Touch.on,e=enemies.slice();players.length=0;players.push(p);enemies.length=0;Touch.on=true;touchReset();const ev=(x,y)=>({pointerId:3,clientX:x,clientY:y});
+  try{slotDown(2,ev(500,300));slotUp(ev(505,300));eq(p.input.abil[2],true);eq(Touch.aimOverride,null);p.input.abil.fill(false);
+    slotDown(2,ev(500,300));slotMove(ev(400,300));eq(Touch.aimOverride.x<0,true);slotUp(ev(400,300));eq(p.input.abil[2],true);const q=Touch.aimOverride;readInput(p);eq([p.input.ax,p.input.ay],[q.x,q.y]);eq(Touch.aimOverride,null);p.input.abil.fill(false);
+    slotDown(2,ev(500,300));slotMove(ev(400,300));slotMove(ev(502,300));slotUp(ev(502,300));eq(p.input.abil[2],false);eq(Touch.aimOverride,null)}
+  finally{players.length=0;players.push(...pl);enemies.push(...e);Touch.on=on;touchReset()}});
 // ================= Developer test mode for co-op =================
 // Open the game twice on this computer as index.html?nettest=a and index.html?nettest=b: the two tabs act as two
 // friends and introduce each other through the browser (no accounts needed). Ignored without the parameter.

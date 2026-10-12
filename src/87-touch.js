@@ -17,3 +17,75 @@ function aimPoint(p,i){const a=p.abil[i],r=aimRange(p,i);if(a&&a.heal)return aim
   const f=aimFace(p);Aim.target=aimPick(p,aimCands(p,r),f,Aim.target);
   if(Aim.target){hudTarget=Aim.target;return{x:Aim.target.x,y:Aim.target.y}}
   return{x:p.x+f.x*200,y:p.y+f.y*200}}
+
+// ---- Touch controls: stick (left thumb), attack + ability arc + quick row (right thumb), context and menu buttons, hold for tooltips.
+// Shown after a touch (or on a coarse-pointer device); any mouse movement or key press hides them, so keyboard and mouse play is unchanged.
+const Touch={on:false,mx:0,my:0,fire:false,aimOverride:null,ptr:{}},STICK_R=60,STICK_DEAD=.1,STICK_RUN=.5,STICK_ZONE=.45,DRAG_PX=18,HOLD_MS=450,SLOT_R=28,ARC_R=104,ARC_ANG=[0,205,171,136,102,67];
+// Stick offset in px -> vector of length <= 1 (60 px radius, the inner 10% is dead).
+function stickVec(dx,dy){const d=Math.hypot(dx,dy),n=d/STICK_R;if(n<=STICK_DEAD)return{x:0,y:0};const m=Math.min(1,(n-STICK_DEAD)/(1-STICK_DEAD));return{x:dx/d*m,y:dy/d*m}}
+const touchIsDrag=(dx,dy)=>Math.hypot(dx,dy)>DRAG_PX;
+function touchReset(){Touch.ptr={};Touch.mx=Touch.my=0;Touch.fire=false;Touch.aimOverride=null;Touch.drag=null;Touch.kx=Touch.ky=0;if(Touch.hold)clearTimeout(Touch.hold.t);Touch.hold=null;touchDrawStick();touchDrawAim()}
+function touchShow(on){if(Touch.on===on)return;Touch.on=on;document.body.classList.toggle('touch',on);touchReset();$('tmenu').classList.add('hidden')}
+// Stick: one owner pointer; it appears where the thumb lands in the left 45%.
+function stickDown(e){if(Touch.ptr.stick!=null||e.clientX>innerWidth*STICK_ZONE)return false;Touch.ptr.stick=e.pointerId;Touch.sx=e.clientX;Touch.sy=e.clientY;Touch.mx=Touch.my=Touch.kx=Touch.ky=0;touchDrawStick();return true}
+// The thumb moves on screen; the world is squashed by TILT, so the move vector is turned to match what the player sees.
+function stickMove(e){if(e.pointerId!==Touch.ptr.stick)return;const dx=e.clientX-Touch.sx,dy=e.clientY-Touch.sy,d=Math.hypot(dx,dy),v=stickVec(dx,dy),m=Math.hypot(v.x,v.y),wy=dy/TILT,wl=Math.hypot(dx,wy)||1,k=Math.min(d,STICK_R)/(d||1);
+  Touch.mx=dx/wl*m;Touch.my=wy/wl*m;Touch.kx=dx*k;Touch.ky=dy*k;touchDrawStick()}
+function stickUp(e){if(e.pointerId!==Touch.ptr.stick)return;delete Touch.ptr.stick;Touch.mx=Touch.my=Touch.kx=Touch.ky=0;touchDrawStick()}
+function touchDrawStick(){const s=$('stick'),on=Touch.ptr.stick!=null;s.classList.toggle('on',on);s.style.left=on?Touch.sx+'px':'';s.style.top=on?Touch.sy+'px':'';s.style.setProperty('--kx',(Touch.kx||0)+'px');s.style.setProperty('--ky',(Touch.ky||0)+'px')}
+// Attack: held = attacking the auto-target, like holding the left mouse button.
+function atkDown(e){if(Touch.ptr.atk!=null)return false;Touch.ptr.atk=e.pointerId;Touch.fire=true;return true}
+function atkUp(e){if(e.pointerId!==Touch.ptr.atk)return;delete Touch.ptr.atk;Touch.fire=false}
+// Ability slots: a tap casts at aimPoint; a drag past 18 px aims (aimOverride) and casts on release; leaving the slot and coming back onto it cancels.
+function slotDown(i,e){if(Touch.ptr.abil!=null)return false;const el=document.querySelector('#arc [data-i="'+i+'"]'),r=el&&el.getBoundingClientRect(),c=r&&r.width?{x:r.left+r.width/2,y:r.top+r.height/2}:{x:e.clientX,y:e.clientY};
+  Touch.ptr.abil=e.pointerId;Touch.drag={i,x0:e.clientX,y0:e.clientY,cx:c.x,cy:c.y,on:false,out:false,cancel:false};Touch.aimOverride=null;return true}
+function slotMove(e){const d=Touch.drag,p=players[0];if(!d||e.pointerId!==Touch.ptr.abil||!p)return;const dx=e.clientX-d.x0,dy=e.clientY-d.y0;if(!d.on&&touchIsDrag(dx,dy))d.on=true;if(!d.on)return;
+  const dc=Math.hypot(e.clientX-d.cx,e.clientY-d.cy);if(dc>SLOT_R)d.out=true;d.cancel=d.out&&dc<=SLOT_R;Touch.aimOverride=d.cancel?null:touchAimAt(p,d.i,dx,dy);touchDrawAim()}
+function slotUp(e,lost){const d=Touch.drag,p=players[0];if(!d||e.pointerId!==Touch.ptr.abil)return;delete Touch.ptr.abil;Touch.drag=null;const held=Touch.hold&&Touch.hold.fired&&Touch.hold.id===e.pointerId;
+  if(p&&!lost&&!held&&!d.cancel&&(!d.on||Touch.aimOverride))p.input.abil[d.i]=true;if(!d.on||d.cancel||lost||held)Touch.aimOverride=null;touchDrawAim()}
+// A drag of 120 px reaches the ability's full range, in the dragged direction (as seen on screen).
+function touchAimAt(p,i,dx,dy){const r=aimRange(p,i),wy=dy/TILT,l=Math.hypot(dx,wy)||1,k=Math.min(1,Math.hypot(dx,dy)/120)*r;return{x:p.x+dx/l*k,y:p.y+wy/l*k}}
+// Aim line from the hero, plus a ground circle for spells (melee shows the line only).
+function touchDrawAim(){const g=$('aimSvg'),d=Touch.drag,p=players[0],q=Touch.aimOverride;document.querySelectorAll('#arc .tslot').forEach(s=>{const me=!!d&&+s.dataset.i===d.i;s.classList.toggle('act',me&&d.on&&!d.cancel);s.classList.toggle('cancel',me&&d.cancel)});
+  if(!d||!d.on||!q||!p){g.classList.add('hidden');return}g.classList.remove('hidden');const[a,b]=S(p.x,p.y),[x,y]=S(q.x,q.y),L=g.children[0],E=g.children[1],sp=aimRange(p,d.i)>AIM_MELEE;
+  L.setAttribute('x1',a);L.setAttribute('y1',b-24);L.setAttribute('x2',x);L.setAttribute('y2',sp?y:y-24);E.style.display=sp?'':'none';E.setAttribute('cx',x);E.setAttribute('cy',y);E.setAttribute('rx',44);E.setAttribute('ry',44*TILT)}
+// Touch version of readInput: stick -> move (walks below 0.5, runs from 0.5), then the aim for whatever fires this frame.
+function touchInput(p){const i=p.input,v=Math.hypot(Touch.mx,Touch.my),s=Math.min(1,v/STICK_RUN);i.mx=v>0?Touch.mx/v*s:0;i.my=v>0?Touch.my/v*s:0;i.fire=Touch.fire;
+  const k=i.abil.findIndex((b,j)=>j>0&&b),d=Touch.drag;let q=null;if(k>0){q=Touch.aimOverride||aimPoint(p,k);Touch.aimOverride=null}else if(i.fire)q=aimPoint(p,0);else if(d&&d.on&&Touch.aimOverride)q=Touch.aimOverride;else if(v>0)q={x:p.x+Touch.mx/v*100,y:p.y+Touch.my/v*100};
+  if(q){i.ax=q.x;i.ay=q.y}}
+// Hold 450 ms on anything with a tooltip ([data-tip] or a mouse-enter tooltip) to show it; lifting hides it. It also stands in for right-click.
+function tipEl(t){for(let e=t;e&&e!==document.body&&e.nodeType===1;e=e.parentElement)if(e.dataset.tip!=null||e.onmouseenter)return e;return null}
+function holdStart(e){const el=tipEl(e.target);if(!el)return;if(Touch.hold)clearTimeout(Touch.hold.t);const h=Touch.hold={id:e.pointerId,x:e.clientX,y:e.clientY,el,fired:false};
+  h.t=setTimeout(()=>{if(Touch.hold!==h)return;h.fired=true;mouse.x=h.x;mouse.y=h.y;if(el.dataset.tip!=null)showTip(el.dataset.tip);else el.onmouseenter({target:el});if(el.oncontextmenu)el.oncontextmenu({target:el,preventDefault(){},stopPropagation(){}})},HOLD_MS)}
+function holdMove(e){const h=Touch.hold;if(h&&!h.fired&&e.pointerId===h.id&&touchIsDrag(e.clientX-h.x,e.clientY-h.y)){clearTimeout(h.t);Touch.hold=null}}
+function holdEnd(e){const h=Touch.hold;if(!h||e.pointerId!==h.id)return;clearTimeout(h.t);Touch.hold=null;if(h.fired){hideTip();Touch.noClick=performance.now()+500}}
+// Builds the arc for the hero's class (again whenever the class changes): attack in the corner, abilities 1-4 round it, R on top.
+function touchBuild(p){Touch.built=p.abil;document.querySelectorAll('#arc .tslot').forEach(s=>{const i=+s.dataset.i,a=p.abil[i],src=$('abar').children[i];s.innerHTML=`<div class="ic">${a?a.icon:''}</div><div class="cd"></div><div class="cdt"></div>`;s.onmouseenter=i&&src?src.onmouseenter:null;// no hold-tooltip on the attack button: holding it is attacking
+  if(i){const g=ARC_ANG[i]*Math.PI/180,c=42-28;s.style.left=(c+Math.cos(g)*ARC_R)+'px';s.style.top=(c-Math.sin(g)*ARC_R)+'px'}})}
+// Per frame (from updateHud): cooldowns and counts mirror the action bar; the context button follows interactables(); the menu button sits left of the minimap.
+function touchFrame(p){if(Touch.built!==p.abil)touchBuild(p);const ab=$('abar').children;
+  document.querySelectorAll('#arc .tslot').forEach(s=>{const a=ab[+s.dataset.i];if(!a)return;for(const c of['locked','poor','rdy'])s.classList.toggle(c,a.classList.contains(c));s.style.setProperty('--e',a.style.getPropertyValue('--e'));s.children[2].textContent=a.children[3].textContent});
+  document.querySelectorAll('#quick .qb').forEach(b=>{const src=b.dataset.src&&$(b.dataset.src),n=b.querySelector('.cnt');if(src){b.classList.toggle('nomana',src.classList.contains('nomana'));if(n)n.textContent=(src.querySelector('.cnt')||src.querySelector('.cdt')).textContent}
+    else if(b.dataset.q==='mount')b.firstChild.textContent=p.mount?MOUNTS[p.mount].icon:'🐎'});
+  const it=!p.dead&&interactables(p)[0],cx=$('ctx');cx.classList.toggle('hidden',!it);if(it){cx._act=it.act;const t=it.label||(it.o===warden?'Talk':it.o===merchant?'Shop':'Use');if(cx.textContent!==t)cx.textContent=t}
+  const r=$('mini').getBoundingClientRect(),mb=$('menuBtn');mb.style.right=(innerWidth-r.left+8)+'px';mb.style.top=r.top+'px';
+  if(isPaused()&&!Touch.paused)touchReset();Touch.paused=isPaused();if(Touch.drag)touchDrawAim()}
+const TMENU={inv:()=>toggleInv(true),tal:()=>toggleTal(true),prof:()=>toggleProf(true),map:()=>toggleMap(true),friends:()=>toggleFriends(true),
+  quest:()=>uiSheet('Quest',[{label:$('quest').innerText.replace(/\s*\n+\s*/g,' · ')}]),
+  settings:()=>{if(!pauseOpen)togglePause();openOverlay('settings','pause')},mute:()=>{Snd.vol.muted=!Snd.vol.muted;applyVol();saveAudio();toast(Snd.vol.muted?'Sound off':'Sound on')},pause:()=>togglePause()};
+function touchMenu(v){const m=$('tmenu');m.classList.toggle('hidden',v===undefined?!m.classList.contains('hidden'):!v);touchReset()}
+{// Wiring. Each control captures its own pointer, so moving and casting work at the same time.
+  const cap=e=>{try{e.target.setPointerCapture(e.pointerId)}catch(_){}e.preventDefault()};touchShow(matchMedia('(pointer:coarse)').matches);
+  addEventListener('pointerdown',e=>{Touch.lastType=e.pointerType;if(e.pointerType==='touch'){touchShow(true);holdStart(e)}},true);
+  addEventListener('pointermove',e=>{if(e.pointerType==='mouse'&&Touch.on&&(e.movementX||e.movementY))touchShow(false);stickMove(e);slotMove(e);holdMove(e)});
+  const up=lost=>e=>{stickUp(e);atkUp(e);slotUp(e,lost);holdEnd(e)};addEventListener('pointerup',up(false));addEventListener('pointercancel',up(true));
+  addEventListener('keydown',()=>{if(Touch.on)touchShow(false)},true);addEventListener('blur',touchReset);addEventListener('orientationchange',touchReset);if(screen.orientation)screen.orientation.addEventListener('change',touchReset);
+  addEventListener('click',e=>{if(performance.now()<(Touch.noClick||0)){Touch.noClick=0;e.stopPropagation();e.preventDefault()}},true);
+  addEventListener('contextmenu',e=>{if(Touch.lastType==='touch'){e.preventDefault();e.stopPropagation()}},true);
+  cvs.addEventListener('pointerdown',e=>{if(Touch.on&&e.pointerType==='touch'&&state==='play'&&!isPaused()&&stickDown(e))cap(e)});
+  $('atk').addEventListener('pointerdown',e=>{if(atkDown(e))cap(e)});
+  document.querySelectorAll('#arc .tslot:not(#atk)').forEach(s=>s.addEventListener('pointerdown',e=>{if(slotDown(+s.dataset.i,e))cap(e)}));
+  const Q={hp:p=>drinkPotion(p,'hp'),mp:p=>drinkPotion(p,'mp'),food:p=>eatFood(p),mount:p=>{if(!p.dead)toggleMount(p)},hearth:p=>startHearth(p)};
+  document.querySelectorAll('#quick .qb').forEach(b=>b.onclick=()=>{const p=players[0];if(p&&!isPaused())Q[b.dataset.q](p)});
+  $('ctx').onclick=()=>{const p=players[0];if(p&&!p.dead&&!isPaused()&&$('ctx')._act)$('ctx')._act()};
+  $('menuBtn').onclick=()=>touchMenu();document.querySelectorAll('#tmenu button').forEach(b=>b.onclick=()=>{touchMenu(false);if(!isPaused()||b.dataset.m==='pause'||b.dataset.m==='mute')TMENU[b.dataset.m]()})}

@@ -60,3 +60,17 @@ test('friendly aim falls back to self',()=>{const pl=players.slice(),a=AU(0,0);p
 
 // ---- Avatars before their look arrives
 test('playerLook tolerates empty look',()=>{const o=playerLook({cls:'paladin',look:{},gear:{},bagSize:20});eq(typeof o.hatColor,'string');eq(typeof o.cloth,'string')});
+
+// ---- Touch controls (B7)
+const TP=cls=>({x:0,y:0,aim:0,hp:10,maxHp:10,level:20,abil:ABIL[cls],input:{mx:0,my:0,ax:0,ay:0,fire:false,abil:[false,false,false,false,false,false]}});
+test('stickVec dead zone',()=>eq(stickVec(5,0),{x:0,y:0}));
+test('stickVec clamps',()=>eq(stickVec(120,0),{x:1,y:0}));
+test('drag threshold',()=>{eq(touchIsDrag(17,0),false);eq(touchIsDrag(19,0),true)});
+test('second pointer ignored by stick',()=>{touchReset();try{eq(stickDown({pointerId:1,clientX:40,clientY:300}),true);eq(stickDown({pointerId:2,clientX:60,clientY:320}),false);eq(Touch.ptr.stick,1);eq([Touch.sx,Touch.sy],[40,300])}finally{touchReset()}});
+test('touchReset clears inputs',()=>{Touch.ptr={stick:1,atk:2};Touch.mx=.5;Touch.my=-.3;Touch.fire=true;Touch.aimOverride={x:1,y:2};touchReset();eq([Touch.ptr,Touch.mx,Touch.my,Touch.fire,Touch.aimOverride],[{},0,0,false,null])});
+test('stick walks under 0.5 and runs past it',()=>{const p=TP('paladin'),on=Touch.on;Touch.on=true;try{Touch.mx=.25;Touch.my=0;readInput(p);eq(p.input.mx,.5);Touch.mx=.8;readInput(p);eq(p.input.mx,1)}finally{Touch.on=on;touchReset()}});
+test('tap casts, drag aims, back onto the slot cancels',()=>{const pl=players.slice(),p=TP('sorcerer'),on=Touch.on,e=enemies.slice();players.length=0;players.push(p);enemies.length=0;Touch.on=true;touchReset();const ev=(x,y)=>({pointerId:3,clientX:x,clientY:y});
+  try{slotDown(2,ev(500,300));slotUp(ev(505,300));eq(p.input.abil[2],true);eq(Touch.aimOverride,null);p.input.abil.fill(false);
+    slotDown(2,ev(500,300));slotMove(ev(400,300));eq(Touch.aimOverride.x<0,true);slotUp(ev(400,300));eq(p.input.abil[2],true);const q=Touch.aimOverride;readInput(p);eq([p.input.ax,p.input.ay],[q.x,q.y]);eq(Touch.aimOverride,null);p.input.abil.fill(false);
+    slotDown(2,ev(500,300));slotMove(ev(400,300));slotMove(ev(502,300));slotUp(ev(502,300));eq(p.input.abil[2],false);eq(Touch.aimOverride,null)}
+  finally{players.length=0;players.push(...pl);enemies.push(...e);Touch.on=on;touchReset()}});

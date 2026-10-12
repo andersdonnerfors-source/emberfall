@@ -60,9 +60,9 @@ function useAbility(p,i){const ab=p.abil[i];if(p.level<UNLOCK[i])return;if(p.cds
 const CASTSFX={paladin:['swing','bash','holy','holy','shieldup'],sorcerer:['fire','frost','blink','fire','meteor'],hunter:['arrow','arrow','trap','howl','arrow'],necromancer:['shadow','summon','drain','curse','bone']};
 function updatePlayer(p,dt){p.playT=(p.playT||0)+dt;
   if(p.dead){p.deathT-=dt;if(p.deathT<=0)respawn(p);return}
-  const i=p.input;let mx=i.mx,my=i.my;const l=Math.hypot(mx,my);if(l>0){mx/=l;my/=l}
+  const i=p.input;let mx=i.mx,my=i.my;const l=Math.hypot(mx,my);if(l>1){mx/=l;my/=l}// keys give length 1 or 1.4 (diagonal); the touch stick gives 0-1 (walk to run)
   updateMount(p,dt,l>0);updateHearth(p,dt,l>0);const spd=p.stats.speed*(p.slowUntil>time?p.slowF:1)*(tileAt(p.x,p.y)===T.BOG&&!p.fly?.65:1)*(p.mounted?1+MOUNTS[p.mount].speed:1);
-  if(!(p.stunUntil>time)&&l>0){moveEnt(p,mx*spd*dt,my*spd*dt);p.walk+=dt*12}
+  if(!(p.stunUntil>time)&&l>0){moveEnt(p,mx*spd*dt,my*spd*dt);p.walk+=dt*12*Math.min(1,l)}
   const bNow=biomeAtW(p.x,p.y)+(isDeep(p.x/TILE,p.y/TILE,biomeAtW(p.x,p.y))?10:0);if(zone.kind==='over'&&p.id===0&&bNow!==p.biome&&rt>(p.bT||0)){if(p.biome!==undefined){const zr=zoneRange(p.x/TILE,p.y/TILE,bNow%10);toast((isDeep(p.x/TILE,p.y/TILE,bNow%10)?'The Deep Wilds of '+BIOME_NAME[bNow%10].replace(/^The /,''):BIOME_NAME[bNow%10])+' · Levels '+zr[0]+'–'+zr[1]+(zr[0]>p.level+2?' · Dangerous!':''),zr[0]>p.level+2?'danger':'')}p.biome=bNow;p.bT=rt+5}
   p.aim=Math.atan2(i.ay-p.y,i.ax-p.x);
   for(let k=0;k<6;k++)p.cds[k]=Math.max(0,p.cds[k]-dt);p.potCd=Math.max(0,p.potCd-dt);updateSupplies(p,dt);gearFx(p,dt);p.castAnim=Math.max(0,(p.castAnim||0)-dt);
@@ -247,7 +247,7 @@ function questTick(){updateBarrowGate();const p=players[0];if(!p||quest.state!==
   if(Math.hypot(p.x/TILE-q.site.x,p.y/TILE-q.site.y)<22){flags['site'+quest.idx]=true;spawnSite(q.boss)}}
 
 // ================= Input =================
-function readInput(p){const i=p.input;if(isPaused()){i.mx=i.my=0;i.fire=false;return}i.mx=((keys.KeyD||keys.ArrowRight)?1:0)-((keys.KeyA||keys.ArrowLeft)?1:0);i.my=((keys.KeyS||keys.ArrowDown)?1:0)-((keys.KeyW||keys.ArrowUp)?1:0);i.ax=mouse.x+camX;i.ay=mouse.y/TILT+camY;i.fire=mouse.l}
+function readInput(p){const i=p.input;if(isPaused()){i.mx=i.my=0;i.fire=false;return}if(Touch.on){touchInput(p);return}i.mx=((keys.KeyD||keys.ArrowRight)?1:0)-((keys.KeyA||keys.ArrowLeft)?1:0);i.my=((keys.KeyS||keys.ArrowDown)?1:0)-((keys.KeyW||keys.ArrowUp)?1:0);i.ax=mouse.x+camX;i.ay=mouse.y/TILT+camY;i.fire=mouse.l}
 addEventListener('keydown',e=>{if(storyOpen){if(e.code==='Enter'||e.code==='Escape'){if(!$('intro').classList.contains('hidden'))$('btnIntro').click();else $('btnVic').click()}return}if(e.target.tagName==='INPUT'){if(e.code==='Enter'&&state==='creator')beginGame();return}keys[e.code]=true;if(state!=='play')return;
   const p=players[0];if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code))e.preventDefault();
   if(e.code==='Escape'){if(Friends.open){toggleFriends(false);return}if(mapOpen)toggleMap(false);else if(lootOpen)closeLoot();else if(profOpen)toggleProf(false);else if(invOpen)toggleInv(false);else if(talOpen)toggleTal(false);else if(shopOpen)closeShop();else if(dialogOpen)closeDialog();else togglePause();return}
@@ -573,7 +573,7 @@ function updateHud(){const p=players[0];if(!p)return;
     $('tF').style.width=Math.max(0,tg.hp/tg.maxHp*100)+'%';$('tT').textContent=Math.max(0,Math.ceil(tg.hp))+' / '+tg.maxHp;
     const k=monsterKey(tg);if(k!==updateHud.tk){updateHud.tk=k;const c=$('tPort').getContext('2d');c.clearRect(0,0,112,112);c.drawImage(monsterPortrait(tg),0,0)}}else tf.classList.add('hidden');
   partyT-=1/60;if(partyT<=0){partyT=.25;renderParty()}
-  layoutHud();drawMini()}
+  if(Touch.on)touchFrame(p);layoutHud();drawMini()}
 function updateQuestUI(){const q=QUESTS[quest.idx],el=$('quest');
   if(!q||quest.state==='done'){el.innerHTML='<b>The road goes on</b><br>All quests complete. Roam the wilds, grow stronger and hunt for gear. More adventures are coming.';return}
   if(quest.state==='offer'){el.innerHTML=`<b>New quest</b><br>Speak with Old Warden Bram in Emberfall (E).`;return}
