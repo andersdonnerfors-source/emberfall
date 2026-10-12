@@ -295,7 +295,7 @@ function drawBug(c,x,y,o){const s=o.s||1,face=Math.cos(o.aim||0)<0?-1:1,w=o.walk
   c.restore()}
 const S=(x,y)=>[x-camX,(y-camY)*TILT];
 const aimScreen=a=>Math.atan2(Math.sin(a)*TILT,Math.cos(a));
-function playerLook(p){const c=CLASSES[p.cls],L=p.look,hg=L.headgear!==false,gv=p.gear?gearLook(p):null;if(gv&&!hg)delete gv.helm;return{gv,wv:gv&&gv.weapon,darkHood:!!c.darkHood,s:1,skin:L.skin,hair:L.hair,eyes:L.eyes||'#1b140e',cloth:L.cloth,trim:L.trim,bw:{slim:.85,normal:1,broad:1.2}[L.body||'normal'],hairStyle:L.hairStyle||'short',beardStyle:L.beard||'none',hat:hg&&!gv?c.hat:null,hatColor:c.hat==='helm'?'#a7adb5':c.darkHood?'#1c1a22':shade(L.cloth,-28),weapon:weaponVisual(p),shield:!!c.shield,shieldColor:L.cloth,robe:!!c.robe,orb:c.orb,legs:'#33291f',shadowFace:!!c.darkHood&&hg&&!gv}}
+function playerLook(p){const c=CLASSES[p.cls],L=Object.assign({},DEF_LOOK,p.look),hg=L.headgear!==false,gv=p.gear?gearLook(p):null;if(gv&&!hg)delete gv.helm;return{gv,wv:gv&&gv.weapon,darkHood:!!c.darkHood,s:1,skin:L.skin,hair:L.hair,eyes:L.eyes||'#1b140e',cloth:L.cloth,trim:L.trim,bw:{slim:.85,normal:1,broad:1.2}[L.body||'normal'],hairStyle:L.hairStyle||'short',beardStyle:L.beard||'none',hat:hg&&!gv?c.hat:null,hatColor:c.hat==='helm'?'#a7adb5':c.darkHood?'#1c1a22':shade(L.cloth,-28),weapon:weaponVisual(p),shield:!!c.shield,shieldColor:L.cloth,robe:!!c.robe,orb:c.orb,legs:'#33291f',shadowFace:!!c.darkHood&&hg&&!gv}}
 function unitLook(u){const o={aim:u.aim,aimS:aimScreen(u.aim||0),walk:u.walk,moving:u.moving,atk:u.atkT?Math.max(0,1-(time-u.atkT)/.35):0,ph:u.x*.013};switch(u.type||u.kind){
   case'goblin':return Object.assign(o,{s:.82,skin:'#7fa548',cloth:'#5a4228',ears:true,weapon:'blade',eyes:'#ffde4a'});
   case'skarg':return Object.assign(o,{s:1.45,skin:'#6b9a3a',cloth:'#4a2a1a',ears:true,hat:'helm',hatColor:'#6d6a62',weapon:'axe',eyes:'#ff5a2a',glow:true});
@@ -681,7 +681,9 @@ const CYCLE={body:[['slim','Slim'],['normal','Normal'],['broad','Broad']],hairSt
   beard:[['none','None'],['stubble','Stubble'],['full','Full'],['long','Long']],headgear:[[true,'Shown'],[false,'Hidden']]};
 const LOOK_ROWS=[['body','Body'],['hairStyle','Hair'],['beard','Beard'],['headgear','Headgear'],['skin','Skin'],['hair','Hair color'],['eyes','Eyes'],['cloth','Garb'],['trim','Trim']];
 const NAMES=['Elric','Maren','Thoren','Ilsa','Corwin','Aeryn','Halden','Brisa','Eowan','Tamsin','Rurik','Liora'];
-let cr={cls:'sorcerer',look:{body:'normal',hairStyle:'short',beard:'none',headgear:true,skin:LOOKS.skin[1],hair:LOOKS.hair[2],eyes:LOOKS.eyes[0],cloth:LOOKS.cloth[1],trim:LOOKS.trim[0]}};
+// The creator's starting look; also fills any field a hero is missing (co-op avatars start with look:{} until the host sends theirs).
+const DEF_LOOK={body:'normal',hairStyle:'short',beard:'none',headgear:true,skin:LOOKS.skin[1],hair:LOOKS.hair[2],eyes:LOOKS.eyes[0],cloth:LOOKS.cloth[1],trim:LOOKS.trim[0]};
+let cr={cls:'sorcerer',look:{...DEF_LOOK}};
 function renderLooks(){const el=$('looks');el.innerHTML='';
   for(const[k,label]of LOOK_ROWS){const row=document.createElement('div');row.className='lrow';row.innerHTML=`<span class="ll">${label}</span>`;
     if(CYCLE[k]){const opts=CYCLE[k],i=Math.max(0,opts.findIndex(o=>o[0]===cr.look[k]));const mk=(t,d)=>{const b=document.createElement('button');b.className='cyb';b.textContent=t;b.onclick=()=>{cr.look[k]=opts[(i+d+opts.length)%opts.length][0];renderLooks()};return b};

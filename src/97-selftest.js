@@ -57,3 +57,6 @@ test('aim with no candidates faces forward',()=>{const t=Aim.target,h=hudTarget,
 test('aimRange: melee 120, ranged and spells 460',()=>{const pa={abil:ABIL.paladin},so={abil:ABIL.sorcerer};eq(aimRange(pa,0),120);eq(aimRange(pa,1),120);eq(aimRange(so,0),460);eq(aimRange(so,3),460)});
 test('friendly aim picks most hurt',()=>{const pl=players.slice(),a=AU(0,0,{hp:9,maxHp:10}),b=AU(100,0,{hp:3,maxHp:10}),c=AU(900,0,{hp:1,maxHp:10});players.length=0;players.push(a,b,c);try{eq(aimFriendly(a,460),b)}finally{players.length=0;players.push(...pl)}});
 test('friendly aim falls back to self',()=>{const pl=players.slice(),a=AU(0,0);players.length=0;players.push(a);try{eq(aimFriendly(a,460),a)}finally{players.length=0;players.push(...pl)}});
+
+// ---- Avatars before their look arrives
+test('playerLook tolerates empty look',()=>{const o=playerLook({cls:'paladin',look:{},gear:{},bagSize:20});eq(typeof o.hatColor,'string');eq(typeof o.cloth,'string')});
