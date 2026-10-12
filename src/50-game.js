@@ -573,7 +573,7 @@ function updateHud(){const p=players[0];if(!p)return;
     $('tF').style.width=Math.max(0,tg.hp/tg.maxHp*100)+'%';$('tT').textContent=Math.max(0,Math.ceil(tg.hp))+' / '+tg.maxHp;
     const k=monsterKey(tg);if(k!==updateHud.tk){updateHud.tk=k;const c=$('tPort').getContext('2d');c.clearRect(0,0,112,112);c.drawImage(monsterPortrait(tg),0,0)}}else tf.classList.add('hidden');
   partyT-=1/60;if(partyT<=0){partyT=.25;renderParty()}
-  drawMini()}
+  layoutHud();drawMini()}
 function updateQuestUI(){const q=QUESTS[quest.idx],el=$('quest');
   if(!q||quest.state==='done'){el.innerHTML='<b>The road goes on</b><br>All quests complete. Roam the wilds, grow stronger and hunt for gear. More adventures are coming.';return}
   if(quest.state==='offer'){el.innerHTML=`<b>New quest</b><br>Speak with Old Warden Bram in Emberfall (E).`;return}

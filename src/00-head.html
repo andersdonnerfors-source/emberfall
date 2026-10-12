@@ -63,7 +63,7 @@ h2{margin:0 0 10px;color:var(--gold);font-weight:normal;letter-spacing:.05em}
 .cfbox{width:min(420px,92vw);padding:20px 22px}.cfbox p{line-height:1.5}.cfbox .row{display:flex;gap:8px;margin-top:14px;justify-content:flex-end}.cfbox .btn{min-width:0}
 @media (max-width:700px){#selPanel{top:auto;bottom:90px;transform:none;width:auto;left:12px;max-height:40vh}#selBottom{left:50%}.logo{font-size:34px}}
 .sub{color:var(--muted);font-style:italic;margin:6px 0 34px;letter-spacing:.08em;text-align:center}
-.btn{background:rgba(255,255,255,.07);color:var(--text);border:1px solid rgba(255,255,255,.16);border-radius:var(--r);padding:11px 26px;font-size:16px;cursor:pointer;margin:6px;min-width:200px;font-family:inherit}
+.btn{min-height:var(--tap);background:rgba(255,255,255,.07);color:var(--text);border:1px solid rgba(255,255,255,.16);border-radius:var(--r);padding:11px 26px;font-size:16px;cursor:pointer;margin:6px;min-width:200px;font-family:inherit}
 .btn:hover{background:var(--hover);border-color:var(--gold);color:#fff}
 .btn.primary{background:rgba(232,194,106,.22);border-color:var(--gold)}
 #creator .wrap{display:grid;grid-template-columns:290px 1fr;gap:22px;width:min(1080px,100%);padding:20px;max-height:94vh;overflow:auto}
@@ -144,7 +144,7 @@ h2{margin:0 0 10px;color:var(--gold);font-weight:normal;letter-spacing:.05em}
 #bag,#supplies{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}
 #invPrev{display:block;margin:0 auto 6px;width:200px;height:190px}
 .cell .qty{position:absolute;right:4px;bottom:1px;font-size:12px;font-weight:bold;font-family:system-ui,sans-serif;text-shadow:0 1px 2px #000}
-#buffs{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}#buffs:empty{display:none}
+#buffs{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;max-height:34px;overflow:hidden}#buffs:empty{display:none}
 .buff{position:relative;width:32px;height:32px;border:1px solid var(--edge);border-radius:6px;background:var(--panel);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);display:flex;align-items:center;justify-content:center;font-size:17px}
 .buff small{position:absolute;bottom:-3px;right:1px;font-size:var(--fs-s);line-height:1;font-family:system-ui,sans-serif;color:#fff;text-shadow:0 1px 2px #000}
 #stats{margin-top:14px;font-size:14px}
@@ -198,9 +198,9 @@ h2{margin:0 0 10px;color:var(--gold);font-weight:normal;letter-spacing:.05em}
 /* windows use Inter (Cinzel stays on title, banners and story screens) */
 #inv h2,#tal h2,#shop h2,#prof h2,#loot h2,#worldmap h2,#friends h2,#settings h2,#howto h2,#namePick h2,#confirm h2,#dialog h3,.branch h3,#pause h1{font-family:var(--ui-font);font-weight:600}
 #pause h1{font-size:40px}
-/* target frame keeps clear of the player frame and minimap at any UI size; below 1100 px it drops under the top row */
+/* target frame keeps clear of the player frame and minimap at any UI size; layoutHud() (src/86-ui.js) adds .low and positions it under the player frame when the centred layout would not fit */
 #tframe{width:clamp(200px,calc((100vw - 640px*var(--ui))/var(--ui)),300px)}#tframe.boss{width:clamp(240px,calc((100vw - 640px*var(--ui))/var(--ui)),460px)}
-@media (max-width:1100px){#tframe,#tframe.boss{top:128px;left:14px;transform:none;width:min(280px,calc((100vw - 10px)/var(--ui) - 228px))}#party{top:204px}}
+#tframe.low,#tframe.boss.low{left:14px;transform:none;width:min(280px,calc((100vw - 10px)/var(--ui) - 228px))}
 /* action bar slots shrink so the bar fits the screen at large UI sizes */
 .slot{width:clamp(36px,calc((100vw/var(--ui) - 94px)/10),56px);height:clamp(36px,calc((100vw/var(--ui) - 94px)/10),56px)}
 /* UI size (Settings): zoom scales layout and hit-testing together */

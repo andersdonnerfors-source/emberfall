@@ -36,3 +36,7 @@ function abarState(p,i,now){now=now===undefined?rt:now;const cd=Math.max(0,p.cds
   return{cd,cdFrac:cd>0?Math.min(1,cd/mx):0,poor:p.mana<abilCost(p,i),ready:cd<=0&&e!=null&&now-e>=0&&now-e<.6}}
 // The enemy under the mouse (desktop). Same screen projection as drawUnit.
 function enemyUnderMouse(){let best=null,bd=1e9;for(const e of enemies){if(e.dead||e.hp<=0)continue;const[sx,sy]=S(e.x,e.y),h=(e.h||40)*.5,d=Math.hypot(mouse.x-sx,mouse.y-(sy-h)),r=Math.max(e.r||12,14)+12+h*.3;if(d<r&&d<bd){bd=d;best=e}}return best}
+
+// HUD column layout: the target frame sits centred when it fits beside the player frame and minimap at this UI size, else (.low) directly under the player frame; the party list follows whichever is lowest. Heights are read live (buffs grow the player frame).
+function layoutHud(){const ui=+document.documentElement.style.getPropertyValue('--ui')||1,tf=$('tframe'),pf=$('pframe'),pa=$('party'),low=innerWidth<(588+(tf.classList.contains('boss')?240:200))*ui+20,h=e=>e.getBoundingClientRect().height/ui;tf.classList.toggle('low',low);
+  let y=14+h(pf)+8;if(low){tf.style.top=y+'px';if(!tf.classList.contains('hidden'))y+=h(tf)+8}else tf.style.top='';pa.style.top=y+'px'}
