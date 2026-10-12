@@ -45,3 +45,15 @@ test('monster portrait is cached per type',()=>{const u={type:'wolf',h:30,r:12,x
 // ---- UI size (B6)
 test('uiScale defaults: 100 desktop, 85 phone',()=>{eq(uiScale({uiSize:null},false),1);eq(uiScale({uiSize:null},true),.85)});
 test('uiScale clamps to 0.8-1.3',()=>{eq(uiScale({uiSize:200},false),1.3);eq(uiScale({uiSize:10},false),.8);eq(uiScale({uiSize:110},true),1.1)});
+
+// ---- Auto-aim (B7)
+const AU=(x,y,o)=>Object.assign({x,y,hp:10,maxHp:10,r:10},o),AF={x:1,y:0},AP0=AU(0,0,{aim:0,input:{mx:0,my:0}}),ALOS=()=>true;
+test('aimScore: ahead is d, behind is 2.2d',()=>{eq(Math.round(aimScore(AP0,AU(100,0),AF)),100);eq(Math.round(aimScore(AP0,AU(-100,0),AF)),220)});
+test('aim prefers ahead',()=>eq(aimPick(AP0,[AU(-150,0),AU(200,0)],AF,null).x,200));
+test('aim is sticky',()=>{const cur=AU(100,0),near=AU(75,0),far=AU(65,0);eq(aimPick(AP0,[cur,near],AF,cur),cur);eq(aimPick(AP0,[cur,far],AF,cur),far)});
+test('aim drops a current target that is no longer a candidate',()=>{const cur=AU(100,0),b=AU(300,0);eq(aimPick(AP0,[b],AF,cur),b);eq(aimPick(AP0,[],AF,cur),null)});
+test('aim ignores blocked, dead and out of range',()=>{const ok=AU(100,0),dead=AU(50,0,{dead:true}),wall=AU(0,100),far=AU(900,0);eq(aimCands(AP0,460,[ok,dead,wall,far],(a,b)=>b!==wall),[ok])});
+test('aim with no candidates faces forward',()=>{const t=Aim.target,h=hudTarget,e=enemies.slice();Aim.target=null;enemies.length=0;try{const q=aimPoint(Object.assign({abil:[{name:'t',cast:()=>0}]},AP0),0);eq([Math.round(q.x),Math.round(q.y)],[200,0])}finally{Aim.target=t;hudTarget=h;enemies.push(...e)}});
+test('aimRange: melee 120, ranged and spells 460',()=>{const pa={abil:ABIL.paladin},so={abil:ABIL.sorcerer};eq(aimRange(pa,0),120);eq(aimRange(pa,1),120);eq(aimRange(so,0),460);eq(aimRange(so,3),460)});
+test('friendly aim picks most hurt',()=>{const pl=players.slice(),a=AU(0,0,{hp:9,maxHp:10}),b=AU(100,0,{hp:3,maxHp:10}),c=AU(900,0,{hp:1,maxHp:10});players.length=0;players.push(a,b,c);try{eq(aimFriendly(a,460),b)}finally{players.length=0;players.push(...pl)}});
+test('friendly aim falls back to self',()=>{const pl=players.slice(),a=AU(0,0);players.length=0;players.push(a);try{eq(aimFriendly(a,460),a)}finally{players.length=0;players.push(...pl)}});

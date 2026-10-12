@@ -11,7 +11,7 @@ const ABIL={
   paladin:[
     {name:'Crusader Strike',icon:'⚔️',cd:.55,mana:0,desc:'Swing your sword in a wide arc.',cast:(p,tx,ty)=>{const a=ang(p,tx,ty);melee(p,a,80,1.8,p.stats.dmg,{});swing(p,a,'#fff2c0',80)}},
     {name:'Shield Bash',icon:'🛡️',cd:6,mana:15,desc:'Bash enemies in front of you, stunning them for 1.5 s.',cast:(p,tx,ty)=>{const a=ang(p,tx,ty);melee(p,a,88,1.3,p.stats.dmg*1.3,{stun:1.5,knock:70});swing(p,a,'#9fd0ff',88)}},
-    {name:'Holy Light',icon:'✨',cd:10,mana:30,desc:'Heal yourself and nearby allies for 35% of their health.',cast:p=>{for(const q of friendlies())if(dist(p,q)<220)heal(q,q.maxHp*.35*(p.healMult||1));burst(p.x,p.y,'#ffe9a0',34,170)}},
+    {name:'Holy Light',icon:'✨',heal:true,cd:10,mana:30,desc:'Heal yourself and nearby allies for 35% of their health.',cast:p=>{for(const q of friendlies())if(dist(p,q)<220)heal(q,q.maxHp*.35*(p.healMult||1));burst(p.x,p.y,'#ffe9a0',34,170)}},
     {name:'Consecration',icon:'🔆',cd:12,mana:35,desc:'Sanctify the ground around you, burning enemies for 5 s.',cast:p=>{areas.push(mkArea({x:p.x,y:p.y,r:115,dur:5,tick:.5,tickDmg:p.stats.dmg*.5,side:'player',src:p,kind:'holy'}))}},
     {name:'Divine Shield',icon:'🌟',cd:30,mana:40,desc:'Become immune to all damage for 3 s.',cast:p=>{p.invulnUntil=time+3;burst(p.x,p.y,'#fff6c8',26,130)}},
   ],
