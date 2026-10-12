@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#0a0c10"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Emberfall"><link rel="apple-touch-icon" href="icons/icon-192.png">
 <title>Emberfall</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Inter:wght@400;500;600;700&display=swap">
@@ -248,11 +249,11 @@ body.phone #quest{margin-top:6px;padding:5px 8px;font-size:12px;line-height:1.35
 body.phone #quest .ql{display:inline}body.phone #quest .ql+.ql::before{content:' · '}body.phone #quest .muted{display:none}body.phone #quest b{font-size:12px}
 body.phone #toasts{top:calc(70px + env(safe-area-inset-top))}body.phone .toast{font-size:14px;padding:6px 14px}
 /* windows: fullscreen, header pinned to the top */
-body.phone #inv,body.phone #tal,body.phone #shop,body.phone #prof,body.phone #friends,body.phone #worldmap{left:0;top:0;transform:none;width:calc(100vw/var(--ui));height:calc(100vh/var(--ui));max-width:none;max-height:none;border:0;border-radius:0;background:#0c0e12;padding:0 calc(14px + env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) calc(14px + env(safe-area-inset-left))}
+body.phone #inv,body.phone #tal,body.phone #shop,body.phone #prof,body.phone #friends,body.phone #worldmap{left:0;top:0;transform:none;width:calc(100vw/var(--ui));height:calc(100vh/var(--ui));height:calc(100dvh/var(--ui));max-width:none;max-height:none;border:0;border-radius:0;background:#0c0e12;padding:0 calc(14px + env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) calc(14px + env(safe-area-inset-left))}
 body.phone .invhead{position:sticky;top:0;z-index:3;margin:0 0 10px;padding:4px 0;background:var(--panel-solid);border-bottom:1px solid var(--line)}
 body.phone #inv .invhead .muted{display:none}body.phone #bag,body.phone #supplies,body.phone #sbag{grid-template-columns:repeat(auto-fill,minmax(64px,1fr))}body.phone #invActs{position:sticky;top:53px;z-index:2}
 body.phone #settings,body.phone #howto{padding:0}
-body.phone #settings>.panel,body.phone #howto>.panel{width:calc(100vw/var(--ui))!important;height:calc(100vh/var(--ui));max-width:none;max-height:none!important;overflow:auto;border:0;border-radius:0;background:#0c0e12;padding:12px calc(24px + env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) calc(24px + env(safe-area-inset-left))!important}
+body.phone #settings>.panel,body.phone #howto>.panel{width:calc(100vw/var(--ui))!important;height:calc(100vh/var(--ui));height:calc(100dvh/var(--ui));max-width:none;max-height:none!important;overflow:auto;border:0;border-radius:0;background:#0c0e12;padding:12px calc(24px + env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) calc(24px + env(safe-area-inset-left))!important}
 body.phone #pause h1{font-size:28px;margin:0}body.phone #pause .btn{margin:4px}
 /* world map: fills the window, drag to pan and pinch to zoom */
 body.phone #worldmap{display:flex;flex-direction:column;overflow:hidden}body.phone #worldmap>.muted{display:none}
@@ -260,7 +261,7 @@ body.phone #wmapView{position:relative;flex:1;min-height:0;overflow:hidden;touch
 body.phone #wmap{flex:none;width:auto;height:100%;border:0;border-radius:0;transform-origin:0 0}
 /* dialogs and loot: bottom sheets with rows of at least 48 px */
 @keyframes sheetUp{from{transform:translateY(100%)}to{transform:none}}
-body.phone #dialog,body.phone #loot{left:0;right:auto;top:auto;bottom:0;transform:none;width:calc(100vw/var(--ui));max-width:none;max-height:calc(70vh/var(--ui));overflow:auto;z-index:44;border-radius:calc(var(--r) * 2) calc(var(--r) * 2) 0 0;padding:12px calc(16px + env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));animation:sheetUp .2s ease-out}
+body.phone #dialog,body.phone #loot{left:0;right:auto;top:auto;bottom:0;transform:none;width:calc(100vw/var(--ui));max-width:none;max-height:calc(70vh/var(--ui));max-height:calc(70dvh/var(--ui));overflow:auto;z-index:44;border-radius:calc(var(--r) * 2) calc(var(--r) * 2) 0 0;padding:12px calc(16px + env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));animation:sheetUp .2s ease-out}
 body.phone #dialog .btn,body.phone #loot .btn{min-height:48px}body.phone #dBtns .btn{flex:1;min-width:0}body.phone .lrow2{min-height:48px}
 /* ---- Co-op chat (src/96-net.js): the last 3 lines in the middle top, a button, a compact desktop bar and the phone sheet */
 #chatLog{position:absolute;left:50%;top:92px;transform:translateX(-50%);width:min(420px,50vw);display:flex;flex-direction:column;align-items:center;gap:2px;pointer-events:none;text-align:center}
