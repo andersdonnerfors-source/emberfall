@@ -206,7 +206,7 @@ function update(dt){time+=dt;
     if(a.kind==='holy'&&Math.random()<.5){const an=rand(0,TAU),rr2=Math.sqrt(Math.random())*a.r;parts.push({x:a.x+Math.cos(an)*rr2,y:a.y+Math.sin(an)*rr2,z:2,vx:0,vy:0,vz:60,life:.8,max:.8,col:'#ffe08a',size:2,ng:true})}
     if(a.kind==='meteor'&&Math.random()<.6){const an=rand(0,TAU),rr2=Math.sqrt(Math.random())*a.r;parts.push({x:a.x+Math.cos(an)*rr2,y:a.y+Math.sin(an)*rr2,z:2,vx:0,vy:0,vz:50,life:.6,max:.6,col:'#ff7a2a',size:3,ng:true})}
     if(a.t>=a.dur)a.dead=true}
-  if(!GU)pickupDrops();updateCorpses();fogTick(dt);
+  if(!GU)pickupDrops();updateCorpses();autoLootTick(dt);fogTick(dt);
   for(const q of parts){q.life-=dt;q.x+=q.vx*dt;q.y+=q.vy*dt;q.z+=q.vz*dt;if(!q.ng)q.vz-=320*dt;if(q.z<0){q.z=0;q.vz*=-.3;q.vx*=.6;q.vy*=.6}}
   for(const t of texts){t.life-=dt;t.z+=40*dt}
   for(const f of fx)f.life-=dt;
@@ -688,7 +688,7 @@ function drawPreview(){const c=$('prev').getContext('2d');c.clearRect(0,0,260,28
   const o=playerLook({cls:cr.cls,look:cr.look});o.s=2.6;o.aim=Math.sin(rt*.8)*.6;o.aimS=o.aim;o.walk=rt*4;drawHumanoid(c,130,236,o)}
 function show(id){for(const s of['login','title','creator','death','pause'])$(s).classList.toggle('hidden',s!==id)}
 function resetWorld(){if(zones.over&&zones.over.gateOpen){for(const i of zones.over.barrowGate)zones.over.map[i]=T.WALL;zones.over.gateOpen=false;zones.over.terrain.chunks.clear()}for(const d of zones.over.decor)delete d.next;for(const k in zones)if(k!=='over')delete zones[k];zones.over.fog=null;zones.over.cells=null;zones.over.corpses=[];for(const b of zones.over.buildings)b.stock=null;zones.over.enemies=[];zones.over.drops=[];useZone(zones.over);enemies=[];allies=[];projs=[];areas=[];parts=[];texts=[];drops=[];fx=[];players=[];flags={};time=0}
-function startGame(data,isNew,id){heroId=id||Account.newId();ensureWorld(Net.role==='guest'?Net.host.seed:data.p.seed||0);resetWorld();closeLoot();quest=data.quest||{idx:0,state:'offer',prog:0};const p=createPlayer(data.p);p.id=0;players=[p];
+function startGame(data,isNew,id){heroId=id||Account.newId();ensureWorld(Net.role==='guest'?Net.host.seed:data.p.seed||0);resetWorld();closeLoot();lootReset();quest=data.quest||{idx:0,state:'offer',prog:0};const p=createPlayer(data.p);p.id=0;players=[p];
   state='play';show(null);$('hud').classList.remove('hidden');buildAbar(p);updateQuestUI();invOpen=dialogOpen=pauseOpen=talOpen=shopOpen=storyOpen=false;for(const id of['inv','tal','shop','dialog','intro','victory'])$(id).classList.add('hidden');
   if(isNew)showStory('intro',true);save()}
 function beginGame(){const name=($('nameIn').value||'').trim().slice(0,16)||pick(NAMES);startGame({p:{name,cls:cr.cls,look:Object.assign({},cr.look),seed:newWorldSeed()}},true)}
@@ -703,11 +703,12 @@ $('talClose').onclick=()=>toggleTal(false);$('shopClose').onclick=closeShop;
 $('sellJunk').onclick=()=>{const p=players[0];let g=0;p.bag=p.bag.filter(it=>{if(it.rar===0){g+=sellPrice(it);return false}return true});p.gold+=g;if(g)toast('Sold common items for '+g+' gold');renderShop();save()};
 let setFrom=null;
 function openOverlay(id,from){setFrom=from;if(from)$(from).classList.add('hidden');$(id).classList.remove('hidden');
-  if(id==='settings'){$('volSfx').value=Snd.vol.sfx;$('volMus').value=Snd.vol.music;$('volMute').checked=Snd.vol.muted}}
+  if(id==='settings'){$('volSfx').value=Snd.vol.sfx;$('volMus').value=Snd.vol.music;$('volMute').checked=Snd.vol.muted;$('setAutoLoot').checked=Settings.autoLoot;$('setLootRar').innerHTML=RAR.map((r,i)=>`<option value="${i}">${r.n}</option>`).join('');$('setLootRar').value=Settings.lootMinRar}}
 function closeOverlay(id){$(id).classList.add('hidden');if(setFrom)$(setFrom).classList.remove('hidden');setFrom=null}
 $('btnSet').onclick=()=>openOverlay('settings','title');$('btnSet2').onclick=()=>openOverlay('settings','pause');$('btnHow').onclick=()=>openOverlay('howto','title');
 $('btnSetClose').onclick=()=>{saveAudio();closeOverlay('settings')};$('btnHowClose').onclick=()=>closeOverlay('howto');
 $('volSfx').oninput=e=>{Snd.vol.sfx=+e.target.value;applyVol();sfx('hit')};$('volMus').oninput=e=>{Snd.vol.music=+e.target.value;applyVol()};$('volMute').onchange=e=>{Snd.vol.muted=e.target.checked;applyVol()};
+$('setAutoLoot').onchange=e=>{Settings.autoLoot=e.target.checked;saveSettings()};$('setLootRar').onchange=e=>{Settings.lootMinRar=+e.target.value;saveSettings()};
 $('btnRand').onclick=randomLook;
 // Some previews (like a file opened inside another app) block browser storage, so nothing can be saved there.
 function storageOK(){try{localStorage.setItem('emberfall-test','1');localStorage.removeItem('emberfall-test');return true}catch(e){return false}}
