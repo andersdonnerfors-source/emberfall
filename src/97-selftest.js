@@ -26,3 +26,7 @@ test('loot groups drop empty and missing corpses',()=>eq(lootGroupsRefresh([1,2,
 test('auto loot shares one bag budget across corpses',()=>{const a={loot:[{id:1,kind:'item',item:{rar:2}}]},b={loot:[{id:2,kind:'item',item:{rar:2}}]};const r=autoLootPlan([a,b],1,1,new Map());eq(r.take.length,1);eq(r.blocked,true)});
 test('guest bag space counts items on their way',()=>{const role=Net.role,pend=Loot.pending;Net.role='guest';Loot.pending=new Map([[7,true],[8,false],[9,true]]);try{eq(bagFree({bagSize:10,bag:[1,2]}),6)}finally{Net.role=role;Loot.pending=pend}});
 test('pending loot clears on reset',()=>{const pend=Loot.pending;Loot.pending=new Map([[1,true]]);try{lootReset();eq(Loot.pending.size,0)}finally{Loot.pending=pend}});
+
+// ---- Glass UI tokens and shared components
+test('ui tokens read from :root',()=>{eq(uiToken('--hp'),'#e5484d');eq(uiToken('--mp'),'#4c8dff')});
+test('uiSheet makes one row per item',()=>{const s=uiSheet('x',[{label:'a',onTap(){}}]);eq(s.el.querySelectorAll('.g-row').length,1);s.close()});
