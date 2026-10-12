@@ -21,6 +21,28 @@ function touchPlace(o){const{W,H,atk,ab,q,limit,n}=o,mr=o.mr??8,mb=o.mb??4,cx=W-
       if(y-ab/2<limit||x-ab/2<0||near(x,y)||rect(x,y)||out.abil.some(c=>hit(x,y,c)))continue;put={x,y};break}
     out.abil.push(put||{x:cx-R1,y:cy})}
   out.left=Math.min(cx-atk/2,out.quick.x,...out.abil.map(c=>c.x-ab/2));return out}
+// ---- Fullscreen (phone): a button next to the menu button, and a notice inside in-app browsers (Messenger, Instagram...), which cannot go fullscreen at all.
+// fsMode: 'inapp' (open it in Safari/Chrome first), 'ios-a2hs' (iPhone: Add to Home Screen), 'api' (element fullscreen works), 'none' (already fullscreen/standalone, or no way).
+const IAB_RE=/FBAN|FBAV|FB_IAB|Instagram|Messenger|Line\/|Snapchat|TikTok/;
+function isInAppBrowser(ua){return IAB_RE.test(ua)||/iPhone|iPad|iPod/.test(ua)&&!/Safari\//.test(ua)}
+function fsMode(o){if(o.standalone)return'none';if(isInAppBrowser(o.ua))return'inapp';if(/iPhone|iPod/.test(o.ua))return'ios-a2hs';return o.hasFsApi?'api':'none'}
+const fsEl=()=>document.fullscreenElement||document.webkitFullscreenElement||null;
+// While we are in element fullscreen the mode stays 'api' so the button can toggle back out.
+function fsEnv(){const d=document.documentElement,mm=q=>{try{return matchMedia(q).matches}catch(e){return false}};
+  return{ua:navigator.userAgent||'',hasFsApi:!!(d.requestFullscreen||d.webkitRequestFullscreen),standalone:!fsEl()&&(!!navigator.standalone||mm('(display-mode: fullscreen), (display-mode: standalone)'))}}
+function copyLink(){const u=location.href;try{navigator.clipboard.writeText(u).then(()=>toast('Link copied'),()=>prompt('Copy this link',u))}catch(e){prompt('Copy this link',u)}}
+function fsRequest(){const d=document.documentElement,r=d.requestFullscreen||d.webkitRequestFullscreen;if(!r)return;let pr;try{pr=r.call(d)}catch(e){return}
+  const lock=()=>{try{const l=screen.orientation&&screen.orientation.lock&&screen.orientation.lock('landscape');if(l&&l.catch)l.catch(()=>{})}catch(e){}};if(pr&&pr.then)pr.then(lock,()=>{});else lock()}
+function fsClick(){const m=fsMode(fsEnv());
+  if(m==='api'){if(fsEl()){Settings.fullscreen=false;saveSettings();(document.exitFullscreen||document.webkitExitFullscreen).call(document)}else{Settings.fullscreen=true;saveSettings();fsRequest()}}
+  else if(m==='ios-a2hs')uiSheet('Play in fullscreen',[{icon:'1',label:'Tap the Share button in Safari'},{icon:'2',label:'Choose "Add to Home Screen"'},{icon:'3',label:'Open Emberfall from the new icon'}]);
+  else if(m==='inapp')uiSheet('Play in fullscreen',[{icon:'!',label:'For the full screen, open Emberfall in Safari/Chrome'},{icon:'🔗',label:'Copy link',onTap:copyLink}])}
+// Once per session, in an in-app browser: a dismissible banner with Copy link.
+function fsBanner(){if(fsBanner.done)return;fsBanner.done=true;try{if(sessionStorage.getItem('ef-iab'))return;sessionStorage.setItem('ef-iab','1')}catch(e){}
+  const b=uiEl('div','glass'),t=uiEl('span','','For the full screen, open Emberfall in Safari/Chrome'),c=uiEl('button','g-btn','Copy link'),x=uiEl('button','x','✕');b.id='iab';x.setAttribute('aria-label','Close');
+  c.onclick=copyLink;x.onclick=()=>b.remove();b.append(t,c,x);document.body.appendChild(b);setTimeout(()=>b.remove(),20000)}
+// After load: with Fullscreen chosen earlier, the first touch goes fullscreen again (browsers only allow it inside a gesture).
+addEventListener('pointerup',e=>{if(e.pointerType==='touch'&&Settings.fullscreen&&Layout.phone&&!fsEl()&&fsMode(fsEnv())==='api')fsRequest()},true);
 // Particle counts: halved on a phone unless Graphics is High.
 const Layout={phone:null,turn:false};
 function fxScale(){return Layout.phone&&Settings.gfx!=='high'?.5:1}

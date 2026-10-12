@@ -152,3 +152,12 @@ test('locked abilities hidden on phone',()=>{const lp=Layout.phone,pl=players.sl
     p.abil=ABIL.sorcerer.concat([SPEC_LOCKED]);touchLayout(p);eq(ds()[5],false,'spec slot without a spec');
     Layout.phone=false;touchLayout(p);eq(ds().every(Boolean),true,'desktop touch keeps all slots')}
   finally{Layout.phone=lp;players.length=0;players.push(...pl);Touch.built=null;touchLayout.key=null}});
+
+// ---- Fullscreen button and in-app browser notice
+const UA_MSG='Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 [FBAN/MessengerForiOS;FBAV/430.0;FBBV/1;FBDV/iPhone15,2]',
+  UA_SAF='Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
+  UA_AND='Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
+  UA_IG='Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/120.0.0.0 Mobile Safari/537.36 Instagram 300.0.0';
+test('Messenger iOS is an in-app browser, Safari and Chrome are not',()=>{eq(isInAppBrowser(UA_MSG),true);eq(isInAppBrowser(UA_IG),true);eq(isInAppBrowser(UA_SAF),false);eq(isInAppBrowser(UA_AND),false);eq(isInAppBrowser('Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148'),true,'WKWebView without Safari')});
+test('fsMode picks inapp, ios-a2hs, api or none',()=>{eq(fsMode({ua:UA_MSG,hasFsApi:false,standalone:false}),'inapp');eq(fsMode({ua:UA_SAF,hasFsApi:false,standalone:false}),'ios-a2hs');
+  eq(fsMode({ua:UA_AND,hasFsApi:true,standalone:false}),'api');eq(fsMode({ua:UA_SAF,hasFsApi:false,standalone:true}),'none');eq(fsMode({ua:UA_AND,hasFsApi:true,standalone:true}),'none');eq(fsMode({ua:UA_AND,hasFsApi:false,standalone:false}),'none')});

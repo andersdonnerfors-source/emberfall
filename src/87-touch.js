@@ -82,7 +82,7 @@ function touchFrame(p){if(Touch.built!==p.abil)touchBuild(p);touchLayout(p);if(!
   document.querySelectorAll('#quick .qb').forEach(b=>{const src=b.dataset.src&&$(b.dataset.src),n=b.querySelector('.cnt');if(src){b.classList.toggle('nomana',src.classList.contains('nomana'));if(n)n.textContent=(src.querySelector('.cnt')||src.querySelector('.cdt')).textContent}
     else if(b.dataset.q==='mount')b.firstChild.textContent=p.mount?MOUNTS[p.mount].icon:'🐎'});
   const it=!p.dead&&interactables(p)[0],cx=$('ctx');cx.classList.toggle('hidden',!it);if(it){cx._act=it.act;const t=it.label||(it.o===warden?'Talk':it.o===merchant?'Shop':'Use');if(cx.textContent!==t)cx.textContent=t}
-  const r=$('mini').getBoundingClientRect(),mb=$('menuBtn');mb.style.right=(innerWidth-r.left+8)+'px';mb.style.top=r.top+'px';
+  const r=$('mini').getBoundingClientRect(),mb=$('menuBtn');mb.style.right=(innerWidth-r.left+8)+'px';mb.style.top=r.top+'px';const fb=$('fsBtn'),fm=Layout.phone?fsMode(fsEnv()):'none';fb.classList.toggle('hidden',fm==='none');if(fm==='inapp'&&Layout.phone&&state==='play')fsBanner();fb.style.right=(innerWidth-r.left+8+44+6)+'px';fb.style.top=r.top+'px';
   if(isPaused()&&!Touch.paused){touchReset();p.input.abil.fill(false);p.input.fire=false}Touch.paused=isPaused();if(Touch.drag)touchDrawAim()}
 const TMENU={inv:()=>toggleInv(true),tal:()=>toggleTal(true),prof:()=>toggleProf(true),map:()=>toggleMap(true),friends:()=>toggleFriends(true),
   quest:()=>uiSheet('Quest',[...$('quest').querySelectorAll('.ql')].map(e=>({label:e.textContent}))),
@@ -102,4 +102,4 @@ function touchMenu(v){const m=$('tmenu');m.classList.toggle('hidden',v===undefin
   const Q={hp:p=>drinkPotion(p,'hp'),mp:p=>drinkPotion(p,'mp'),food:p=>eatFood(p),mount:p=>{if(!p.dead)toggleMount(p)},hearth:p=>startHearth(p)};
   document.querySelectorAll('#quick .qb').forEach(b=>b.onclick=()=>{const p=players[0];if(p&&!isPaused())Q[b.dataset.q](p)});
   $('ctx').onclick=()=>{const p=players[0];if(p&&!p.dead&&!isPaused()&&$('ctx')._act)$('ctx')._act()};
-  $('menuBtn').onclick=()=>touchMenu();document.querySelectorAll('#tmenu button').forEach(b=>b.onclick=()=>{touchMenu(false);if(!isPaused()||b.dataset.m==='pause'||b.dataset.m==='mute')TMENU[b.dataset.m]()})}
+  $('menuBtn').onclick=()=>touchMenu();$('fsBtn').onclick=fsClick;document.querySelectorAll('#tmenu button').forEach(b=>b.onclick=()=>{touchMenu(false);if(!isPaused()||b.dataset.m==='pause'||b.dataset.m==='mute')TMENU[b.dataset.m]()})}
