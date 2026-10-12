@@ -51,6 +51,21 @@ The phone layout is active when `min(innerWidth, innerHeight) < 500` and touch i
 - **Performance:** on phones the render scale drops to 1.0× (from 1.5×+) and particle counts are halved. Settings get **Graphics: Auto / High / Low**, stored in `emberfall-settings`.
 - **Home-screen app:** a `manifest.webmanifest` (name, icons, `display: fullscreen`, `orientation: landscape`) plus the iOS meta tags, so "Add to Home Screen" runs the game without browser bars. No offline service worker in this round.
 
+## 2b. Co-op on mobile (Anders, 2026-10-12)
+Phones can host or join co-op, including mixed groups of phone and desktop players. Co-op already runs in the browser (WebRTC with a Supabase relay fallback), and touch writes to the same input object, so the game and net logic stay the same. This round adds:
+- **Touch-friendly social UI:**
+  - The friends panel is a fullscreen window.
+  - Invite and join requests appear as a large banner with Accept and Decline (at least 48 px) that stays up for 20 s.
+  - Tap a party portrait for Teleport to friend, Whisper and Leave party.
+  - "Rise beside [friend]" on death is a bottom-sheet choice.
+- **Quick chat:** a chat button opens a bottom sheet with 8 preset lines ("Help!", "Follow me", "Wait", "Loot here", "Ready", "Thanks", "On my way", "Heading back to town") and a free-text field that uses the phone keyboard. Messages show as short bubbles above heroes and in a 3-line log at the middle top. This is the "chat" item from the co-op plan, built mobile-first and used on desktop too (Enter opens it).
+- **App switching and screen lock:** phones pause browser tabs in the background.
+  - A **guest** that goes to the background is shown as "away" in the party (greyed portrait) and is protected (monsters ignore them) for up to 60 s. They resync automatically when they return. After 60 s they drop out as now, and the invite flow can bring them back.
+  - A **host** that goes to the background pauses the world for everyone, with a "Waiting for [host]…" card on the guests' screens. Play resumes automatically when the host returns. After 3 minutes the guests are sent home, as when a host leaves today.
+  - Reconnect is built on page `visibilitychange` and a resync message from the host (full state snapshot), with no change to the protocol.
+- **Mobile networks:** phone data networks often block direct connections, so the relay fallback (untested on a real strict network so far) becomes a **tested** path. The relay starts after 4 s instead of 9 s when either player is on a phone.
+- **Bandwidth:** when a phone is host, entity updates are sent at 10 Hz instead of 20 Hz, with interpolation on the guests.
+
 ## 3. Code structure
 New source files, built into `index.html` by `build.sh` as usual:
 - `86-ui.js`: the B shared glass components (panel, header, tabs, button, row, tooltip, bottom sheet).
@@ -63,7 +78,8 @@ Touch writes into the same `players[0].input` object the keyboard and mouse use 
 1. B1–B6: the glass visual system, player and target frames, portraits, action bar, windows, UI size (desktop first, as already specified).
 2. Touch controls and auto-aim.
 3. The phone layout, fullscreen windows, bottom sheets, performance setting.
-4. The home-screen manifest and icons.
+4. Co-op on mobile: social UI, quick chat, background and reconnect, relay tuning.
+5. The home-screen manifest and icons.
 
 ## 5. Testing
 - **In-browser self-tests** (`?selftest`):
@@ -72,7 +88,8 @@ Touch writes into the same `players[0].input` object the keyboard and mouse use 
   - A tap casts and a drag aims.
 - **Screenshots** in the built-in browser at 844×390 (iPhone landscape) and 915×412 (Android landscape), with touch emulation. Each window is checked at UI sizes 85% and 130%.
 - **Desktop regression:** the keyboard and mouse flow looks and works the same apart from the new B look. The B testing list also applies.
-- **Two-tab co-op:** one tab in phone mode and one on desktop.
+- **Two-tab co-op:** one tab in phone mode and one on desktop. Test both the phone as host and the phone as guest, background and foreground on each side, the quick chat, and forced relay mode.
+- **Real phone co-op:** Anders's phone on mobile data plus the desktop, from the beta copy.
 - **Real phone:** Anders tests on his phone from a beta copy (a `beta/` folder on the live site, published only after his yes). The main game is updated only after a second yes.
 
 ## Out of scope (parked)
