@@ -98,13 +98,14 @@ function netData(pe,m){if(Net.role!=='guest'&&m.t==='hello')return hostHello(pe,
     case'setpos':{const p=players[0];if(p){p.x=m.x;p.y=m.y}break}
     case'zone':Net.hostZone=m.id;netFollowZone(m.id,m.x,m.y);break;
     case'chat':onChat(String(m.fn||'?').slice(0,16),chatClean(m.m),!!m.w,m.f);break;
-    case'hpause':if(m.v){if(!Net.hw){Net.hw=true;Net.hwT=rt}}else Net.hw=false;hostWaitShow();break;
+    case'hpause':if(Net.role!=='guest')break;if(m.v){if(!Net.hw){Net.hw=true;Net.hwT=rt}}else Net.hw=false;hostWaitShow();break;
     case'bye':leaveParty(`${pe.name} left, so their world closed.`);break}}}
 function hostHello(pe,m){if(!m.hero||Net.size()>=MAX_PARTY){netSend(pe,{t:'bye'});return}Net.role='host';const h=players[0];
   const pr=createPlayer(Object.assign({},m.hero.p,{x:h.x+rand(-40,40),y:h.y+rand(20,50)}));pr.isRemote=true;pr.uid=pe.uid;pr.id=pe.uid;pr.netName=pe.name;pr.x=h.x+rand(-40,40);pr.y=h.y+rand(20,50);
   pe.proxy=pr;pe.ph=!!m.ph;players.push(pr);rescaleEnemies();Net.corpVer++;Net.apT=0;
-  netSend(pe,{t:'welcome',seed:WSEED,q:quest.idx,zone:zone.id,x:pr.x,y:pr.y,host:Friends.me?Friends.me.name:h.name});toast(`${pe.name} joined your world!`,'gold');sfx('level');renderParty()}
-function enterGuestWorld(pe,m){Net.role='guest';Net.asking=null;Net.host={uid:pe.uid,name:pe.name,seed:m.seed};Net.hostQ=m.q;Net.hostZone=m.zone;
+  netSend(pe,{t:'welcome',seed:WSEED,q:quest.idx,zone:zone.id,x:pr.x,y:pr.y,host:Friends.me?Friends.me.name:h.name});if(hostHidden()){Net.hid=true;netSend(pe,{t:'hpause',v:1})}// a hidden host gets no frames, so the newcomer must be told now
+  toast(`${pe.name} joined your world!`,'gold');sfx('level');renderParty()}
+function enterGuestWorld(pe,m){Net.role='guest';Net.hw=false;Net.hwT=0;hostWaitShow();Net.asking=null;Net.host={uid:pe.uid,name:pe.name,seed:m.seed};Net.hostQ=m.q;Net.hostZone=m.zone;
   let data;if(Net.pendingHero.data)data=Net.pendingHero.data;else{const c=heroRecord(Net.pendingHero.id);data=c?c.data:{p:heroNetData().p}}
   const id=Net.pendingHero.id;Net.own={x:data.p.x,y:data.p.y,loc:data.p.loc,explored:data.p.explored};
   startGame(data,false,id);const p=players[0];if(m.zone!=='over')enterZone(m.zone,m.x,m.y);p.x=m.x;p.y=m.y;enemies=[];allies=[];
@@ -237,7 +238,7 @@ $('chatBtn').onclick=()=>openChat();
 
 // ---- Background and reconnect. A guest that goes to the background tells the host (monsters then leave its hero alone, up to 60 s) and asks for a full snapshot on return.
 // A host that goes to the background (or shows the portrait card on a phone) pauses the world; guests see "Waiting for ..." and are sent home after 3 minutes.
-const hostHidden=()=>document.visibilityState==='hidden'||!!Layout.turn;
+function hostHidden(){return document.visibilityState==='hidden'||!!Layout.turn}
 function netPresence(){if(!Net.role)return;const h=Net.role==='host'?hostHidden():document.visibilityState==='hidden';if(h===Net.hid)return;Net.hid=h;
   if(Net.role==='guest'){netAll({t:'away',v:h?1:0});if(!h){netAll({t:'resync'});Net.stT=0}}
   else{netAll({t:'hpause',v:h?1:0});if(!h){Net.sentCorp=null;Net.apT=0;Net.snapT=0}}}

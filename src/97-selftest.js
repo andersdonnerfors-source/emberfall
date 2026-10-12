@@ -110,3 +110,8 @@ test('away guest past 60s is dropped',()=>{const role=Net.role,pl=players,t0=tim
   finally{time=t0;players=pl;Net.peers=np;Net.role=role;}});
 test('monsters skip an away-in-background proxy',()=>{const pl=players,a={isRemote:true,x:0,y:0,hp:5,away:false,awayBg:3},b={x:0,y:0,hp:5};players=[a,b];try{eq(friendlies().includes(a),false);eq(friendlies().includes(b),true)}finally{players=pl}});
 test('closeDeathSheet closes the Rise beside sheet',()=>{let n=0;deathSheet={close:()=>n++};closeDeathSheet();closeDeathSheet();eq(n,1);eq(deathSheet,null)});
+test('hpause ignored while only asking',()=>{const r=Net.role,a=Net.asking,hw=Net.hw;try{Net.role=null;Net.asking={uid:'x',ok:true};Net.hw=false;netData({uid:'x',name:'X'},{t:'hpause',v:1});eq(Net.hw,false)}finally{Net.role=r;Net.asking=a;Net.hw=hw}});
+test('host hello while hidden sends hpause',()=>{const sent=[],o={role:Net.role,hid:Net.hid,hh:hostHidden,ns:netSend,peers:Net.peers,pl:players,cp:createPlayer,rs:rescaleEnemies,rp:renderParty,tt:toast,sf:sfx};
+  try{Net.role='host';Net.hid=false;Net.peers=new Map();players=[{x:0,y:0,name:'H'}];hostHidden=()=>true;netSend=(p,m)=>{sent.push([p,m])};createPlayer=d=>({...d});rescaleEnemies=()=>{};renderParty=()=>{};toast=()=>{};sfx=()=>{};
+    const pe={uid:'g1',name:'G'};hostHello(pe,{hero:{p:{}},ph:0});eq(sent.some(([p,m])=>p===pe&&m.t==='hpause'&&m.v===1),true);eq(Net.hid,true)}
+  finally{Net.role=o.role;Net.hid=o.hid;hostHidden=o.hh;netSend=o.ns;Net.peers=o.peers;players=o.pl;createPlayer=o.cp;rescaleEnemies=o.rs;renderParty=o.rp;toast=o.tt;sfx=o.sf}});
