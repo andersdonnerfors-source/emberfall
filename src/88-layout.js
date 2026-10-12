@@ -7,6 +7,20 @@ function isPhone(env=window){return(env.matchMedia('(pointer:coarse)').matches||
 // Canvas pixels per CSS pixel: 1 on Low, and on Auto on a phone; else 1.5-2 by the screen's density.
 function renderScale(gfx,phone,dpr){return gfx==='low'||gfx==='auto'&&phone?1:Math.min(2,Math.max(1.5,dpr))}
 function gfxPref(){try{return Settings.gfx||'auto'}catch(e){return'auto'}}// Settings (src/75-loot.js) does not exist yet on the first resize()
+// Touch button sizes from the screen height: 390 and up keep the full sizes, 260 and under the small ones, linear in between. mini = minimap px, stick = idle stick ring.
+function touchSizes(h){const t=Math.max(0,Math.min(1,(h-260)/130)),L=(a,b)=>Math.round(a+(b-a)*t);return{atk:L(64,84),ab:L(44,56),q:L(36,40),mini:L(96,120),stick:L(96,120)}}
+function applyTouchSizes(){const r=document.documentElement.style,z=touchSizes(innerHeight);for(const[k,v]of[['--t-atk',z.atk],['--t-ab',z.ab],['--t-q',z.q],['--t-mini',z.mini]])Layout.phone?r.setProperty(k,v+'px'):r.removeProperty(k)}
+// Positions (px centres, CSS pixels) for the right-thumb cluster: attack in the bottom-right corner, the quick pair right above it (else left of it when there is no room),
+// then n abilities packed on rings round the attack button, from straight left up to straight up, always below `limit` (bottom of minimap + quest) and clear of each other.
+// Returns {atk:{x,y}, quick:{x,y,w,h}, abil:[{x,y}], left (leftmost edge of the cluster), mb (bottom margin)}.
+function touchPlace(o){const{W,H,atk,ab,q,limit,n}=o,mr=o.mr??8,mb=o.mb??4,cx=W-mr-atk/2,cy=H-mb-atk/2,qw=2*q+6,out={atk:{x:cx,y:cy},abil:[],mb};
+  let qy=cy-atk/2-6-q;out.quick=qy>=limit?{x:W-mr-qw,y:qy,w:qw,h:q}:{x:cx-atk/2-6-qw,y:cy-q/2,w:qw,h:q};
+  const R1=(atk+ab)/2+6,hit=(x,y,c)=>Math.hypot(x-c.x,y-c.y)<ab+1,k=out.quick,rect=(x,y)=>x+ab/2+1>k.x&&x-ab/2-1<k.x+k.w&&y+ab/2+1>k.y&&y-ab/2-1<k.y+k.h;
+  for(let i=0;i<n;i++){let put=null;
+    for(let r=R1;r<W&&!put;r+=2)for(let a=180;a>=90;a-=3){const x=cx+r*Math.cos(a*Math.PI/180),y=cy-r*Math.sin(a*Math.PI/180);
+      if(y-ab/2<limit||x-ab/2<0||rect(x,y)||out.abil.some(c=>hit(x,y,c)))continue;put={x,y};break}
+    out.abil.push(put||{x:cx-R1,y:cy})}
+  out.left=Math.min(cx-atk/2,out.quick.x,...out.abil.map(c=>c.x-ab/2));return out}
 // Particle counts: halved on a phone unless Graphics is High.
 const Layout={phone:null,turn:false};
 function fxScale(){return Layout.phone&&Settings.gfx!=='high'?.5:1}
@@ -14,7 +28,7 @@ function fxScale(){return Layout.phone&&Settings.gfx!=='high'?.5:1}
 // In portrait the card covers the game and solo play pauses (isPaused); in co-op the world keeps going.
 function applyLayout(){const ph=isPhone(),b=document.body;
   if(ph!==Layout.phone){Layout.phone=ph;b.classList.toggle('phone',ph);applyUi();touchReset();resize();if(state==='play')renderParty()}
-  b.classList.toggle('nofx',Settings.gfx==='low'||Settings.gfx==='auto'&&ph);
+  applyTouchSizes();b.classList.toggle('nofx',Settings.gfx==='low'||Settings.gfx==='auto'&&ph);
   const turn=ph&&innerHeight>innerWidth;if(turn!==Layout.turn){Layout.turn=turn;$('turn').classList.toggle('hidden',!turn);touchReset();mouse.l=false}}
 addEventListener('resize',applyLayout);addEventListener('orientationchange',applyLayout);if(screen.orientation)screen.orientation.addEventListener('change',applyLayout);
 addEventListener('pointerdown',e=>{if(e.pointerType==='touch'&&!touchSeen){touchSeen=true;applyLayout()}},true);

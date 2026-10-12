@@ -239,14 +239,21 @@ body.touch #bottom,body.touch #hint{display:none}
 /* no glass blur (Graphics Low, or Auto on a phone): solid panels instead */
 body.nofx{--blur:none;--panel:var(--panel-solid)}body.nofx #pause{-webkit-backdrop-filter:none;backdrop-filter:none}
 /* HUD: compact player frame top left, target top centre, 120 px minimap + one quest line top right, party as a stack of portraits with health rings */
-body.phone #pframe{left:calc(10px + env(safe-area-inset-left));top:10px;width:236px;padding:6px 8px;grid-template-columns:44px 1fr;column-gap:8px}
-body.phone #pPort{width:44px;height:44px}body.phone .uname{font-size:14px}body.phone #pframe .gold{margin-top:4px}body.phone #tframe{top:10px}
-body.phone #party{left:calc(10px + env(safe-area-inset-left));width:auto}
+body.phone #pframe{left:calc(10px + env(safe-area-inset-left));top:10px;width:204px;padding:5px 8px;grid-template-columns:36px 1fr;column-gap:8px}
+body.phone #pPort{width:36px;height:36px}body.phone .uname{font-size:13px}body.phone #pframe .pf-tx .bar{height:13px;margin-top:2px}body.phone #pframe .pf-tx .bar.xp{height:3px}body.phone #pframe .bar span{font-size:12px;line-height:11px}
+body.phone #pframe .gold{margin-top:3px;font-size:12px}body.phone #pframe .gold>span:first-child{display:none}body.phone #pframe .gold:not(:has(>:not(.hidden):not(:first-child))){display:none}body.phone #pframe .badge{font-size:12px;padding:0 5px}body.phone #tframe{top:10px}
+body.phone #party{left:calc(10px + env(safe-area-inset-left));width:auto;flex-direction:row;flex-wrap:wrap}
 body.phone .pm{width:40px;height:40px;min-height:0;padding:4px;border:0;border-radius:50%;background:conic-gradient(var(--hp) calc(var(--f,100)*1%),rgba(255,255,255,.18) 0);box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none;cursor:pointer}
 body.phone .pm .pmb{display:none}body.phone .pm canvas{width:32px!important;height:32px!important}
-body.phone #right{zoom:min(var(--ui),1);right:calc(10px + env(safe-area-inset-right));top:10px;width:120px}body.phone #mini{width:120px;height:120px}
+body.phone #right{zoom:min(var(--ui),1);right:calc(10px + env(safe-area-inset-right));top:10px;width:var(--t-mini,120px)}body.phone #mini{width:var(--t-mini,120px);height:var(--t-mini,120px)}
 body.phone #quest{margin-top:6px;padding:5px 8px;font-size:12px;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
 body.phone #quest .ql{display:inline}body.phone #quest .ql+.ql::before{content:' · '}body.phone #quest .muted{display:none}body.phone #quest b{font-size:12px}
+/* Declutter (beta feedback): sizes come from the screen height (--t-* set in applyTouchSizes), only the two potions stay as quick buttons (food, mount and hearthstone live in the menu), the quest line goes on very short screens */
+body.phone .slot.tslot{font-size:calc(var(--t-ab)*.46)}body.phone #atk.tslot{font-size:calc(var(--t-atk)*.43)}body.phone .slot.qb{font-size:calc(var(--t-q)*.5)}
+body.phone #quick .qb[data-q=food],body.phone #quick .qb[data-q=mount],body.phone #quick .qb[data-q=hearth]{display:none}
+body.phone #stick{left:calc(210px + env(safe-area-inset-left));top:calc(100% - 66px - env(safe-area-inset-bottom))}
+body.phone #tmenu{grid-template-columns:repeat(4,112px)}body:not(.phone) #tmenu .pq{display:none}
+@media (max-height:299px){body.phone #quest{display:none}}
 body.phone #toasts{top:calc(70px + env(safe-area-inset-top))}body.phone .toast{font-size:14px;padding:6px 14px}
 /* windows: fullscreen, header pinned to the top */
 body.phone #inv,body.phone #tal,body.phone #shop,body.phone #prof,body.phone #friends,body.phone #worldmap{left:0;top:0;transform:none;width:calc(100vw/var(--ui));height:calc(100vh/var(--ui));height:calc(100dvh/var(--ui));max-width:none;max-height:none;border:0;border-radius:0;background:#0c0e12;padding:0 calc(14px + env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) calc(14px + env(safe-area-inset-left))}
@@ -306,7 +313,7 @@ body.phone #chatLog{top:76px;width:min(360px,44vw)}
   <div id="quick"><div class="slot qb" data-q="hp" data-src="potSlot"><div class="ic">🧪</div><div class="cnt"></div></div><div class="slot qb" data-q="mp" data-src="manaSlot"><div class="ic"><span style="filter:hue-rotate(200deg)">🧪</span></div><div class="cnt"></div></div><div class="slot qb" data-q="food" data-src="foodSlot"><div class="ic">🍖</div><div class="cnt"></div></div><div class="slot qb" data-q="mount"><div class="ic">🐎</div></div><div class="slot qb" data-q="hearth" data-src="hearthSlot"><div class="ic">🏠</div><div class="cnt"></div></div></div>
   <button id="ctx" class="glass hidden"></button>
   <button id="menuBtn" class="glass" aria-label="Menu">☰</button>
-  <div id="tmenu" class="glass hidden"><button data-m="inv">Inventory</button><button data-m="tal">Talents</button><button data-m="prof">Professions</button><button data-m="map">Map</button><button data-m="quest">Quests</button><button data-m="friends">Friends</button><button data-m="settings">Settings</button><button data-m="mute">Mute</button><button data-m="pause">Pause</button></div>
+  <div id="tmenu" class="glass hidden"><button data-m="inv">Inventory</button><button data-m="tal">Talents</button><button data-m="prof">Professions</button><button data-m="map">Map</button><button data-m="quest">Quests</button><button data-m="friends">Friends</button><button data-m="settings">Settings</button><button data-m="food" class="pq">Eat food</button><button data-m="mount" class="pq">Mount</button><button data-m="hearth" class="pq">Hearthstone</button><button data-m="mute">Mute</button><button data-m="pause">Pause</button></div>
 </div>
 <div id="toasts"></div>
 <div id="netAsks"></div><div id="hostWait" class="panel glass hidden"></div>

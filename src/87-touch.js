@@ -63,10 +63,21 @@ function holdStart(e){const el=tipEl(e.target);if(!el)return;if(Touch.hold)clear
 function holdMove(e){const h=Touch.hold;if(h&&e.pointerId===h.id&&touchIsDrag(e.clientX-h.x,e.clientY-h.y)){clearTimeout(h.t);Touch.hold=null;if(h.fired)hideTip()}}
 function holdEnd(e){const h=Touch.hold;if(!h||e.pointerId!==h.id)return;clearTimeout(h.t);Touch.hold=null;if(h.fired){hideTip();Touch.noClick=performance.now()+500}}
 // Builds the arc for the hero's class (again whenever the class changes): attack in the corner, abilities 1-4 round it, R on top.
-function touchBuild(p){Touch.built=p.abil;document.querySelectorAll('#arc .tslot').forEach(s=>{const i=+s.dataset.i,a=p.abil[i],src=$('abar').children[i];s.innerHTML=`<div class="ic">${a?a.icon:''}</div><div class="cd"></div><div class="cdt"></div>`;s.onmouseenter=i&&src?src.onmouseenter:null;// no hold-tooltip on the attack button: holding it is attacking
+function touchBuild(p){Touch.built=p.abil;touchLayout.key=null;document.querySelectorAll('#arc .tslot').forEach(s=>{const i=+s.dataset.i,a=p.abil[i],src=$('abar').children[i];s.innerHTML=`<div class="ic">${a?a.icon:''}</div><div class="cd"></div><div class="cdt"></div>`;s.onmouseenter=i&&src?src.onmouseenter:null;// no hold-tooltip on the attack button: holding it is attacking
   if(i){const g=ARC_ANG[i]*Math.PI/180,c=42-28;s.style.left=(c+Math.cos(g)*ARC_R)+'px';s.style.top=(c-Math.sin(g)*ARC_R)+'px'}})}
+// Phone only: hides slots that are not unlocked yet (level below UNLOCK, or no spec for the R slot), sizes the buttons from the screen height (touchSizes)
+// and places attack, abilities, quick pair and context button with touchPlace, all below the minimap + quest stack. Re-runs when level, spec, size or that stack changes.
+const touchVis=(p,i)=>i===0||!!p.abil[i]&&p.abil[i]!==SPEC_LOCKED&&p.level>=UNLOCK[i];
+function touchLayout(p){const ph=!!Layout.phone,tc=$('touch'),arc=$('arc'),ql=$('quick'),cx=$('ctx'),sl=[...arc.querySelectorAll('.tslot')];
+  if(!ph){if(touchLayout.ph){touchLayout.ph=false;touchLayout.key=null;sl.forEach(s=>{s.style.display=''});for(const e of[arc,ql,cx]){e.style.left=e.style.top=e.style.right=e.style.bottom=''}Touch.built=null;touchBuild(p)}return}
+  const z=touchSizes(innerHeight),lim=Math.ceil($('right').getBoundingClientRect().bottom)+4,vis=sl.map(s=>touchVis(p,+s.dataset.i)),key=[innerWidth,innerHeight,lim,vis.join()].join('|');
+  if(touchLayout.ph&&key===touchLayout.key)return;touchLayout.ph=true;touchLayout.key=key;
+  const idx=vis.map((v,i)=>v&&i>0?i:-1).filter(i=>i>0),r=touchPlace({W:innerWidth,H:innerHeight,atk:z.atk,ab:z.ab,q:z.q,limit:lim,n:idx.length}),ax=r.atk.x-z.atk/2,ay=r.atk.y-z.atk/2;
+  sl.forEach((s,i)=>{s.style.display=vis[i]?'':'none'});arc.style.right=arc.style.bottom='auto';arc.style.left=ax+'px';arc.style.top=ay+'px';
+  idx.forEach((i,k)=>{const s=sl[i];s.style.left=(r.abil[k].x-z.ab/2-ax)+'px';s.style.top=(r.abil[k].y-z.ab/2-ay)+'px'});
+  ql.style.right=ql.style.bottom='auto';ql.style.left=r.quick.x+'px';ql.style.top=r.quick.y+'px';cx.style.right=(innerWidth-r.left+8)+'px';cx.style.bottom=r.mb+'px'}
 // Per frame (from updateHud): cooldowns and counts mirror the action bar; the context button follows interactables(); the menu button sits left of the minimap.
-function touchFrame(p){if(Touch.built!==p.abil)touchBuild(p);if(!p.dead)aimPreview(p);else Aim.target=null;const ab=$('abar').children;
+function touchFrame(p){if(Touch.built!==p.abil)touchBuild(p);touchLayout(p);if(!p.dead)aimPreview(p);else Aim.target=null;const ab=$('abar').children;
   document.querySelectorAll('#arc .tslot').forEach(s=>{const a=ab[+s.dataset.i];if(!a)return;for(const c of['locked','poor','rdy'])s.classList.toggle(c,a.classList.contains(c));s.style.setProperty('--e',a.style.getPropertyValue('--e'));s.children[2].textContent=a.children[3].textContent});
   document.querySelectorAll('#quick .qb').forEach(b=>{const src=b.dataset.src&&$(b.dataset.src),n=b.querySelector('.cnt');if(src){b.classList.toggle('nomana',src.classList.contains('nomana'));if(n)n.textContent=(src.querySelector('.cnt')||src.querySelector('.cdt')).textContent}
     else if(b.dataset.q==='mount')b.firstChild.textContent=p.mount?MOUNTS[p.mount].icon:'🐎'});
@@ -75,7 +86,7 @@ function touchFrame(p){if(Touch.built!==p.abil)touchBuild(p);if(!p.dead)aimPrevi
   if(isPaused()&&!Touch.paused){touchReset();p.input.abil.fill(false);p.input.fire=false}Touch.paused=isPaused();if(Touch.drag)touchDrawAim()}
 const TMENU={inv:()=>toggleInv(true),tal:()=>toggleTal(true),prof:()=>toggleProf(true),map:()=>toggleMap(true),friends:()=>toggleFriends(true),
   quest:()=>uiSheet('Quest',[...$('quest').querySelectorAll('.ql')].map(e=>({label:e.textContent}))),
-  settings:()=>{if(!pauseOpen)togglePause();openOverlay('settings','pause')},mute:()=>{Snd.vol.muted=!Snd.vol.muted;applyVol();saveAudio();toast(Snd.vol.muted?'Sound off':'Sound on')},pause:()=>togglePause()};
+  settings:()=>{if(!pauseOpen)togglePause();openOverlay('settings','pause')},food:()=>{const p=players[0];if(p)eatFood(p)},mount:()=>{const p=players[0];if(p&&!p.dead)toggleMount(p)},hearth:()=>{const p=players[0];if(p)startHearth(p)},mute:()=>{Snd.vol.muted=!Snd.vol.muted;applyVol();saveAudio();toast(Snd.vol.muted?'Sound off':'Sound on')},pause:()=>togglePause()};
 function touchMenu(v){const m=$('tmenu');m.classList.toggle('hidden',v===undefined?!m.classList.contains('hidden'):!v);touchReset()}
 {// Wiring. Each control captures its own pointer, so moving and casting work at the same time.
   const cap=e=>{try{e.target.setPointerCapture(e.pointerId)}catch(_){}e.preventDefault()};touchShow(matchMedia('(pointer:coarse)').matches);

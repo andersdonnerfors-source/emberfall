@@ -132,3 +132,23 @@ test('guest waits after 5s without snapshots',()=>{const o={role:Net.role,hw:Net
   finally{Net.role=o.role;Net.hw=o.hw;Net.hwT=o.hwT;Net.host=o.host;Net.lastSnap=o.ls;hostWaitShow()}});
 test('desktop key hints hidden on touch',()=>{const on=Touch.on;try{Touch.on=true;eq(keyHint('Loot'),'Loot');Touch.on=false;eq(keyHint('Loot'),'[E] Loot')}finally{Touch.on=on}});
 test('drawBubble works without roundRect',()=>{const old=CanvasRenderingContext2D.prototype.roundRect;try{CanvasRenderingContext2D.prototype.roundRect=undefined;const k=myUid();Chat.bub.set(k,{m:'hi',until:rt+3});drawBubble({x:0,y:0},50,50);eq(true,true)}finally{CanvasRenderingContext2D.prototype.roundRect=old;Chat.bub.delete(myUid())}});
+
+// ---- Phone HUD declutter: sizes from the screen height, locked abilities hidden, no overlaps in the arc
+test('touch sizes scale with height',()=>{const a=touchSizes(220),b=touchSizes(300),c=touchSizes(400),d=touchSizes(390);
+  eq([a.atk,a.ab,a.q],[64,44,36]);eq([c.atk,c.ab,c.q],[84,56,40]);eq([d.atk,d.ab,d.q],[84,56,40]);eq([b.atk,b.ab,b.q],[70,48,37]);
+  eq([a.mini,c.mini],[96,120]);eq(touchSizes(100).atk,64);eq(touchSizes(900).atk,84)});
+test('touchPlace keeps abilities apart and below the minimap',()=>{for(const[W,H,lim]of[[667,220,110],[667,375,140],[844,390,140],[915,412,140]]){const z=touchSizes(H);
+    for(let n=0;n<=5;n++){const r=touchPlace({W,H,atk:z.atk,ab:z.ab,q:z.q,limit:lim,n}),cs=[{x:r.atk.x,y:r.atk.y,r:z.atk/2},...r.abil.map(a=>({x:a.x,y:a.y,r:z.ab/2}))],tag=W+'x'+H+' n'+n;
+      eq(r.abil.length,n,tag);
+      for(let i=0;i<cs.length;i++){eq(cs[i].y-cs[i].r>=lim,true,tag+' below limit '+i);eq(cs[i].x-cs[i].r>=0&&cs[i].x+cs[i].r<=W&&cs[i].y+cs[i].r<=H,true,tag+' on screen '+i);
+        for(let j=i+1;j<cs.length;j++)eq(Math.hypot(cs[i].x-cs[j].x,cs[i].y-cs[j].y)>=cs[i].r+cs[j].r,true,tag+' overlap '+i+','+j);
+        const k=r.quick;eq(cs[i].x+cs[i].r<=k.x||cs[i].x-cs[i].r>=k.x+k.w||cs[i].y+cs[i].r<=k.y||cs[i].y-cs[i].r>=k.y+k.h,true,tag+' quick overlap '+i)}
+      eq(r.quick.y>=lim,true,tag+' quick below limit')}}});
+test('locked abilities hidden on phone',()=>{const lp=Layout.phone,pl=players.slice(),p=TP('sorcerer');p.level=1;p.abil=ABIL.sorcerer.concat([SPEC_LOCKED]);players.length=0;players.push(p);
+  const ds=()=>[...document.querySelectorAll('#arc .tslot')].map(s=>s.style.display!=='none');
+  try{Layout.phone=true;touchBuild(p);touchLayout(p);eq(ds(),[true,true,false,false,false,false]);
+    p.level=5;touchLayout(p);eq(ds(),[true,true,true,true,false,false],'level 5');
+    p.level=10;p.abil=ABIL.sorcerer.concat([{name:'Sig',icon:'x',cd:1,mana:0,cast(){}}]);touchLayout(p);eq(ds(),[true,true,true,true,true,true],'spec slot with a spec');
+    p.abil=ABIL.sorcerer.concat([SPEC_LOCKED]);touchLayout(p);eq(ds()[5],false,'spec slot without a spec');
+    Layout.phone=false;touchLayout(p);eq(ds().every(Boolean),true,'desktop touch keeps all slots')}
+  finally{Layout.phone=lp;players.length=0;players.push(...pl);Touch.built=null;touchLayout.key=null}});
