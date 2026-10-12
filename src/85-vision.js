@@ -38,7 +38,7 @@ function drawAwareness(u,sx,sy){const m=awarenessMark(u,time);if(!m)return;const
   if(m.bar!=null){ctx.fillStyle='rgba(0,0,0,.6)';ctx.fillRect(sx-12,y+4,24,3);ctx.fillStyle='#ffb03a';ctx.fillRect(sx-12,y+4,24*m.bar,3)}}
 // ---- World map (N or click the minimap)
 let mapOpen=false;
-function toggleMap(v){mapOpen=v===undefined?!mapOpen:v;$('worldmap').classList.toggle('hidden',!mapOpen);if(mapOpen){mouse.l=false;drawWorldMap()}}
+function toggleMap(v){mapOpen=v===undefined?!mapOpen:v;$('worldmap').classList.toggle('hidden',!mapOpen);if(mapOpen){mouse.l=false;drawWorldMap();wmReset()}}
 function drawWorldMap(){const cv=$('wmap'),c=cv.getContext('2d'),S2=cv.width,z=zone,k=S2/Math.max(z.MW,z.MH);c.fillStyle='#07070a';c.fillRect(0,0,S2,S2);c.imageSmoothingEnabled=true;
   c.drawImage(z.terrain.ov,0,0,z.MW*k,z.MH*k);const f=fogOf(z);c.drawImage(f.cv,0,0,f.w*FOGS*k,f.h*FOGS*k);
   $('wmapTitle').textContent=z.kind==='over'?'The Westmark':z.name;

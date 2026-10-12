@@ -87,8 +87,7 @@ function loadSettings(){return Object.assign({autoLoot:false,lootMinRar:1,uiSize
 function saveSettings(){store('emberfall-settings',Settings)}
 // UI size: null = 100% (85% on a phone), else 80-130. applyUi() sets --ui on :root; zoom on the HUD and windows follows it.
 function uiScale(st,phone){const v=st&&st.uiSize!=null?+st.uiSize:phone?85:100;return Math.min(1.3,Math.max(.8,(isFinite(v)?v:100)/100))}
-function applyUi(){document.documentElement.style.setProperty('--ui',uiScale(Settings,phoneUI()))}
-addEventListener('resize',()=>applyUi());
+function applyUi(){document.documentElement.style.setProperty('--ui',uiScale(Settings,isPhone()))}// runs from applyLayout (src/88-layout.js) when the layout changes
 function autoLootPick(loot,minRar,bagFree,pending){const take=[];let blocked=false;
   for(const d of loot){if(pending.has(d.id))continue;if(!d.item){take.push(d);continue}if(d.item.rar<minRar)continue;if(bagFree>0){take.push(d);bagFree--}else blocked=true}return{take,blocked}}
 function autoLootPlan(cs,minRar,free,pending){const take=[];let blocked=false;for(const c of cs){const r=autoLootPick(c.loot,minRar,free,pending);if(r.blocked)blocked=true;for(const d of r.take){take.push([c,d]);if(d.item)free--}}return{take,blocked}}

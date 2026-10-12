@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Emberfall</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Inter:wght@400;500;600;700&display=swap">
@@ -226,6 +226,40 @@ body.touch #bottom,body.touch #hint{display:none}
 #menuBtn{width:44px;height:44px;font-size:20px;padding:0}
 #tmenu{pointer-events:auto;position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:27;display:grid;grid-template-columns:repeat(3,112px);gap:8px;padding:12px}
 #tmenu button{min-height:48px;background:var(--field);color:var(--text);border:1px solid var(--edge);border-radius:var(--r);font-family:var(--ui-font);font-size:var(--fs);cursor:pointer}
+/* ---- Phone layout (src/88-layout.js): body.phone when touch is present and the short screen side is under 500 px */
+:root{--panel-solid:rgba(10,12,16,.9)}
+.ql{display:block}#quest.clash{visibility:hidden}
+.sheet-bg{position:fixed;inset:0;z-index:43;background:rgba(0,0,0,.35);opacity:0;transition:opacity .2s}.sheet-bg.open{opacity:1}
+.cell.sel{outline:2px solid var(--accent);outline-offset:1px}
+#invActs{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:10px;padding:8px 10px;border:1px solid var(--edge);border-radius:var(--r);background:rgba(20,22,28,.96)}.ia-n{flex:1;min-width:120px;font-weight:600}
+#turn{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;background:#0d0b09;padding:24px}#turn .panel{padding:22px 26px;text-align:center;font-size:18px;font-weight:600}#turn i{display:block;font-style:normal;font-size:44px;margin-bottom:10px}
+/* no glass blur (Graphics Low, or Auto on a phone): solid panels instead */
+body.nofx{--blur:none;--panel:var(--panel-solid)}body.nofx #pause{-webkit-backdrop-filter:none;backdrop-filter:none}
+/* HUD: compact player frame top left, target top centre, 120 px minimap + one quest line top right, party as a stack of portraits with health rings */
+body.phone #pframe{left:calc(10px + env(safe-area-inset-left));top:10px;width:236px;padding:6px 8px;grid-template-columns:44px 1fr;column-gap:8px}
+body.phone #pPort{width:44px;height:44px}body.phone .uname{font-size:14px}body.phone #pframe .gold{margin-top:4px}body.phone #tframe{top:10px}
+body.phone #party{left:calc(10px + env(safe-area-inset-left));width:auto}
+body.phone .pm{width:40px;height:40px;min-height:0;padding:4px;border:0;border-radius:50%;background:conic-gradient(var(--hp) calc(var(--f,100)*1%),rgba(255,255,255,.18) 0);box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none;cursor:pointer}
+body.phone .pm .pmb{display:none}body.phone .pm canvas{width:32px!important;height:32px!important}
+body.phone #right{right:calc(10px + env(safe-area-inset-right));top:10px;width:120px}body.phone #mini{width:120px;height:120px}
+body.phone #quest{margin-top:6px;padding:5px 8px;font-size:12px;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+body.phone #quest .ql{display:inline}body.phone #quest .ql+.ql::before{content:' · '}body.phone #quest .muted{display:none}body.phone #quest b{font-size:12px}
+body.phone #toasts{top:calc(70px + env(safe-area-inset-top))}body.phone .toast{font-size:14px;padding:6px 14px}
+/* windows: fullscreen, header pinned to the top */
+body.phone #inv,body.phone #tal,body.phone #shop,body.phone #prof,body.phone #friends,body.phone #worldmap{left:0;top:0;transform:none;width:calc(100vw/var(--ui));height:calc(100vh/var(--ui));max-width:none;max-height:none;border:0;border-radius:0;background:#0c0e12;padding:0 calc(14px + env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) calc(14px + env(safe-area-inset-left))}
+body.phone .invhead{position:sticky;top:0;z-index:3;margin:0 0 10px;padding:4px 0;background:var(--panel-solid);border-bottom:1px solid var(--line)}
+body.phone #inv .invhead .muted{display:none}body.phone #bag,body.phone #supplies,body.phone #sbag{grid-template-columns:repeat(auto-fill,minmax(64px,1fr))}body.phone #invActs{position:sticky;top:53px;z-index:2}
+body.phone #settings,body.phone #howto{padding:0}
+body.phone #settings>.panel,body.phone #howto>.panel{width:calc(100vw/var(--ui))!important;height:calc(100vh/var(--ui));max-width:none;max-height:none!important;overflow:auto;border:0;border-radius:0;background:#0c0e12;padding:12px calc(24px + env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) calc(24px + env(safe-area-inset-left))!important}
+body.phone #pause h1{font-size:28px;margin:0}body.phone #pause .btn{margin:4px}
+/* world map: fills the window, drag to pan and pinch to zoom */
+body.phone #worldmap{display:flex;flex-direction:column;overflow:hidden}body.phone #worldmap>.muted{display:none}
+body.phone #wmapView{position:relative;flex:1;min-height:0;overflow:hidden;touch-action:none;display:flex;justify-content:center;border:1px solid var(--edge);border-radius:6px}
+body.phone #wmap{flex:none;width:auto;height:100%;border:0;border-radius:0;transform-origin:0 0}
+/* dialogs and loot: bottom sheets with rows of at least 48 px */
+@keyframes sheetUp{from{transform:translateY(100%)}to{transform:none}}
+body.phone #dialog,body.phone #loot{left:0;right:auto;top:auto;bottom:0;transform:none;width:calc(100vw/var(--ui));max-width:none;max-height:calc(70vh/var(--ui));overflow:auto;z-index:44;border-radius:calc(var(--r) * 2) calc(var(--r) * 2) 0 0;padding:12px calc(16px + env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));animation:sheetUp .2s ease-out}
+body.phone #dialog .btn,body.phone #loot .btn{min-height:48px}body.phone #dBtns .btn{flex:1;min-width:0}body.phone .lrow2{min-height:48px}
 </style>
 </head>
 <body>
@@ -315,6 +349,7 @@ body.touch #bottom,body.touch #hint{display:none}
 
 <div id="inv" class="panel hidden">
   <div class="invhead"><h2>Character</h2><span class="muted">Click item: equip · Sell loot at any shop</span><button class="x" id="invClose">✕</button></div>
+  <div id="invActs" class="hidden"></div>
   <div class="invbody">
     <div><canvas id="invPrev" width="200" height="190"></canvas><div id="equip"></div><div id="stats"></div></div>
     <div><div class="muted" style="margin-bottom:6px">Bag</div><div id="bag"></div><div class="muted" style="margin:14px 0 6px">Supplies · click to use · Q heal · Z mana · X eat</div><div id="supplies"></div></div>
@@ -330,7 +365,7 @@ body.touch #bottom,body.touch #hint{display:none}
   <div id="matsRow"></div><div id="profList"></div>
   <div class="muted" style="margin-top:10px">Monsters drop materials: beasts give hide, spiders give silk, goblins and trolls give ore, undead and spirits give arcane dust, and bosses give essence. Herbs grow in the wild (better herbs in harder lands), berry bushes and wells can be gathered with E, and beasts drop meat. Learn a profession from a trainer in a city shop.</div></div>
 <div id="loot" class="panel hidden"><div class="invhead"><h2 id="lootTitle">Loot</h2><button class="x" id="lootClose">✕</button></div><div id="lootList"></div><div class="row"><button class="btn primary" id="lootAll" style="min-width:0;width:100%;margin:8px 0 0">Take all</button></div></div>
-<div id="worldmap" class="panel hidden"><div class="invhead"><h2 id="wmapTitle">World map</h2><span class="muted" id="wmapPct"></span><button class="x" id="wmapClose">✕</button></div><canvas id="wmap" width="640" height="640"></canvas><div class="muted" style="margin-top:6px">Only places you have seen are shown. 🏠 your home city · orange: dungeons · blue: caves · gold ring: your current goal.</div></div>
+<div id="worldmap" class="panel hidden"><div class="invhead"><h2 id="wmapTitle">World map</h2><span class="muted" id="wmapPct"></span><button class="x" id="wmapClose">✕</button></div><div id="wmapView"><canvas id="wmap" width="640" height="640"></canvas></div><div class="muted" style="margin-top:6px">Only places you have seen are shown. 🏠 your home city · orange: dungeons · blue: caves · gold ring: your current goal.</div></div>
 <div id="dialog" class="panel hidden"><h3 id="dTitle"></h3><div class="who" id="dWho">Old Warden Bram</div><p id="dText"></p><div id="dGoal"></div><div class="row" id="dBtns"></div></div>
 <div id="intro" class="screen hidden"><div class="panel" style="max-width:640px;padding:24px 30px;line-height:1.6">
   <h2>The Lamp has gone dark</h2>
@@ -349,6 +384,7 @@ body.touch #bottom,body.touch #hint{display:none}
   <label class="set"><span>Auto loot (walk near corpses)</span><input type="checkbox" id="setAutoLoot"></label>
   <label class="set"><span>Auto loot items of at least</span><select id="setLootRar"></select></label>
   <label class="set"><span>UI size</span><input type="range" id="setUi" min="80" max="130" step="5"><output id="setUiV"></output></label>
+  <label class="set"><span>Graphics</span><select id="setGfx"><option value="auto">Auto</option><option value="high">High</option><option value="low">Low</option></select></label>
   <div class="row"><button class="btn primary" id="btnSetClose">Done</button></div></div></div>
 <div id="howto" class="screen hidden"><div class="panel" style="width:min(620px,100%);padding:20px 26px;line-height:1.55;max-height:92vh;overflow:auto">
   <h2>How to play</h2>
@@ -363,6 +399,7 @@ body.touch #bottom,body.touch #hint{display:none}
   <p><b>Lost?</b> Read the waymarks along the roads (click them) and listen to the bards in each city.</p>
   <div class="row"><button class="btn primary" id="btnHowClose">Got it</button></div></div></div>
 <div id="tip" class="hidden"></div>
+<div id="turn" class="hidden"><div class="panel"><i>📱↻</i>Turn your phone sideways</div></div>
 
 <script>
 'use strict';
@@ -370,7 +407,8 @@ body.touch #bottom,body.touch #hint{display:none}
 const $=id=>document.getElementById(id);
 const cvs=$('game'),ctx=cvs.getContext('2d');
 let W=0,H=0;
-function resize(){const d=Math.min(2,Math.max(1.5,window.devicePixelRatio||1));W=innerWidth;H=innerHeight;cvs.width=W*d;cvs.height=H*d;ctx.setTransform(d,0,0,d,0,0)}
+function resize(){const d=renderScale(gfxPref(),isPhone(),window.devicePixelRatio||1);// renderScale, gfxPref, isPhone: src/88-layout.js
+  W=innerWidth;H=innerHeight;cvs.width=W*d;cvs.height=H*d;ctx.setTransform(d,0,0,d,0,0)}
 addEventListener('resize',resize);resize();
 const clamp=(v,a,b)=>v<a?a:v>b?b:v,rand=(a,b)=>a+Math.random()*(b-a),pick=a=>a[Math.floor(Math.random()*a.length)];
 const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
@@ -1012,7 +1050,7 @@ function inRadius(list,x,y,r){return list.filter(e=>!e.dead&&Math.hypot(e.x-x,e.
 function wrapA(a){while(a>Math.PI)a-=TAU;while(a<-Math.PI)a+=TAU;return a}
 function mkArea(o){return Object.assign({t:0,delay:0,dur:0,tick:0,nt:0,tickDmg:0},o,{delay0:o.delay||0})}
 function fireProj(o){projs.push(Object.assign({life:1.5,r:6,hit:new Set(),pierce:0},o))}
-function burst(x,y,col,n,spd){for(let i=0;i<n;i++){const a=rand(0,TAU),s=rand(.2,1)*spd;parts.push({x,y,z:rand(5,25),vx:Math.cos(a)*s,vy:Math.sin(a)*s,vz:rand(20,140),life:rand(.4,.9),max:.9,col,size:rand(1.5,3.5)})}}
+function burst(x,y,col,n,spd){n=Math.round(n*fxScale());for(let i=0;i<n;i++){const a=rand(0,TAU),s=rand(.2,1)*spd;parts.push({x,y,z:rand(5,25),vx:Math.cos(a)*s,vy:Math.sin(a)*s,vz:rand(20,140),life:rand(.4,.9),max:.9,col,size:rand(1.5,3.5)})}}
 let hudTarget=null;// the enemy shown in the target frame: under the mouse, or the last one you hit (auto-aim also sets it on phones)
 function floatText(x,y,txt,col,size){texts.push({x:x+rand(-8,8),y,z:44,txt,col,size:size||15,life:1})}
 function toast(msg,cls){const d=document.createElement('div');d.className='toast '+(cls||'');d.textContent=msg;const tc=$('toasts');tc.appendChild(d);while(tc.children.length>4)tc.firstChild.remove();setTimeout(()=>d.remove(),3500)}
@@ -1279,7 +1317,7 @@ cvs.addEventListener('mousedown',e=>{if(state!=='play'||isPaused())return;if(e.b
 addEventListener('mouseup',e=>{if(e.button===0)mouse.l=false});
 cvs.addEventListener('contextmenu',e=>e.preventDefault());
 let storyOpen=false;
-function isPaused(){return Friends.open||invOpen||dialogOpen||pauseOpen||talOpen||shopOpen||storyOpen||profOpen||mapOpen}
+function isPaused(){return Friends.open||invOpen||dialogOpen||pauseOpen||talOpen||shopOpen||storyOpen||profOpen||mapOpen||Layout.turn&&!Net.role}// Layout.turn: phone held upright (solo only)
 function showStory(id,on){storyOpen=on;$(id).classList.toggle('hidden',!on);mouse.l=false}
 function fmtTime(s){const m=Math.floor(s/60);return m>=60?Math.floor(m/60)+' h '+(m%60)+' min':m+' min'}
 function showVictory(){const p=players[0];sfx('victory');$('vicText').innerHTML=`The Barrow King is no more, and the Lamp of Emberfall shines over the whole valley.<br><br>${p.name} the ${CLASSES[p.cls].name} · level ${p.level}<br>${p.kills||0} foes defeated · fallen ${p.deaths||0} times · ${fmtTime(p.playT||0)} played<br><br>The world stays open: keep hunting for epic gear and growing stronger.`;showStory('victory',true)}
@@ -1574,7 +1612,7 @@ function updateHud(){const p=players[0];if(!p)return;
       e.children[3].style.height=(kind==='food'?(p.eat?p.eat.left/EAT_TIME*100:0):p.potCd/POT_CD*100)+'%'}}
   renderBuffs(p);
   {const h=$('hearthSlot');if(h){const cd=Math.max(0,(p.hearthCd||0)-time);h.children[2].style.height=(p.hearthCast>0?(1-p.hearthCast/HEARTH_CAST)*100:cd/HEARTH_CD*100)+'%';h.children[2].style.background=p.hearthCast>0?'rgba(120,200,255,.5)':'rgba(0,0,0,.68)';h.children[3].textContent=cd>0?Math.ceil(cd)+'':''}}
-  if(!phoneUI()){const h=enemyUnderMouse();if(h&&!isPaused())hudTarget=h}
+  if(!isPhone()){const h=enemyUnderMouse();if(h&&!isPaused())hudTarget=h}
   if(hudTarget&&(hudTarget.dead||hudTarget.hp<=0||dist(hudTarget,p)>1100||!enemies.includes(hudTarget)))hudTarget=null;
   let tg=hudTarget,bd=900;if(!tg)for(const e of enemies)if(e.boss&&e.target&&dist(e,p)<bd){bd=dist(e,p);tg=e}// an engaged boss shows even with nothing targeted
   const tf=$('tframe');if(tg){tf.classList.remove('hidden');tf.classList.toggle('boss',!!tg.boss);$('tName').textContent=tg.name+(tg.enraged?' · ENRAGED':'');const tl=$('tLvl');tl.textContent='Lv '+tg.lvl;tl.style.color=lvlColor(p,tg.lvl);
@@ -1582,11 +1620,13 @@ function updateHud(){const p=players[0];if(!p)return;
     const k=monsterKey(tg);if(k!==updateHud.tk){updateHud.tk=k;const c=$('tPort').getContext('2d');c.clearRect(0,0,112,112);c.drawImage(monsterPortrait(tg),0,0)}}else tf.classList.add('hidden');
   partyT-=1/60;if(partyT<=0){partyT=.25;renderParty()}
   if(Touch.on)touchFrame(p);layoutHud();drawMini()}
-function updateQuestUI(){const q=QUESTS[quest.idx],el=$('quest');
-  if(!q||quest.state==='done'){el.innerHTML='<b>The road goes on</b><br>All quests complete. Roam the wilds, grow stronger and hunt for gear. More adventures are coming.';return}
-  if(quest.state==='offer'){el.innerHTML=`<b>New quest</b><br>Speak with Old Warden Bram in Emberfall (E).`;return}
-  if(quest.state==='ready'){el.innerHTML=`<b>${q.title}</b><br><span style="color:#9fe07a">Complete!</span> Return to the Warden.`;return}
-  el.innerHTML=`<b>${q.title}</b> <span class="muted">(level ${q.rec}+)</span><br>${q.goal}${q.need>1?`<br>Progress: ${quest.prog} / ${q.need}`:''}`}
+// One .ql line each: stacked on desktop, joined into one line with " · " on a phone (tap it for all of it).
+function updateQuestUI(){const q=QUESTS[quest.idx],el=$('quest'),L=(...ls)=>{el.innerHTML=ls.filter(Boolean).map(l=>`<span class="ql">${l}</span>`).join('')};
+  if(!q||quest.state==='done')return L('<b>The road goes on</b>','All quests complete. Roam the wilds, grow stronger and hunt for gear. More adventures are coming.');
+  if(quest.state==='offer')return L('<b>New quest</b>','Speak with Old Warden Bram in Emberfall (E).');
+  if(quest.state==='ready')return L(`<b>${q.title}</b>`,'<span style="color:#9fe07a">Complete!</span> Return to the Warden.');
+  L(`<b>${q.title}</b> <span class="muted">(level ${q.rec}+)</span>`,q.goal,q.need>1&&`Progress: ${quest.prog} / ${q.need}`)}
+$('quest').onclick=()=>{if(Layout.phone&&state==='play')TMENU.quest()};
 function showTip(h){const t=$('tip');t.innerHTML=h;t.classList.remove('hidden');t.style.left=Math.min(mouse.x+16,innerWidth-300)+'px';t.style.top=Math.min(mouse.y+16,innerHeight-t.offsetHeight-8)+'px'}
 function hideTip(){$('tip').classList.add('hidden')}
 function itemTip(it,cmp){let h=`<div class="tn" style="color:${RAR[it.rar].c}">${itemIcon(it)} ${it.name}</div><div class="ts">${RAR[it.rar].n} ${SLOTNAME[it.slot]} · item level ${it.lvl}</div>`;
@@ -1604,10 +1644,14 @@ function renderBuffs(p){const el=$('buffs');if(!el||rt<(el.t||0))return;el.t=rt+
 // The hero preview in the character panel shows your equipped gear.
 function drawInvPreview(){const cv=$('invPrev');if(!cv||!invOpen)return;const p=players[0];if(!p)return;const c=cv.getContext('2d');c.clearRect(0,0,cv.width,cv.height);
   c.fillStyle='rgba(0,0,0,.35)';ell(c,cv.width/2,cv.height-18,40,11);c.fill();const o=playerLook(p);o.s=2.2;o.aim=Math.sin(rt*.7)*.5;o.aimS=o.aim;o.walk=0;o.moving=false;drawHumanoid(c,cv.width/2,cv.height-18,o)}
-function renderInv(){const p=players[0];if(!p)return;const eq=$('equip');eq.innerHTML='';
-  for(const sl of SLOTS){const it=p.gear[sl];const d=document.createElement('div');d.className='cell';d.style.borderColor=it?RAR[it.rar].c:'';d.innerHTML=cellHtml(it,SLOTNAME[sl]);
+const statsText=st=>Object.entries(st||{}).map(([k,v])=>'+'+v+' '+STATLBL[k]).join(', ');
+function equipBag(p,i){const it=p.bag[i];if(!it)return;const old=p.gear[it.slot];p.gear[it.slot]=it;p.bag.splice(i,1);if(old)p.bag.push(old);calcStats(p)}
+function unequip(p,sl){const it=p.gear[sl];if(!it)return false;if(p.bag.length>=p.bagSize){toast('Bag is full');return false}p.bag.push(it);p.gear[sl]=null;calcStats(p);return true}
+// On a phone a tap selects (invPick, src/88-layout.js) and the action row acts; on desktop a click acts at once.
+function renderInv(){const p=players[0];if(!p)return;invActs(p);const eq=$('equip'),ph=Layout.phone,sel=(k,i)=>invSel&&invSel.k===k&&invSel.i===i?' sel':'';eq.innerHTML='';
+  for(const sl of SLOTS){const it=p.gear[sl];const d=document.createElement('div');d.className='cell'+sel('gear',sl);d.style.borderColor=it?RAR[it.rar].c:'';d.innerHTML=cellHtml(it,SLOTNAME[sl]);
     d.onmouseenter=()=>{if(it)showTip(itemTip(it)+'<div class="ts" style="margin-top:6px">Click to unequip</div>')};d.onmouseleave=hideTip;
-    d.onclick=()=>{if(!it)return;if(p.bag.length>=p.bagSize){toast('Bag is full');return}p.bag.push(it);p.gear[sl]=null;calcStats(p);hideTip();renderInv()};eq.appendChild(d)}
+    d.onclick=()=>{if(!it)return;if(ph)return invPick({k:'gear',i:sl});if(unequip(p,sl)){hideTip();renderInv()}};eq.appendChild(d)}
   const s=p.stats,pt=p.points>0,st=s.attrs,ms=s.main,hc=hitChance(p,{lvl:p.level});
   const attr=(k,n,what)=>`<div class="st"><span>${n}${k===ms?' <span style="color:var(--gold)">★</span>':''} <span class="muted">(${what})</span></span><span>${st[k]}${pt?`<button data-a="${k}">+${ATTR_PT}</button>`:''}</span></div>`;
   $('stats').innerHTML=`<div class="st"><span>Level ${p.level} ${CLASSES[p.cls].name}</span><span class="muted">${p.level>=20?'Max level':p.xp+' / '+xpNeed(p.level)+' XP'}</span></div>
@@ -1620,7 +1664,7 @@ function renderInv(){const p=players[0];if(!p)return;const eq=$('equip');eq.inne
    <div class="st"><span>Critical chance <span class="muted">(needs ${CRIT_MIN_HIT*100}%+ hit)</span></span><span>${Math.round(s.crit*100)}%</span></div>
    <div class="st"><span>Attack speed</span><span>+${Math.round(s.haste*100)}%</span></div><div class="st"><span>Cooldown reduction</span><span>${Math.round(s.cdr*100)}%</span></div>
    <div class="st"><span>Move speed</span><span>${Math.round(s.speed)}</span></div><div class="st"><span>Gold</span><span>🪙 ${p.gold}</span></div>
-   ${Object.keys(p.buffs).length?`<div class="st" style="margin-top:8px"><b style="font-weight:normal;color:var(--gold)">Active effects</b><span></span></div>`+Object.values(p.buffs).map(b=>`<div class="st"><span>${b.icon} ${b.n} <span class="muted">${Object.entries(b.stats).map(([k,v])=>'+'+v+' '+STATLBL[k]).join(', ')}</span></span><span>${fmtLeft(b.left)}</span></div>`).join(''):''}
+   ${Object.keys(p.buffs).length?`<div class="st" style="margin-top:8px"><b style="font-weight:normal;color:var(--gold)">Active effects</b><span></span></div>`+Object.values(p.buffs).map(b=>`<div class="st"><span>${b.icon} ${b.n} <span class="muted">${statsText(b.stats)}</span></span><span>${fmtLeft(b.left)}</span></div>`).join(''):''}
    <div class="st" style="margin-top:8px"><b style="font-weight:normal;color:var(--gold)">Skills</b><span class="muted">max ${skillCap(p)} at your level</span></div>
    ${[...new Set([wtypeOf(p),...Object.keys(p.skills).filter(k=>k!=='spell')])].map(k=>`<div class="st"><span>${SKILL_NAME[k]}${k===wtypeOf(p)?' <span class="muted">(equipped)</span>':''}</span><span>${skillOf(p,k)} <span class="muted">(+${Math.round(skillOf(p,k)/2.5)}% weapon hits)</span></span></div>`).join('')}
    <div class="st"><span>Spellcraft</span><span>${skillOf(p,'spell')} <span class="muted">(+${Math.round(skillOf(p,'spell')/3)}% spells & heals)</span></span></div>
@@ -1628,17 +1672,17 @@ function renderInv(){const p=players[0];if(!p)return;const eq=$('equip');eq.inne
    <div class="st"><span>${p.bagName||'Starter Pouch'}</span><span>${p.bagSize} slots</span></div>`;
   for(const b of $('stats').querySelectorAll('button[data-m]'))b.onclick=()=>{p.mount=b.dataset.m;if(p.mounted)dismount(p,true);renderInv();save()};
   for(const b of $('stats').querySelectorAll('button[data-a]'))b.onclick=()=>{if(p.points<=0)return;p.points--;p.attr[b.dataset.a]=(p.attr[b.dataset.a]||0)+1;const hpf=p.hp/p.maxHp;calcStats(p);p.hp=Math.round(p.maxHp*hpf);renderInv();save()};
-  const bag=$('bag');bag.innerHTML='';for(let i=0;i<p.bagSize;i++){const it=p.bag[i];const d=document.createElement('div');d.className='cell';if(it)d.style.borderColor=RAR[it.rar].c;d.innerHTML=cellHtml(it);
+  const bag=$('bag');bag.innerHTML='';for(let i=0;i<p.bagSize;i++){const it=p.bag[i];const d=document.createElement('div');d.className='cell'+sel('bag',i);if(it)d.style.borderColor=RAR[it.rar].c;d.innerHTML=cellHtml(it);
     if(it){d.onmouseenter=()=>showTip(itemTip(it,p.gear[it.slot]||null)+`<div class="ts" style="margin-top:6px">Click: equip · Sells for ${sellPrice(it)} gold at any shop</div>`);d.onmouseleave=hideTip;
-      d.onclick=()=>{const old=p.gear[it.slot];p.gear[it.slot]=it;p.bag.splice(i,1);if(old)p.bag.push(old);calcStats(p);hideTip();renderInv();save()};
+      d.onclick=()=>{if(ph)return invPick({k:'bag',i});equipBag(p,i);hideTip();renderInv();save()};
       d.oncontextmenu=e=>{e.preventDefault();toast('Sell loot at any shop')}}
     bag.appendChild(d)}
   // Supplies: potions, food, drink and everyday crafts. Click to use.
   const su=$('supplies');su.innerHTML='';const ks=Object.keys(SUP).filter(k=>supCount(p,k)>0);
   if(!ks.length)su.innerHTML='<div class="muted" style="grid-column:1/-1">No supplies. Buy potions at a General Store, gather berries and water, or craft with Alchemy and Cooking.</div>';
-  for(const k of ks){const d=document.createElement('div');d.className='cell';d.innerHTML=`${supHtml(k)}<span class="qty">${supCount(p,k)}</span>`;
+  for(const k of ks){const d=document.createElement('div');d.className='cell'+sel('sup',k);d.innerHTML=`${supHtml(k)}<span class="qty">${supCount(p,k)}</span>`;
     d.onmouseenter=()=>showTip(`<div class="tn">${supName(k)}</div>${supDesc(k,p)}<div class="ts" style="margin-top:6px">Click to use</div>`);d.onmouseleave=hideTip;
-    d.onclick=()=>{hideTip();useSup(p,k);renderInv()};su.appendChild(d)}}
+    d.onclick=()=>{if(ph)return invPick({k:'sup',i:k});hideTip();useSup(p,k);renderInv()};su.appendChild(d)}}
 function sellPrice(it){return Math.round((3+it.lvl*2)*(1+it.rar*1.5))}
 // ---- Talents panel
 function treeEl(p,tr,title){const d=document.createElement('div');d.className='branch';const bp=treePts(p,tr);d.innerHTML=`<h3>${title} <span class="muted">(${bp} points)</span></h3>`;
@@ -1665,7 +1709,7 @@ function drawMerchant(){const[sx,sy]=S(merchant.x,merchant.y);const p=players[0]
   drawHumanoid(ctx,sx,sy,{s:1,skin:'#d9a47a',hair:'#8a2d1c',cloth:'#8a5a2a',hat:'hood',hatColor:'#b8402a',aim:merchant.aim,walk:0,legs:'#3a2a1a'});
   const b=Math.sin(rt*3)*3;ctx.font='20px system-ui';ctx.textAlign='center';ctx.fillText('🪙',sx,sy-70+b);ctx.font='12px Georgia';ctx.fillStyle='#e8dcb8';ctx.fillText('Tilda the Trader',sx,sy-56);
   if(p&&!p.dead&&dist(p,merchant)<95&&!shopOpen&&!(dist(p,warden)<95)){ctx.font='bold 13px system-ui';ctx.fillStyle='#fff';ctx.fillText('[E] Trade',sx,sy+22)}}
-function toggleInv(v){invOpen=v===undefined?!invOpen:v;if(invOpen){talOpen=false;$('tal').classList.add('hidden');closeShop()}$('inv').classList.toggle('hidden',!invOpen);hideTip();if(invOpen){mouse.l=false;renderInv()}}
+function toggleInv(v){invOpen=v===undefined?!invOpen:v;invSel=null;if(invOpen){talOpen=false;$('tal').classList.add('hidden');closeShop()}$('inv').classList.toggle('hidden',!invOpen);hideTip();if(invOpen){mouse.l=false;renderInv()}}
 function togglePause(){$('btnQuit').textContent=Net.role==='guest'?'Leave party':Net.role==='host'?'Save & quit (ends the party)':'Save & quit to menu';pauseOpen=!pauseOpen;$('pause').classList.toggle('hidden',!pauseOpen);mouse.l=false;if(pauseOpen)save()}
 function openDialog(){const q=QUESTS[quest.idx];dialogOpen=true;$('dWho').textContent='Old Warden Bram';mouse.l=false;$('dialog').classList.remove('hidden');const btns=$('dBtns');btns.innerHTML='';
   const btn=(txt,fn,pri)=>{const b=document.createElement('button');b.className='btn'+(pri?' primary':'');b.textContent=txt;b.onclick=fn;btns.appendChild(b)};$('dGoal').textContent='';
@@ -1722,12 +1766,12 @@ $('talClose').onclick=()=>toggleTal(false);$('shopClose').onclick=closeShop;
 $('sellJunk').onclick=()=>{const p=players[0];let g=0;p.bag=p.bag.filter(it=>{if(it.rar===0){g+=sellPrice(it);return false}return true});p.gold+=g;if(g)toast('Sold common items for '+g+' gold');renderShop();save()};
 let setFrom=null;
 function openOverlay(id,from){setFrom=from;if(from)$(from).classList.add('hidden');$(id).classList.remove('hidden');
-  if(id==='settings'){$('volSfx').value=Snd.vol.sfx;$('volMus').value=Snd.vol.music;$('volMute').checked=Snd.vol.muted;$('setAutoLoot').checked=Settings.autoLoot;$('setLootRar').innerHTML=RAR.map((r,i)=>`<option value="${i}">${r.n}</option>`).join('');$('setLootRar').value=Settings.lootMinRar;const u=Math.round(uiScale(Settings,phoneUI())*100);$('setUi').value=u;$('setUiV').textContent=u+'%'}}
+  if(id==='settings'){$('volSfx').value=Snd.vol.sfx;$('volMus').value=Snd.vol.music;$('volMute').checked=Snd.vol.muted;$('setAutoLoot').checked=Settings.autoLoot;$('setLootRar').innerHTML=RAR.map((r,i)=>`<option value="${i}">${r.n}</option>`).join('');$('setLootRar').value=Settings.lootMinRar;const u=Math.round(uiScale(Settings,isPhone())*100);$('setUi').value=u;$('setUiV').textContent=u+'%';$('setGfx').value=Settings.gfx}}
 function closeOverlay(id){$(id).classList.add('hidden');if(setFrom)$(setFrom).classList.remove('hidden');setFrom=null}
 $('btnSet').onclick=()=>openOverlay('settings','title');$('btnSet2').onclick=()=>openOverlay('settings','pause');$('btnHow').onclick=()=>openOverlay('howto','title');
 $('btnSetClose').onclick=()=>{saveAudio();closeOverlay('settings')};$('btnHowClose').onclick=()=>closeOverlay('howto');
 $('volSfx').oninput=e=>{Snd.vol.sfx=+e.target.value;applyVol();sfx('hit')};$('volMus').oninput=e=>{Snd.vol.music=+e.target.value;applyVol()};$('volMute').onchange=e=>{Snd.vol.muted=e.target.checked;applyVol()};
-$('setUi').oninput=e=>{Settings.uiSize=+e.target.value;$('setUiV').textContent=e.target.value+'%';applyUi()};$('setUi').onchange=saveSettings;$('setAutoLoot').onchange=e=>{Settings.autoLoot=e.target.checked;saveSettings()};$('setLootRar').onchange=e=>{Settings.lootMinRar=+e.target.value;saveSettings()};
+$('setUi').oninput=e=>{Settings.uiSize=+e.target.value;$('setUiV').textContent=e.target.value+'%';applyUi()};$('setUi').onchange=saveSettings;$('setAutoLoot').onchange=e=>{Settings.autoLoot=e.target.checked;saveSettings()};$('setGfx').onchange=e=>{Settings.gfx=e.target.value;saveSettings();resize();applyLayout()};$('setLootRar').onchange=e=>{Settings.lootMinRar=+e.target.value;saveSettings()};
 $('btnRand').onclick=randomLook;
 // Some previews (like a file opened inside another app) block browser storage, so nothing can be saved there.
 function storageOK(){try{localStorage.setItem('emberfall-test','1');localStorage.removeItem('emberfall-test');return true}catch(e){return false}}
@@ -2466,8 +2510,7 @@ function loadSettings(){return Object.assign({autoLoot:false,lootMinRar:1,uiSize
 function saveSettings(){store('emberfall-settings',Settings)}
 // UI size: null = 100% (85% on a phone), else 80-130. applyUi() sets --ui on :root; zoom on the HUD and windows follows it.
 function uiScale(st,phone){const v=st&&st.uiSize!=null?+st.uiSize:phone?85:100;return Math.min(1.3,Math.max(.8,(isFinite(v)?v:100)/100))}
-function applyUi(){document.documentElement.style.setProperty('--ui',uiScale(Settings,phoneUI()))}
-addEventListener('resize',()=>applyUi());
+function applyUi(){document.documentElement.style.setProperty('--ui',uiScale(Settings,isPhone()))}// runs from applyLayout (src/88-layout.js) when the layout changes
 function autoLootPick(loot,minRar,bagFree,pending){const take=[];let blocked=false;
   for(const d of loot){if(pending.has(d.id))continue;if(!d.item){take.push(d);continue}if(d.item.rar<minRar)continue;if(bagFree>0){take.push(d);bagFree--}else blocked=true}return{take,blocked}}
 function autoLootPlan(cs,minRar,free,pending){const take=[];let blocked=false;for(const c of cs){const r=autoLootPick(c.loot,minRar,free,pending);if(r.blocked)blocked=true;for(const d of r.take){take.push([c,d]);if(d.item)free--}}return{take,blocked}}
@@ -2489,7 +2532,7 @@ function drawParticles(){for(const q of parts){if(q.gl||q.ng)continue;const[sx,s
   for(const q of parts){if(!(q.gl||q.ng))continue;const[sx,sy]=S(q.x,q.y);ctx.globalAlpha=Math.max(0,q.life/q.max);
     if(q.streak){ctx.fillStyle=q.col;ctx.fillRect(sx,sy-q.z-14,q.size,14);continue}const r=q.size*2.6;ctx.drawImage(glowSprite(q.col),sx-r,sy-q.z-r,r*2,r*2)}
   ctx.restore();ctx.globalAlpha=1}
-function sparks(x,y,z,col,n,spd,life){for(let i=0;i<n;i++){const a=rand(0,TAU),s=rand(.3,1)*spd;parts.push({x,y,z,vx:Math.cos(a)*s,vy:Math.sin(a)*s,vz:rand(-.3,1)*spd*.6,life:rand(.6,1)*(life||.4),max:life||.4,col,size:rand(1.2,2.6),gl:true})}}
+function sparks(x,y,z,col,n,spd,life){n=Math.round(n*fxScale());for(let i=0;i<n;i++){const a=rand(0,TAU),s=rand(.3,1)*spd;parts.push({x,y,z,vx:Math.cos(a)*s,vy:Math.sin(a)*s,vz:rand(-.3,1)*spd*.6,life:rand(.6,1)*(life||.4),max:life||.4,col,size:rand(1.2,2.6),gl:true})}}
 // Color of a spell by its sound/theme.
 const FX_COL={fire:'#ff7a2a',meteor:'#ff5a1a',frost:'#8fd8ff',blink:'#c890ff',holy:'#ffe08a',shieldup:'#ffe08a',bash:'#ffe08a',shadow:'#b06aff',drain:'#c84aff',curse:'#b06aff',summon:'#7dff9a',bone:'#e8e2cc',
   arrow:'#f0e2b8',trap:'#e8c890',howl:'#cfe0ff',snipe:'#fff2c0',swing:'#fff3d0'};
@@ -2503,7 +2546,7 @@ function castFx(p,i){const ab=p.abil[i],col=FX_COL[ab.sfx||CASTSFX[p.cls][i]]||C
   fx.push({k:'glyph',x:p.x,y:p.y,r:46,life:.6,max:.6,col});sparks(p.x+Math.cos(p.aim)*22,p.y+Math.sin(p.aim)*22,28,col,14,150,.45);
   fx.push({k:'flash',x:p.x+Math.cos(p.aim)*22,y:p.y+Math.sin(p.aim)*22,z:28,r:40,life:.2,max:.2,col})}
 function boomFx(x,y,r,col){fx.push({k:'flash',x,y,z:10,r:r*1.4,life:.3,max:.3,col});fx.push({k:'ring',x,y,r:r*1.25,life:.45,max:.45,col:'#fff3d0'});
-  sparks(x,y,8,col,34,r*3.2,.6);for(let i=0;i<10;i++)parts.push({x:x+rand(-r,r)*.5,y:y+rand(-r,r)*.4,z:rand(4,20),vx:rand(-30,30),vy:rand(-20,20),vz:rand(30,70),life:rand(.8,1.4),max:1.4,col:'rgba(60,50,45,.6)',size:rand(5,9),ng:false,smoke:true})}
+  sparks(x,y,8,col,34,r*3.2,.6);for(let i=0;i<10*fxScale();i++)parts.push({x:x+rand(-r,r)*.5,y:y+rand(-r,r)*.4,z:rand(4,20),vx:rand(-30,30),vy:rand(-20,20),vz:rand(30,70),life:rand(.8,1.4),max:1.4,col:'rgba(60,50,45,.6)',size:rand(5,9),ng:false,smoke:true})}
 // Ground effects drawn under units: rune circles and glowing rings for active spell areas.
 function drawGroundFx(){for(const f of fx){if(f.k!=='glyph')continue;const[sx,sy]=S(f.x,f.y),k=1-f.life/f.max,r=f.r*(.6+.4*k);ctx.save();ctx.globalCompositeOperation='lighter';ctx.globalAlpha=1-k;
     ctx.strokeStyle=f.col;ctx.lineWidth=2;ctx.shadowColor=f.col;ctx.shadowBlur=10;ell(ctx,sx,sy,r,r*TILT);ctx.stroke();ell(ctx,sx,sy,r*.72,r*.72*TILT);ctx.stroke();
@@ -2512,7 +2555,7 @@ function drawGroundFx(){for(const f of fx){if(f.k!=='glyph')continue;const[sx,sy
     ctx.save();ctx.globalCompositeOperation='lighter';ctx.globalAlpha=.55*fade;ctx.strokeStyle=col;ctx.lineWidth=2.5;ctx.setLineDash([14,10]);ctx.lineDashOffset=-rt*40;ctx.shadowColor=col;ctx.shadowBlur=12;
     ell(ctx,sx,sy,a.r,a.r*TILT);ctx.stroke();ctx.setLineDash([]);const g=ctx.createRadialGradient(sx,sy,0,sx,sy,a.r);g.addColorStop(0,col+'40');g.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=g;ctx.globalAlpha=(.5+.2*Math.sin(rt*5))*fade;
     ctx.save();ctx.translate(sx,sy);ctx.scale(1,TILT);circ(ctx,0,0,a.r);ctx.fill();ctx.restore();ctx.restore();
-    if(Math.random()<.5){const an=rand(0,TAU),rr2=Math.sqrt(Math.random())*a.r;parts.push({x:a.x+Math.cos(an)*rr2,y:a.y+Math.sin(an)*rr2,z:2,vx:0,vy:0,vz:rand(30,70),life:.7,max:.7,col,size:1.8,gl:true})}}}
+    if(Math.random()<.5*fxScale()){const an=rand(0,TAU),rr2=Math.sqrt(Math.random())*a.r;parts.push({x:a.x+Math.cos(an)*rr2,y:a.y+Math.sin(an)*rr2,z:2,vx:0,vy:0,vz:rand(30,70),life:.7,max:.7,col,size:1.8,gl:true})}}}
 // Air effects: flashes of light, glowing weapon swings and the level-up pillar.
 function drawAirFx(){ctx.save();ctx.globalCompositeOperation='lighter';
   for(const f of fx){const k=1-f.life/f.max;
@@ -2570,7 +2613,7 @@ function drawFogBanks(){const dens=mood.fog+(zone&&zone.kind==='over'?nightness(
     ctx.filter=n>.5?'brightness(.35)':'none';ctx.drawImage(fogSpr,sx-r,sy-r*.45,r*2,r*.9)}ctx.filter='none';ctx.restore();ctx.globalAlpha=1}
 // ---- Ambient life: fireflies, snow, desert dust, bog motes, ash
 function ambientTick(dt){if(!zone||zone.kind!=='over'||state!=='play')return;const p=players[0];if(!p)return;const k=moodKey(),n=nightness(),R=(a,b)=>a+Math.random()*(b-a);
-  const spawn=(rate,f)=>{let c=rate*dt;while(c>0){if(Math.random()<c)f();c--}};const vx=camX+R(0,W),vy=camY+R(0,H/TILT);
+  const spawn=(rate,f)=>{let c=rate*dt*fxScale();while(c>0){if(Math.random()<c)f();c--}};const vx=camX+R(0,W),vy=camY+R(0,H/TILT);
   if(k===1)spawn(28,()=>parts.push({x:camX+R(-100,W),y:camY+R(-50,H/TILT),z:R(80,220),vx:R(-30,-10),vy:R(-5,5),vz:R(-60,-35),life:4,max:4,col:'#f4f8ff',size:R(1.5,3),ng:true}));
   else if(k===2)spawn(6,()=>parts.push({x:camX-20,y:camY+R(0,H/TILT),z:R(2,40),vx:R(160,260),vy:R(-10,10),vz:0,life:R(2,4),max:4,col:'rgba(220,190,140,.5)',size:R(1,2),streak:false,ng:true}));
   else if(k===3||k===0){if(n>.4)spawn(4*n,()=>parts.push({x:camX+R(0,W),y:camY+R(0,H/TILT),z:R(10,60),vx:R(-15,15),vy:R(-15,15),vz:R(-8,8),life:R(3,6),max:6,col:'#d8ff6a',size:1.6,gl:true}));
@@ -2660,7 +2703,7 @@ function drawAwareness(u,sx,sy){const m=awarenessMark(u,time);if(!m)return;const
   if(m.bar!=null){ctx.fillStyle='rgba(0,0,0,.6)';ctx.fillRect(sx-12,y+4,24,3);ctx.fillStyle='#ffb03a';ctx.fillRect(sx-12,y+4,24*m.bar,3)}}
 // ---- World map (N or click the minimap)
 let mapOpen=false;
-function toggleMap(v){mapOpen=v===undefined?!mapOpen:v;$('worldmap').classList.toggle('hidden',!mapOpen);if(mapOpen){mouse.l=false;drawWorldMap()}}
+function toggleMap(v){mapOpen=v===undefined?!mapOpen:v;$('worldmap').classList.toggle('hidden',!mapOpen);if(mapOpen){mouse.l=false;drawWorldMap();wmReset()}}
 function drawWorldMap(){const cv=$('wmap'),c=cv.getContext('2d'),S2=cv.width,z=zone,k=S2/Math.max(z.MW,z.MH);c.fillStyle='#07070a';c.fillRect(0,0,S2,S2);c.imageSmoothingEnabled=true;
   c.drawImage(z.terrain.ov,0,0,z.MW*k,z.MH*k);const f=fogOf(z);c.drawImage(f.cv,0,0,f.w*FOGS*k,f.h*FOGS*k);
   $('wmapTitle').textContent=z.kind==='over'?'The Westmark':z.name;
@@ -2696,14 +2739,17 @@ function uiPanel(title,o){o=o||{};const el=uiEl('div','panel glass'),h=uiEl('div
  el.appendChild(h);el.head=h;
  if(o.tabs&&o.tabs.length){const t=uiEl('div','g-tabs');o.tabs.forEach((n,i)=>{const k=uiEl('button',i?'':'on',n);k.onclick=()=>{[...t.children].forEach(c=>c.classList.toggle('on',c===k));if(o.onTab)o.onTab(i)};t.appendChild(k)});el.appendChild(t);el.tabs=t}
  el.appendChild(b);el.body=b;return el}
-// A bottom sheet of tappable rows (>=48 px). Returns {el, close()}; it opens at once and removes itself on close.
-function uiSheet(title,rows){const el=uiEl('div','sheet panel glass'),done=()=>{el.classList.remove('open');setTimeout(()=>el.remove(),220)};
- el.appendChild(uiEl('div','g-head',title));
+// A bottom sheet of tappable rows (>=48 px) over a dimmed backdrop. Returns {el, bg, close(), closed}; it opens at once and removes itself on close.
+// A row tap, the close button, a tap on the backdrop or Escape closes it.
+function uiSheet(title,rows){const el=uiEl('div','sheet panel glass'),bg=uiEl('div','sheet-bg'),h=uiEl('div','g-head'),x=uiEl('button','x','✕');let shut=false;
+ const key=e=>{if(e.code==='Escape'){e.stopImmediatePropagation();e.preventDefault();done()}},
+  done=()=>{if(shut)return;shut=true;removeEventListener('keydown',key,true);el.classList.remove('open');bg.classList.remove('open');setTimeout(()=>{el.remove();bg.remove()},220)};
+ h.appendChild(uiEl('span','g-title',title));x.setAttribute('aria-label','Close');x.onclick=done;h.appendChild(x);el.appendChild(h);bg.onclick=done;
  for(const r of rows){const b=uiEl('button','g-row');if(r.icon)b.appendChild(uiEl('span','g-ic',r.icon));b.appendChild(uiEl('span','',r.label));b.onclick=()=>{done();if(r.onTap)r.onTap()};el.appendChild(b)}
- document.body.appendChild(el);requestAnimationFrame(()=>el.classList.add('open'));return {el,close:done}}
+ document.body.append(bg,el);addEventListener('keydown',key,true);requestAnimationFrame(()=>{if(!shut){el.classList.add('open');bg.classList.add('open')}});return {el,bg,close:done,get closed(){return shut}}}
 
 // ================= Live portraits (head and shoulders, drawn with the in-game hero figure) =================
-const phoneUI=()=>matchMedia('(pointer:coarse)').matches&&Math.min(innerWidth,innerHeight)<500,PORT=new Map();
+const PORT=new Map();
 const portraitKey=(look,gear,cls)=>{const L=look||{},g=gear||{},f=it=>it?it.name+'|'+it.rar+'|'+(it.ilvl||it.lvl||''):'';return JSON.stringify([cls||'',L.skin,L.hair,L.eyes,L.hairStyle,L.beard,L.headgear,L.body,L.cloth,L.trim,f(g.helm),f(g.armor)])};
 function drawPortrait(cv,look,gear,cls){const p={cls:cls||'paladin',look:look||{},gear:gear||{},bagSize:20},o=playerLook(p),S=cv.width,c=cv.getContext('2d');
   if(o.gv){delete o.gv.cape;delete o.gv.pack;delete o.gv.offhand;delete o.gv.aura}o.wv=null;o.weapon=null;o.shield=false;o.aim=.3;o.aimS=.3;o.walk=0;o.moving=false;o.s=S/112*3.4;
@@ -2727,8 +2773,12 @@ function abarState(p,i,now){now=now===undefined?rt:now;const cd=Math.max(0,p.cds
 function enemyUnderMouse(){let best=null,bd=1e9;for(const e of enemies){if(e.dead||e.hp<=0)continue;const[sx,sy]=S(e.x,e.y),h=(e.h||40)*.5,d=Math.hypot(mouse.x-sx,mouse.y-(sy-h)),r=Math.max(e.r||12,14)+12+h*.3;if(d<r&&d<bd){bd=d;best=e}}return best}
 
 // HUD column layout: the target frame sits centred when it fits beside the player frame and minimap at this UI size, else (.low) directly under the player frame; the party list follows whichever is lowest. Heights are read live (buffs grow the player frame).
-function layoutHud(){const ui=+document.documentElement.style.getPropertyValue('--ui')||1,tf=$('tframe'),pf=$('pframe'),pa=$('party'),low=innerWidth<(588+(tf.classList.contains('boss')?240:200))*ui+20,h=e=>e.getBoundingClientRect().height/ui;tf.classList.toggle('low',low);
-  let y=14+h(pf)+8;if(low){tf.style.top=y+'px';if(!tf.classList.contains('hidden'))y+=h(tf)+8}else tf.style.top='';pa.style.top=y+'px'}
+// On a phone the side columns are narrower (compact player frame, 120 px minimap), and the quest line hides whenever it would reach the touch buttons below it.
+function layoutHud(){const ui=+document.documentElement.style.getPropertyValue('--ui')||1,ph=Layout.phone,tf=$('tframe'),pf=$('pframe'),pa=$('party'),low=innerWidth<((ph?440:588)+(tf.classList.contains('boss')?240:200))*ui+20,h=e=>e.getBoundingClientRect().height/ui;tf.classList.toggle('low',low);
+  let y=(ph?10:14)+h(pf)+8;if(low){tf.style.top=y+'px';if(!tf.classList.contains('hidden'))y+=h(tf)+8}else tf.style.top='';pa.style.top=y+'px';
+  const q=$('quest');let clash=false;if(ph&&Touch.on){const c=$('right').getBoundingClientRect(),qb=q.getBoundingClientRect().bottom;// .clash only hides it (visibility), so it keeps its box
+    for(const e of document.querySelectorAll('#arc .tslot,#quick,#ctx')){const r=e.getBoundingClientRect();if(r.width&&r.right>c.left&&r.left<c.right&&r.top<qb+6)clash=true}}
+  q.classList.toggle('clash',clash)}
 // ---- Touch: auto-aim (pure logic; the controls are added below)
 const Aim={target:null},AIM_MELEE=120,AIM_FAR=460,_aimR={};
 // Reach of ability i: 120 for the attack and melee abilities, 460 for ranged and spells (decided once per ability, from its cast code).
@@ -2803,7 +2853,7 @@ function touchFrame(p){if(Touch.built!==p.abil)touchBuild(p);const ab=$('abar').
   const r=$('mini').getBoundingClientRect(),mb=$('menuBtn');mb.style.right=(innerWidth-r.left+8)+'px';mb.style.top=r.top+'px';
   if(isPaused()&&!Touch.paused){touchReset();p.input.abil.fill(false);p.input.fire=false}Touch.paused=isPaused();if(Touch.drag)touchDrawAim()}
 const TMENU={inv:()=>toggleInv(true),tal:()=>toggleTal(true),prof:()=>toggleProf(true),map:()=>toggleMap(true),friends:()=>toggleFriends(true),
-  quest:()=>uiSheet('Quest',[{label:$('quest').innerText.replace(/\s*\n+\s*/g,' · ')}]),
+  quest:()=>uiSheet('Quest',[...$('quest').querySelectorAll('.ql')].map(e=>({label:e.textContent}))),
   settings:()=>{if(!pauseOpen)togglePause();openOverlay('settings','pause')},mute:()=>{Snd.vol.muted=!Snd.vol.muted;applyVol();saveAudio();toast(Snd.vol.muted?'Sound off':'Sound on')},pause:()=>togglePause()};
 function touchMenu(v){const m=$('tmenu');m.classList.toggle('hidden',v===undefined?!m.classList.contains('hidden'):!v);touchReset()}
 {// Wiring. Each control captures its own pointer, so moving and casting work at the same time.
@@ -2821,6 +2871,57 @@ function touchMenu(v){const m=$('tmenu');m.classList.toggle('hidden',v===undefin
   document.querySelectorAll('#quick .qb').forEach(b=>b.onclick=()=>{const p=players[0];if(p&&!isPaused())Q[b.dataset.q](p)});
   $('ctx').onclick=()=>{const p=players[0];if(p&&!p.dead&&!isPaused()&&$('ctx')._act)$('ctx')._act()};
   $('menuBtn').onclick=()=>touchMenu();document.querySelectorAll('#tmenu button').forEach(b=>b.onclick=()=>{touchMenu(false);if(!isPaused()||b.dataset.m==='pause'||b.dataset.m==='mute')TMENU[b.dataset.m]()})}
+// ================= Phone or desktop layout, orientation card, graphics =================
+// Phone = touch present (a coarse pointer, or a touch has happened) and the short screen side under 500 px.
+// env is window, or a fake {innerWidth, innerHeight, matchMedia, touchSeen} in the self-tests.
+// touchSeen is a var (so a window property) because the first resize() in src/10-core.js runs before this file.
+var touchSeen=false;
+function isPhone(env=window){return(env.matchMedia('(pointer:coarse)').matches||!!env.touchSeen)&&Math.min(env.innerWidth,env.innerHeight)<500}
+// Canvas pixels per CSS pixel: 1 on Low, and on Auto on a phone; else 1.5-2 by the screen's density.
+function renderScale(gfx,phone,dpr){return gfx==='low'||gfx==='auto'&&phone?1:Math.min(2,Math.max(1.5,dpr))}
+function gfxPref(){try{return Settings.gfx||'auto'}catch(e){return'auto'}}// Settings (src/75-loot.js) does not exist yet on the first resize()
+// Particle counts: halved on a phone unless Graphics is High.
+const Layout={phone:null,turn:false};
+function fxScale(){return Layout.phone&&Settings.gfx!=='high'?.5:1}
+// Toggles body.phone (and re-scales the UI) when the layout changes, body.nofx (no glass blur) on Low or Auto on a phone, and the orientation card.
+// In portrait the card covers the game and solo play pauses (isPaused); in co-op the world keeps going.
+function applyLayout(){const ph=isPhone(),b=document.body;
+  if(ph!==Layout.phone){Layout.phone=ph;b.classList.toggle('phone',ph);applyUi();touchReset();resize();if(state==='play')renderParty()}
+  b.classList.toggle('nofx',Settings.gfx==='low'||Settings.gfx==='auto'&&ph);
+  const turn=ph&&innerHeight>innerWidth;if(turn!==Layout.turn){Layout.turn=turn;$('turn').classList.toggle('hidden',!turn);touchReset();mouse.l=false}}
+addEventListener('resize',applyLayout);addEventListener('orientationchange',applyLayout);if(screen.orientation)screen.orientation.addEventListener('change',applyLayout);
+addEventListener('pointerdown',e=>{if(e.pointerType==='touch'&&!touchSeen){touchSeen=true;applyLayout()}},true);
+
+// ---- Phone inventory: a tap selects an item; the action row under the header offers what can be done with it.
+let invSel=null;// {k:'bag'|'gear'|'sup', i: bag index, gear slot or supply key}
+function invPick(s){invSel=s;hideTip();renderInv()}
+// Shows a tooltip in the middle of the screen until the next tap (phones have no hover).
+function tipCentre(h){showTip(h);const t=$('tip');t.style.left=Math.max(8,(innerWidth-t.offsetWidth)/2)+'px';t.style.top=Math.max(8,(innerHeight-t.offsetHeight)/2)+'px';setTimeout(()=>addEventListener('pointerdown',hideTip,{once:true,capture:true}),0)}
+function dropItem(p,it){drops.push({kind:'item',item:it,x:p.x+Math.cos(p.aim||0)*60,y:p.y+Math.sin(p.aim||0)*60,t:0});toast('Dropped '+it.name)}
+function invActs(p){const el=$('invActs'),s=invSel,it=s&&(s.k==='bag'?p.bag[s.i]:s.k==='gear'?p.gear[s.i]:null),ok=s&&(s.k==='sup'?supCount(p,s.i)>0:!!it);
+  if(!Layout.phone||!ok){invSel=null;el.classList.add('hidden');return}el.classList.remove('hidden');el.innerHTML='';
+  const btn=(t,fn)=>{const b=uiEl('button','g-btn',t);b.onclick=()=>{fn();save()};el.appendChild(b)},n=uiEl('span','ia-n',s.k==='sup'?supName(s.i):it.name);if(it)n.style.color=RAR[it.rar].c;el.appendChild(n);
+  if(s.k==='bag'){btn('Equip',()=>{equipBag(p,s.i);invSel=null;renderInv()});
+    if(shopOpen)btn('Sell',()=>{p.gold+=sellPrice(it);p.bag.splice(s.i,1);sfx('gold');toast('Sold '+it.name+' for '+sellPrice(it)+' gold');invSel=null;renderInv()});
+    if(Net.role!=='guest')btn('Drop',()=>{p.bag.splice(s.i,1);dropItem(p,it);invSel=null;renderInv()});
+    btn('Compare',()=>tipCentre(itemTip(it,p.gear[it.slot]||null)))}
+  else if(s.k==='gear'){btn('Unequip',()=>{unequip(p,s.i);invSel=null;renderInv()});btn('Details',()=>tipCentre(itemTip(it)))}
+  else{btn('Use',()=>{useSup(p,s.i);renderInv()});btn('Details',()=>tipCentre(`<div class="tn">${supName(s.i)}</div>${supDesc(s.i,p)}`))}}
+
+// ---- Phone world map: drag to pan, pinch to zoom (1-4x), kept inside the view.
+const WM={s:1,x:0,y:0,p:new Map()};
+function wmApply(){const c=$('wmap');if(!Layout.phone){c.style.transform='';return}const w=c.offsetWidth,h=c.offsetHeight;
+  WM.x=clamp(WM.x,w*(1-WM.s),0);WM.y=clamp(WM.y,h*(1-WM.s),0);c.style.transform=`translate(${WM.x}px,${WM.y}px) scale(${WM.s})`}
+function wmReset(){WM.s=1;WM.x=WM.y=0;WM.p.clear();wmApply()}
+{const v=$('wmapView'),ui=()=>+document.documentElement.style.getPropertyValue('--ui')||1,mid=()=>{const a=[...WM.p.values()];return{x:(a[0].x+a[1].x)/2,y:(a[0].y+a[1].y)/2,d:Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y)||1}};
+  v.addEventListener('pointerdown',e=>{if(!Layout.phone||WM.p.size>=2)return;try{v.setPointerCapture(e.pointerId)}catch(_){}WM.p.set(e.pointerId,{x:e.clientX,y:e.clientY})});
+  v.addEventListener('pointermove',e=>{const q=WM.p.get(e.pointerId);if(!q)return;const k=ui();
+    if(WM.p.size===1){WM.x+=(e.clientX-q.x)/k;WM.y+=(e.clientY-q.y)/k;q.x=e.clientX;q.y=e.clientY}
+    else{const a=mid();q.x=e.clientX;q.y=e.clientY;const b=mid(),r=v.getBoundingClientRect(),c=$('wmap'),ns=clamp(WM.s*b.d/a.d,1,4),f=ns/WM.s;
+      const mx=(a.x-r.left)/k-c.offsetLeft,my=(a.y-r.top)/k-c.offsetTop;WM.x=mx-(mx-WM.x)*f+(b.x-a.x)/k;WM.y=my-(my-WM.y)*f+(b.y-a.y)/k;WM.s=ns}
+    wmApply()});
+  const up=e=>WM.p.delete(e.pointerId);v.addEventListener('pointerup',up);v.addEventListener('pointercancel',up)}
+applyLayout();
 // ================= Accounts and hero storage =================
 // Online: heroes are stored in Supabase, and database rules (supabase-setup.sql) make sure each player can only
 // read, change and delete their own heroes. Offline: heroes stay in this browser, as before.
@@ -3196,10 +3297,11 @@ function teleportTo(uid,free){const m=partyMembers().find(q=>q.uid===uid),p=play
   if(!free){if(Net.tpCd>time){toast(`Teleport is ready in ${Math.ceil(Net.tpCd-time)} s.`);return}if(time-p.lastHurt<4){toast('You cannot teleport while fighting.','danger');return}Net.tpCd=time+TP_CD}
   if(p.mounted)dismount(p,true);burst(p.x,p.y,'#9fd8ff',24,160);p.x=m.x+rand(-40,40);p.y=m.y+rand(20,50);sfx('blink');burst(p.x,p.y,'#9fd8ff',30,180);fx.push({k:'pillar',x:p.x,y:p.y,life:.8,max:.8,col:'#9fd8ff'})}
 let partyT=0;
-function renderParty(){const el=$('party');if(!el)return;const ms=partyMembers();el.classList.toggle('hidden',!ms.length);el.innerHTML=ms.map(m=>`<div class="pm${m.dead?' dead':''}"><span class="pmp"></span><div class="pmb"><div class="pmn"><span>${CLASSES[m.cls]?CLASSES[m.cls].icon:''} ${escapeHtml(m.name||m.hero||'')}</span><small>Lv ${m.level||'?'}${m.away?' · inside':''}</small>`+
+function renderParty(){const el=$('party');if(!el)return;const ms=partyMembers();el.classList.toggle('hidden',!ms.length);el.innerHTML=ms.map(m=>`<div class="pm${m.dead?' dead':''}" style="--f:${Math.max(0,Math.min(100,m.hp/(m.maxHp||1)*100))}"><span class="pmp"></span><div class="pmb"><div class="pmn"><span>${CLASSES[m.cls]?CLASSES[m.cls].icon:''} ${escapeHtml(m.name||m.hero||'')}</span><small>Lv ${m.level||'?'}${m.away?' · inside':''}</small>`+
   `<button title="Teleport to ${escapeHtml(m.name||'')} (every ${TP_CD} s, not in combat)" data-tp="${m.uid}">⇢</button></div><div class="bar hp"><i style="width:${Math.max(0,m.hp/(m.maxHp||1)*100)}%"></i></div></div></div>`).join('');
-  el.querySelectorAll('.pmp').forEach((e,i)=>e.replaceWith(portraitEl(ms[i],phoneUI()?32:40)));
-  for(const b of el.querySelectorAll('[data-tp]'))b.onclick=()=>teleportTo(b.dataset.tp)}
+  el.querySelectorAll('.pmp').forEach((e,i)=>e.replaceWith(portraitEl(ms[i],isPhone()?32:40)));
+  for(const b of el.querySelectorAll('[data-tp]'))b.onclick=()=>teleportTo(b.dataset.tp);
+  if(Layout.phone)el.querySelectorAll('.pm').forEach((e,i)=>e.onclick=()=>{const m=ms[i];uiSheet(m.name||m.hero||'',[{icon:'⇢',label:'Teleport to '+(m.name||m.hero||''),onTap:()=>teleportTo(m.uid)}])})}// phone: the portrait stack has no buttons, so a tap opens them
 
 // ---- Dying with friends around: return to town, or rise beside a living friend.
 function showDeathChoices(p){const el=$('deathBtns'),sub=$('death').querySelector('.sub');el.innerHTML='';const alive=partyMembers().filter(m=>!m.dead&&!m.away);
@@ -3289,6 +3391,16 @@ test('hold then drag still aims and casts',()=>{const pl=players.slice(),p=TP('s
   try{inPlay(()=>{slotDown(2,ev(500,300));Touch.hold={id:3,x:500,y:300,fired:true,t:0};slotUp(ev(502,300));eq(p.input.abil[2],false);
     slotDown(2,ev(500,300));Touch.hold={id:3,x:500,y:300,fired:true,t:0};const m=ev(400,300);slotMove(m);holdMove(m);eq(Touch.hold,null);slotUp(m);eq(p.input.abil[2],true);eq(Touch.aimOverride.x<0,true)})}
   finally{players.length=0;players.push(...pl);enemies.push(...e);touchReset()}});
+
+// ---- Phone layout, graphics (Task 7)
+const FENV=(w,h,coarse,touched)=>({innerWidth:w,innerHeight:h,matchMedia:()=>({matches:coarse}),touchSeen:touched});
+test('renderScale by graphics setting',()=>{eq(renderScale('auto',true,3),1);eq(renderScale('auto',false,3),2);eq(renderScale('low',false,2),1);eq(renderScale('high',true,3),2)});
+test('isPhone: 844x390 coarse yes, 1280x800 no',()=>{eq(isPhone(FENV(844,390,true)),true);eq(isPhone(FENV(1280,800,true)),false)});
+test('isPhone needs touch: a seen touch counts, a mouse alone does not',()=>{eq(isPhone(FENV(844,390,false,true)),true);eq(isPhone(FENV(844,390,false,false)),false)});
+test('touch laptop stays desktop layout',()=>{const e=FENV(1280,800,true);eq(isPhone(e),false);eq(uiScale({uiSize:null},isPhone(e)),1)});
+test('buff stats text tolerates a buff without stats',()=>{eq(statsText(undefined),'');eq(statsText({str:3}),'+3 '+STATLBL.str)});
+test('uiSheet closes on Escape and on a backdrop tap',()=>{const a=uiSheet('x',[]);eq(a.closed,false);dispatchEvent(new KeyboardEvent('keydown',{code:'Escape'}));eq(a.closed,true);
+  const b=uiSheet('y',[]);b.bg.click();eq(b.closed,true)});
 // ================= Developer test mode for co-op =================
 // Open the game twice on this computer as index.html?nettest=a and index.html?nettest=b: the two tabs act as two
 // friends and introduce each other through the browser (no accounts needed). Ignored without the parameter.

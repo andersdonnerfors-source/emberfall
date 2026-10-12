@@ -4,7 +4,7 @@ function inRadius(list,x,y,r){return list.filter(e=>!e.dead&&Math.hypot(e.x-x,e.
 function wrapA(a){while(a>Math.PI)a-=TAU;while(a<-Math.PI)a+=TAU;return a}
 function mkArea(o){return Object.assign({t:0,delay:0,dur:0,tick:0,nt:0,tickDmg:0},o,{delay0:o.delay||0})}
 function fireProj(o){projs.push(Object.assign({life:1.5,r:6,hit:new Set(),pierce:0},o))}
-function burst(x,y,col,n,spd){for(let i=0;i<n;i++){const a=rand(0,TAU),s=rand(.2,1)*spd;parts.push({x,y,z:rand(5,25),vx:Math.cos(a)*s,vy:Math.sin(a)*s,vz:rand(20,140),life:rand(.4,.9),max:.9,col,size:rand(1.5,3.5)})}}
+function burst(x,y,col,n,spd){n=Math.round(n*fxScale());for(let i=0;i<n;i++){const a=rand(0,TAU),s=rand(.2,1)*spd;parts.push({x,y,z:rand(5,25),vx:Math.cos(a)*s,vy:Math.sin(a)*s,vz:rand(20,140),life:rand(.4,.9),max:.9,col,size:rand(1.5,3.5)})}}
 let hudTarget=null;// the enemy shown in the target frame: under the mouse, or the last one you hit (auto-aim also sets it on phones)
 function floatText(x,y,txt,col,size){texts.push({x:x+rand(-8,8),y,z:44,txt,col,size:size||15,life:1})}
 function toast(msg,cls){const d=document.createElement('div');d.className='toast '+(cls||'');d.textContent=msg;const tc=$('toasts');tc.appendChild(d);while(tc.children.length>4)tc.firstChild.remove();setTimeout(()=>d.remove(),3500)}
@@ -271,7 +271,7 @@ cvs.addEventListener('mousedown',e=>{if(state!=='play'||isPaused())return;if(e.b
 addEventListener('mouseup',e=>{if(e.button===0)mouse.l=false});
 cvs.addEventListener('contextmenu',e=>e.preventDefault());
 let storyOpen=false;
-function isPaused(){return Friends.open||invOpen||dialogOpen||pauseOpen||talOpen||shopOpen||storyOpen||profOpen||mapOpen}
+function isPaused(){return Friends.open||invOpen||dialogOpen||pauseOpen||talOpen||shopOpen||storyOpen||profOpen||mapOpen||Layout.turn&&!Net.role}// Layout.turn: phone held upright (solo only)
 function showStory(id,on){storyOpen=on;$(id).classList.toggle('hidden',!on);mouse.l=false}
 function fmtTime(s){const m=Math.floor(s/60);return m>=60?Math.floor(m/60)+' h '+(m%60)+' min':m+' min'}
 function showVictory(){const p=players[0];sfx('victory');$('vicText').innerHTML=`The Barrow King is no more, and the Lamp of Emberfall shines over the whole valley.<br><br>${p.name} the ${CLASSES[p.cls].name} · level ${p.level}<br>${p.kills||0} foes defeated · fallen ${p.deaths||0} times · ${fmtTime(p.playT||0)} played<br><br>The world stays open: keep hunting for epic gear and growing stronger.`;showStory('victory',true)}
@@ -566,7 +566,7 @@ function updateHud(){const p=players[0];if(!p)return;
       e.children[3].style.height=(kind==='food'?(p.eat?p.eat.left/EAT_TIME*100:0):p.potCd/POT_CD*100)+'%'}}
   renderBuffs(p);
   {const h=$('hearthSlot');if(h){const cd=Math.max(0,(p.hearthCd||0)-time);h.children[2].style.height=(p.hearthCast>0?(1-p.hearthCast/HEARTH_CAST)*100:cd/HEARTH_CD*100)+'%';h.children[2].style.background=p.hearthCast>0?'rgba(120,200,255,.5)':'rgba(0,0,0,.68)';h.children[3].textContent=cd>0?Math.ceil(cd)+'':''}}
-  if(!phoneUI()){const h=enemyUnderMouse();if(h&&!isPaused())hudTarget=h}
+  if(!isPhone()){const h=enemyUnderMouse();if(h&&!isPaused())hudTarget=h}
   if(hudTarget&&(hudTarget.dead||hudTarget.hp<=0||dist(hudTarget,p)>1100||!enemies.includes(hudTarget)))hudTarget=null;
   let tg=hudTarget,bd=900;if(!tg)for(const e of enemies)if(e.boss&&e.target&&dist(e,p)<bd){bd=dist(e,p);tg=e}// an engaged boss shows even with nothing targeted
   const tf=$('tframe');if(tg){tf.classList.remove('hidden');tf.classList.toggle('boss',!!tg.boss);$('tName').textContent=tg.name+(tg.enraged?' · ENRAGED':'');const tl=$('tLvl');tl.textContent='Lv '+tg.lvl;tl.style.color=lvlColor(p,tg.lvl);
@@ -574,11 +574,13 @@ function updateHud(){const p=players[0];if(!p)return;
     const k=monsterKey(tg);if(k!==updateHud.tk){updateHud.tk=k;const c=$('tPort').getContext('2d');c.clearRect(0,0,112,112);c.drawImage(monsterPortrait(tg),0,0)}}else tf.classList.add('hidden');
   partyT-=1/60;if(partyT<=0){partyT=.25;renderParty()}
   if(Touch.on)touchFrame(p);layoutHud();drawMini()}
-function updateQuestUI(){const q=QUESTS[quest.idx],el=$('quest');
-  if(!q||quest.state==='done'){el.innerHTML='<b>The road goes on</b><br>All quests complete. Roam the wilds, grow stronger and hunt for gear. More adventures are coming.';return}
-  if(quest.state==='offer'){el.innerHTML=`<b>New quest</b><br>Speak with Old Warden Bram in Emberfall (E).`;return}
-  if(quest.state==='ready'){el.innerHTML=`<b>${q.title}</b><br><span style="color:#9fe07a">Complete!</span> Return to the Warden.`;return}
-  el.innerHTML=`<b>${q.title}</b> <span class="muted">(level ${q.rec}+)</span><br>${q.goal}${q.need>1?`<br>Progress: ${quest.prog} / ${q.need}`:''}`}
+// One .ql line each: stacked on desktop, joined into one line with " · " on a phone (tap it for all of it).
+function updateQuestUI(){const q=QUESTS[quest.idx],el=$('quest'),L=(...ls)=>{el.innerHTML=ls.filter(Boolean).map(l=>`<span class="ql">${l}</span>`).join('')};
+  if(!q||quest.state==='done')return L('<b>The road goes on</b>','All quests complete. Roam the wilds, grow stronger and hunt for gear. More adventures are coming.');
+  if(quest.state==='offer')return L('<b>New quest</b>','Speak with Old Warden Bram in Emberfall (E).');
+  if(quest.state==='ready')return L(`<b>${q.title}</b>`,'<span style="color:#9fe07a">Complete!</span> Return to the Warden.');
+  L(`<b>${q.title}</b> <span class="muted">(level ${q.rec}+)</span>`,q.goal,q.need>1&&`Progress: ${quest.prog} / ${q.need}`)}
+$('quest').onclick=()=>{if(Layout.phone&&state==='play')TMENU.quest()};
 function showTip(h){const t=$('tip');t.innerHTML=h;t.classList.remove('hidden');t.style.left=Math.min(mouse.x+16,innerWidth-300)+'px';t.style.top=Math.min(mouse.y+16,innerHeight-t.offsetHeight-8)+'px'}
 function hideTip(){$('tip').classList.add('hidden')}
 function itemTip(it,cmp){let h=`<div class="tn" style="color:${RAR[it.rar].c}">${itemIcon(it)} ${it.name}</div><div class="ts">${RAR[it.rar].n} ${SLOTNAME[it.slot]} · item level ${it.lvl}</div>`;
@@ -596,10 +598,14 @@ function renderBuffs(p){const el=$('buffs');if(!el||rt<(el.t||0))return;el.t=rt+
 // The hero preview in the character panel shows your equipped gear.
 function drawInvPreview(){const cv=$('invPrev');if(!cv||!invOpen)return;const p=players[0];if(!p)return;const c=cv.getContext('2d');c.clearRect(0,0,cv.width,cv.height);
   c.fillStyle='rgba(0,0,0,.35)';ell(c,cv.width/2,cv.height-18,40,11);c.fill();const o=playerLook(p);o.s=2.2;o.aim=Math.sin(rt*.7)*.5;o.aimS=o.aim;o.walk=0;o.moving=false;drawHumanoid(c,cv.width/2,cv.height-18,o)}
-function renderInv(){const p=players[0];if(!p)return;const eq=$('equip');eq.innerHTML='';
-  for(const sl of SLOTS){const it=p.gear[sl];const d=document.createElement('div');d.className='cell';d.style.borderColor=it?RAR[it.rar].c:'';d.innerHTML=cellHtml(it,SLOTNAME[sl]);
+const statsText=st=>Object.entries(st||{}).map(([k,v])=>'+'+v+' '+STATLBL[k]).join(', ');
+function equipBag(p,i){const it=p.bag[i];if(!it)return;const old=p.gear[it.slot];p.gear[it.slot]=it;p.bag.splice(i,1);if(old)p.bag.push(old);calcStats(p)}
+function unequip(p,sl){const it=p.gear[sl];if(!it)return false;if(p.bag.length>=p.bagSize){toast('Bag is full');return false}p.bag.push(it);p.gear[sl]=null;calcStats(p);return true}
+// On a phone a tap selects (invPick, src/88-layout.js) and the action row acts; on desktop a click acts at once.
+function renderInv(){const p=players[0];if(!p)return;invActs(p);const eq=$('equip'),ph=Layout.phone,sel=(k,i)=>invSel&&invSel.k===k&&invSel.i===i?' sel':'';eq.innerHTML='';
+  for(const sl of SLOTS){const it=p.gear[sl];const d=document.createElement('div');d.className='cell'+sel('gear',sl);d.style.borderColor=it?RAR[it.rar].c:'';d.innerHTML=cellHtml(it,SLOTNAME[sl]);
     d.onmouseenter=()=>{if(it)showTip(itemTip(it)+'<div class="ts" style="margin-top:6px">Click to unequip</div>')};d.onmouseleave=hideTip;
-    d.onclick=()=>{if(!it)return;if(p.bag.length>=p.bagSize){toast('Bag is full');return}p.bag.push(it);p.gear[sl]=null;calcStats(p);hideTip();renderInv()};eq.appendChild(d)}
+    d.onclick=()=>{if(!it)return;if(ph)return invPick({k:'gear',i:sl});if(unequip(p,sl)){hideTip();renderInv()}};eq.appendChild(d)}
   const s=p.stats,pt=p.points>0,st=s.attrs,ms=s.main,hc=hitChance(p,{lvl:p.level});
   const attr=(k,n,what)=>`<div class="st"><span>${n}${k===ms?' <span style="color:var(--gold)">★</span>':''} <span class="muted">(${what})</span></span><span>${st[k]}${pt?`<button data-a="${k}">+${ATTR_PT}</button>`:''}</span></div>`;
   $('stats').innerHTML=`<div class="st"><span>Level ${p.level} ${CLASSES[p.cls].name}</span><span class="muted">${p.level>=20?'Max level':p.xp+' / '+xpNeed(p.level)+' XP'}</span></div>
@@ -612,7 +618,7 @@ function renderInv(){const p=players[0];if(!p)return;const eq=$('equip');eq.inne
    <div class="st"><span>Critical chance <span class="muted">(needs ${CRIT_MIN_HIT*100}%+ hit)</span></span><span>${Math.round(s.crit*100)}%</span></div>
    <div class="st"><span>Attack speed</span><span>+${Math.round(s.haste*100)}%</span></div><div class="st"><span>Cooldown reduction</span><span>${Math.round(s.cdr*100)}%</span></div>
    <div class="st"><span>Move speed</span><span>${Math.round(s.speed)}</span></div><div class="st"><span>Gold</span><span>🪙 ${p.gold}</span></div>
-   ${Object.keys(p.buffs).length?`<div class="st" style="margin-top:8px"><b style="font-weight:normal;color:var(--gold)">Active effects</b><span></span></div>`+Object.values(p.buffs).map(b=>`<div class="st"><span>${b.icon} ${b.n} <span class="muted">${Object.entries(b.stats).map(([k,v])=>'+'+v+' '+STATLBL[k]).join(', ')}</span></span><span>${fmtLeft(b.left)}</span></div>`).join(''):''}
+   ${Object.keys(p.buffs).length?`<div class="st" style="margin-top:8px"><b style="font-weight:normal;color:var(--gold)">Active effects</b><span></span></div>`+Object.values(p.buffs).map(b=>`<div class="st"><span>${b.icon} ${b.n} <span class="muted">${statsText(b.stats)}</span></span><span>${fmtLeft(b.left)}</span></div>`).join(''):''}
    <div class="st" style="margin-top:8px"><b style="font-weight:normal;color:var(--gold)">Skills</b><span class="muted">max ${skillCap(p)} at your level</span></div>
    ${[...new Set([wtypeOf(p),...Object.keys(p.skills).filter(k=>k!=='spell')])].map(k=>`<div class="st"><span>${SKILL_NAME[k]}${k===wtypeOf(p)?' <span class="muted">(equipped)</span>':''}</span><span>${skillOf(p,k)} <span class="muted">(+${Math.round(skillOf(p,k)/2.5)}% weapon hits)</span></span></div>`).join('')}
    <div class="st"><span>Spellcraft</span><span>${skillOf(p,'spell')} <span class="muted">(+${Math.round(skillOf(p,'spell')/3)}% spells & heals)</span></span></div>
@@ -620,17 +626,17 @@ function renderInv(){const p=players[0];if(!p)return;const eq=$('equip');eq.inne
    <div class="st"><span>${p.bagName||'Starter Pouch'}</span><span>${p.bagSize} slots</span></div>`;
   for(const b of $('stats').querySelectorAll('button[data-m]'))b.onclick=()=>{p.mount=b.dataset.m;if(p.mounted)dismount(p,true);renderInv();save()};
   for(const b of $('stats').querySelectorAll('button[data-a]'))b.onclick=()=>{if(p.points<=0)return;p.points--;p.attr[b.dataset.a]=(p.attr[b.dataset.a]||0)+1;const hpf=p.hp/p.maxHp;calcStats(p);p.hp=Math.round(p.maxHp*hpf);renderInv();save()};
-  const bag=$('bag');bag.innerHTML='';for(let i=0;i<p.bagSize;i++){const it=p.bag[i];const d=document.createElement('div');d.className='cell';if(it)d.style.borderColor=RAR[it.rar].c;d.innerHTML=cellHtml(it);
+  const bag=$('bag');bag.innerHTML='';for(let i=0;i<p.bagSize;i++){const it=p.bag[i];const d=document.createElement('div');d.className='cell'+sel('bag',i);if(it)d.style.borderColor=RAR[it.rar].c;d.innerHTML=cellHtml(it);
     if(it){d.onmouseenter=()=>showTip(itemTip(it,p.gear[it.slot]||null)+`<div class="ts" style="margin-top:6px">Click: equip · Sells for ${sellPrice(it)} gold at any shop</div>`);d.onmouseleave=hideTip;
-      d.onclick=()=>{const old=p.gear[it.slot];p.gear[it.slot]=it;p.bag.splice(i,1);if(old)p.bag.push(old);calcStats(p);hideTip();renderInv();save()};
+      d.onclick=()=>{if(ph)return invPick({k:'bag',i});equipBag(p,i);hideTip();renderInv();save()};
       d.oncontextmenu=e=>{e.preventDefault();toast('Sell loot at any shop')}}
     bag.appendChild(d)}
   // Supplies: potions, food, drink and everyday crafts. Click to use.
   const su=$('supplies');su.innerHTML='';const ks=Object.keys(SUP).filter(k=>supCount(p,k)>0);
   if(!ks.length)su.innerHTML='<div class="muted" style="grid-column:1/-1">No supplies. Buy potions at a General Store, gather berries and water, or craft with Alchemy and Cooking.</div>';
-  for(const k of ks){const d=document.createElement('div');d.className='cell';d.innerHTML=`${supHtml(k)}<span class="qty">${supCount(p,k)}</span>`;
+  for(const k of ks){const d=document.createElement('div');d.className='cell'+sel('sup',k);d.innerHTML=`${supHtml(k)}<span class="qty">${supCount(p,k)}</span>`;
     d.onmouseenter=()=>showTip(`<div class="tn">${supName(k)}</div>${supDesc(k,p)}<div class="ts" style="margin-top:6px">Click to use</div>`);d.onmouseleave=hideTip;
-    d.onclick=()=>{hideTip();useSup(p,k);renderInv()};su.appendChild(d)}}
+    d.onclick=()=>{if(ph)return invPick({k:'sup',i:k});hideTip();useSup(p,k);renderInv()};su.appendChild(d)}}
 function sellPrice(it){return Math.round((3+it.lvl*2)*(1+it.rar*1.5))}
 // ---- Talents panel
 function treeEl(p,tr,title){const d=document.createElement('div');d.className='branch';const bp=treePts(p,tr);d.innerHTML=`<h3>${title} <span class="muted">(${bp} points)</span></h3>`;
@@ -657,7 +663,7 @@ function drawMerchant(){const[sx,sy]=S(merchant.x,merchant.y);const p=players[0]
   drawHumanoid(ctx,sx,sy,{s:1,skin:'#d9a47a',hair:'#8a2d1c',cloth:'#8a5a2a',hat:'hood',hatColor:'#b8402a',aim:merchant.aim,walk:0,legs:'#3a2a1a'});
   const b=Math.sin(rt*3)*3;ctx.font='20px system-ui';ctx.textAlign='center';ctx.fillText('🪙',sx,sy-70+b);ctx.font='12px Georgia';ctx.fillStyle='#e8dcb8';ctx.fillText('Tilda the Trader',sx,sy-56);
   if(p&&!p.dead&&dist(p,merchant)<95&&!shopOpen&&!(dist(p,warden)<95)){ctx.font='bold 13px system-ui';ctx.fillStyle='#fff';ctx.fillText('[E] Trade',sx,sy+22)}}
-function toggleInv(v){invOpen=v===undefined?!invOpen:v;if(invOpen){talOpen=false;$('tal').classList.add('hidden');closeShop()}$('inv').classList.toggle('hidden',!invOpen);hideTip();if(invOpen){mouse.l=false;renderInv()}}
+function toggleInv(v){invOpen=v===undefined?!invOpen:v;invSel=null;if(invOpen){talOpen=false;$('tal').classList.add('hidden');closeShop()}$('inv').classList.toggle('hidden',!invOpen);hideTip();if(invOpen){mouse.l=false;renderInv()}}
 function togglePause(){$('btnQuit').textContent=Net.role==='guest'?'Leave party':Net.role==='host'?'Save & quit (ends the party)':'Save & quit to menu';pauseOpen=!pauseOpen;$('pause').classList.toggle('hidden',!pauseOpen);mouse.l=false;if(pauseOpen)save()}
 function openDialog(){const q=QUESTS[quest.idx];dialogOpen=true;$('dWho').textContent='Old Warden Bram';mouse.l=false;$('dialog').classList.remove('hidden');const btns=$('dBtns');btns.innerHTML='';
   const btn=(txt,fn,pri)=>{const b=document.createElement('button');b.className='btn'+(pri?' primary':'');b.textContent=txt;b.onclick=fn;btns.appendChild(b)};$('dGoal').textContent='';
@@ -714,12 +720,12 @@ $('talClose').onclick=()=>toggleTal(false);$('shopClose').onclick=closeShop;
 $('sellJunk').onclick=()=>{const p=players[0];let g=0;p.bag=p.bag.filter(it=>{if(it.rar===0){g+=sellPrice(it);return false}return true});p.gold+=g;if(g)toast('Sold common items for '+g+' gold');renderShop();save()};
 let setFrom=null;
 function openOverlay(id,from){setFrom=from;if(from)$(from).classList.add('hidden');$(id).classList.remove('hidden');
-  if(id==='settings'){$('volSfx').value=Snd.vol.sfx;$('volMus').value=Snd.vol.music;$('volMute').checked=Snd.vol.muted;$('setAutoLoot').checked=Settings.autoLoot;$('setLootRar').innerHTML=RAR.map((r,i)=>`<option value="${i}">${r.n}</option>`).join('');$('setLootRar').value=Settings.lootMinRar;const u=Math.round(uiScale(Settings,phoneUI())*100);$('setUi').value=u;$('setUiV').textContent=u+'%'}}
+  if(id==='settings'){$('volSfx').value=Snd.vol.sfx;$('volMus').value=Snd.vol.music;$('volMute').checked=Snd.vol.muted;$('setAutoLoot').checked=Settings.autoLoot;$('setLootRar').innerHTML=RAR.map((r,i)=>`<option value="${i}">${r.n}</option>`).join('');$('setLootRar').value=Settings.lootMinRar;const u=Math.round(uiScale(Settings,isPhone())*100);$('setUi').value=u;$('setUiV').textContent=u+'%';$('setGfx').value=Settings.gfx}}
 function closeOverlay(id){$(id).classList.add('hidden');if(setFrom)$(setFrom).classList.remove('hidden');setFrom=null}
 $('btnSet').onclick=()=>openOverlay('settings','title');$('btnSet2').onclick=()=>openOverlay('settings','pause');$('btnHow').onclick=()=>openOverlay('howto','title');
 $('btnSetClose').onclick=()=>{saveAudio();closeOverlay('settings')};$('btnHowClose').onclick=()=>closeOverlay('howto');
 $('volSfx').oninput=e=>{Snd.vol.sfx=+e.target.value;applyVol();sfx('hit')};$('volMus').oninput=e=>{Snd.vol.music=+e.target.value;applyVol()};$('volMute').onchange=e=>{Snd.vol.muted=e.target.checked;applyVol()};
-$('setUi').oninput=e=>{Settings.uiSize=+e.target.value;$('setUiV').textContent=e.target.value+'%';applyUi()};$('setUi').onchange=saveSettings;$('setAutoLoot').onchange=e=>{Settings.autoLoot=e.target.checked;saveSettings()};$('setLootRar').onchange=e=>{Settings.lootMinRar=+e.target.value;saveSettings()};
+$('setUi').oninput=e=>{Settings.uiSize=+e.target.value;$('setUiV').textContent=e.target.value+'%';applyUi()};$('setUi').onchange=saveSettings;$('setAutoLoot').onchange=e=>{Settings.autoLoot=e.target.checked;saveSettings()};$('setGfx').onchange=e=>{Settings.gfx=e.target.value;saveSettings();resize();applyLayout()};$('setLootRar').onchange=e=>{Settings.lootMinRar=+e.target.value;saveSettings()};
 $('btnRand').onclick=randomLook;
 // Some previews (like a file opened inside another app) block browser storage, so nothing can be saved there.
 function storageOK(){try{localStorage.setItem('emberfall-test','1');localStorage.removeItem('emberfall-test');return true}catch(e){return false}}

@@ -10,7 +10,7 @@ function drawParticles(){for(const q of parts){if(q.gl||q.ng)continue;const[sx,s
   for(const q of parts){if(!(q.gl||q.ng))continue;const[sx,sy]=S(q.x,q.y);ctx.globalAlpha=Math.max(0,q.life/q.max);
     if(q.streak){ctx.fillStyle=q.col;ctx.fillRect(sx,sy-q.z-14,q.size,14);continue}const r=q.size*2.6;ctx.drawImage(glowSprite(q.col),sx-r,sy-q.z-r,r*2,r*2)}
   ctx.restore();ctx.globalAlpha=1}
-function sparks(x,y,z,col,n,spd,life){for(let i=0;i<n;i++){const a=rand(0,TAU),s=rand(.3,1)*spd;parts.push({x,y,z,vx:Math.cos(a)*s,vy:Math.sin(a)*s,vz:rand(-.3,1)*spd*.6,life:rand(.6,1)*(life||.4),max:life||.4,col,size:rand(1.2,2.6),gl:true})}}
+function sparks(x,y,z,col,n,spd,life){n=Math.round(n*fxScale());for(let i=0;i<n;i++){const a=rand(0,TAU),s=rand(.3,1)*spd;parts.push({x,y,z,vx:Math.cos(a)*s,vy:Math.sin(a)*s,vz:rand(-.3,1)*spd*.6,life:rand(.6,1)*(life||.4),max:life||.4,col,size:rand(1.2,2.6),gl:true})}}
 // Color of a spell by its sound/theme.
 const FX_COL={fire:'#ff7a2a',meteor:'#ff5a1a',frost:'#8fd8ff',blink:'#c890ff',holy:'#ffe08a',shieldup:'#ffe08a',bash:'#ffe08a',shadow:'#b06aff',drain:'#c84aff',curse:'#b06aff',summon:'#7dff9a',bone:'#e8e2cc',
   arrow:'#f0e2b8',trap:'#e8c890',howl:'#cfe0ff',snipe:'#fff2c0',swing:'#fff3d0'};
@@ -24,7 +24,7 @@ function castFx(p,i){const ab=p.abil[i],col=FX_COL[ab.sfx||CASTSFX[p.cls][i]]||C
   fx.push({k:'glyph',x:p.x,y:p.y,r:46,life:.6,max:.6,col});sparks(p.x+Math.cos(p.aim)*22,p.y+Math.sin(p.aim)*22,28,col,14,150,.45);
   fx.push({k:'flash',x:p.x+Math.cos(p.aim)*22,y:p.y+Math.sin(p.aim)*22,z:28,r:40,life:.2,max:.2,col})}
 function boomFx(x,y,r,col){fx.push({k:'flash',x,y,z:10,r:r*1.4,life:.3,max:.3,col});fx.push({k:'ring',x,y,r:r*1.25,life:.45,max:.45,col:'#fff3d0'});
-  sparks(x,y,8,col,34,r*3.2,.6);for(let i=0;i<10;i++)parts.push({x:x+rand(-r,r)*.5,y:y+rand(-r,r)*.4,z:rand(4,20),vx:rand(-30,30),vy:rand(-20,20),vz:rand(30,70),life:rand(.8,1.4),max:1.4,col:'rgba(60,50,45,.6)',size:rand(5,9),ng:false,smoke:true})}
+  sparks(x,y,8,col,34,r*3.2,.6);for(let i=0;i<10*fxScale();i++)parts.push({x:x+rand(-r,r)*.5,y:y+rand(-r,r)*.4,z:rand(4,20),vx:rand(-30,30),vy:rand(-20,20),vz:rand(30,70),life:rand(.8,1.4),max:1.4,col:'rgba(60,50,45,.6)',size:rand(5,9),ng:false,smoke:true})}
 // Ground effects drawn under units: rune circles and glowing rings for active spell areas.
 function drawGroundFx(){for(const f of fx){if(f.k!=='glyph')continue;const[sx,sy]=S(f.x,f.y),k=1-f.life/f.max,r=f.r*(.6+.4*k);ctx.save();ctx.globalCompositeOperation='lighter';ctx.globalAlpha=1-k;
     ctx.strokeStyle=f.col;ctx.lineWidth=2;ctx.shadowColor=f.col;ctx.shadowBlur=10;ell(ctx,sx,sy,r,r*TILT);ctx.stroke();ell(ctx,sx,sy,r*.72,r*.72*TILT);ctx.stroke();
@@ -33,7 +33,7 @@ function drawGroundFx(){for(const f of fx){if(f.k!=='glyph')continue;const[sx,sy
     ctx.save();ctx.globalCompositeOperation='lighter';ctx.globalAlpha=.55*fade;ctx.strokeStyle=col;ctx.lineWidth=2.5;ctx.setLineDash([14,10]);ctx.lineDashOffset=-rt*40;ctx.shadowColor=col;ctx.shadowBlur=12;
     ell(ctx,sx,sy,a.r,a.r*TILT);ctx.stroke();ctx.setLineDash([]);const g=ctx.createRadialGradient(sx,sy,0,sx,sy,a.r);g.addColorStop(0,col+'40');g.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=g;ctx.globalAlpha=(.5+.2*Math.sin(rt*5))*fade;
     ctx.save();ctx.translate(sx,sy);ctx.scale(1,TILT);circ(ctx,0,0,a.r);ctx.fill();ctx.restore();ctx.restore();
-    if(Math.random()<.5){const an=rand(0,TAU),rr2=Math.sqrt(Math.random())*a.r;parts.push({x:a.x+Math.cos(an)*rr2,y:a.y+Math.sin(an)*rr2,z:2,vx:0,vy:0,vz:rand(30,70),life:.7,max:.7,col,size:1.8,gl:true})}}}
+    if(Math.random()<.5*fxScale()){const an=rand(0,TAU),rr2=Math.sqrt(Math.random())*a.r;parts.push({x:a.x+Math.cos(an)*rr2,y:a.y+Math.sin(an)*rr2,z:2,vx:0,vy:0,vz:rand(30,70),life:.7,max:.7,col,size:1.8,gl:true})}}}
 // Air effects: flashes of light, glowing weapon swings and the level-up pillar.
 function drawAirFx(){ctx.save();ctx.globalCompositeOperation='lighter';
   for(const f of fx){const k=1-f.life/f.max;

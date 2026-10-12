@@ -3,7 +3,8 @@
 const $=id=>document.getElementById(id);
 const cvs=$('game'),ctx=cvs.getContext('2d');
 let W=0,H=0;
-function resize(){const d=Math.min(2,Math.max(1.5,window.devicePixelRatio||1));W=innerWidth;H=innerHeight;cvs.width=W*d;cvs.height=H*d;ctx.setTransform(d,0,0,d,0,0)}
+function resize(){const d=renderScale(gfxPref(),isPhone(),window.devicePixelRatio||1);// renderScale, gfxPref, isPhone: src/88-layout.js
+  W=innerWidth;H=innerHeight;cvs.width=W*d;cvs.height=H*d;ctx.setTransform(d,0,0,d,0,0)}
 addEventListener('resize',resize);resize();
 const clamp=(v,a,b)=>v<a?a:v>b?b:v,rand=(a,b)=>a+Math.random()*(b-a),pick=a=>a[Math.floor(Math.random()*a.length)];
 const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);

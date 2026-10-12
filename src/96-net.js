@@ -174,10 +174,11 @@ function teleportTo(uid,free){const m=partyMembers().find(q=>q.uid===uid),p=play
   if(!free){if(Net.tpCd>time){toast(`Teleport is ready in ${Math.ceil(Net.tpCd-time)} s.`);return}if(time-p.lastHurt<4){toast('You cannot teleport while fighting.','danger');return}Net.tpCd=time+TP_CD}
   if(p.mounted)dismount(p,true);burst(p.x,p.y,'#9fd8ff',24,160);p.x=m.x+rand(-40,40);p.y=m.y+rand(20,50);sfx('blink');burst(p.x,p.y,'#9fd8ff',30,180);fx.push({k:'pillar',x:p.x,y:p.y,life:.8,max:.8,col:'#9fd8ff'})}
 let partyT=0;
-function renderParty(){const el=$('party');if(!el)return;const ms=partyMembers();el.classList.toggle('hidden',!ms.length);el.innerHTML=ms.map(m=>`<div class="pm${m.dead?' dead':''}"><span class="pmp"></span><div class="pmb"><div class="pmn"><span>${CLASSES[m.cls]?CLASSES[m.cls].icon:''} ${escapeHtml(m.name||m.hero||'')}</span><small>Lv ${m.level||'?'}${m.away?' · inside':''}</small>`+
+function renderParty(){const el=$('party');if(!el)return;const ms=partyMembers();el.classList.toggle('hidden',!ms.length);el.innerHTML=ms.map(m=>`<div class="pm${m.dead?' dead':''}" style="--f:${Math.max(0,Math.min(100,m.hp/(m.maxHp||1)*100))}"><span class="pmp"></span><div class="pmb"><div class="pmn"><span>${CLASSES[m.cls]?CLASSES[m.cls].icon:''} ${escapeHtml(m.name||m.hero||'')}</span><small>Lv ${m.level||'?'}${m.away?' · inside':''}</small>`+
   `<button title="Teleport to ${escapeHtml(m.name||'')} (every ${TP_CD} s, not in combat)" data-tp="${m.uid}">⇢</button></div><div class="bar hp"><i style="width:${Math.max(0,m.hp/(m.maxHp||1)*100)}%"></i></div></div></div>`).join('');
-  el.querySelectorAll('.pmp').forEach((e,i)=>e.replaceWith(portraitEl(ms[i],phoneUI()?32:40)));
-  for(const b of el.querySelectorAll('[data-tp]'))b.onclick=()=>teleportTo(b.dataset.tp)}
+  el.querySelectorAll('.pmp').forEach((e,i)=>e.replaceWith(portraitEl(ms[i],isPhone()?32:40)));
+  for(const b of el.querySelectorAll('[data-tp]'))b.onclick=()=>teleportTo(b.dataset.tp);
+  if(Layout.phone)el.querySelectorAll('.pm').forEach((e,i)=>e.onclick=()=>{const m=ms[i];uiSheet(m.name||m.hero||'',[{icon:'⇢',label:'Teleport to '+(m.name||m.hero||''),onTap:()=>teleportTo(m.uid)}])})}// phone: the portrait stack has no buttons, so a tap opens them
 
 // ---- Dying with friends around: return to town, or rise beside a living friend.
 function showDeathChoices(p){const el=$('deathBtns'),sub=$('death').querySelector('.sub');el.innerHTML='';const alive=partyMembers().filter(m=>!m.dead&&!m.away);

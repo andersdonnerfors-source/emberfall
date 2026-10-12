@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Emberfall</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Inter:wght@400;500;600;700&display=swap">
@@ -226,6 +226,40 @@ body.touch #bottom,body.touch #hint{display:none}
 #menuBtn{width:44px;height:44px;font-size:20px;padding:0}
 #tmenu{pointer-events:auto;position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:27;display:grid;grid-template-columns:repeat(3,112px);gap:8px;padding:12px}
 #tmenu button{min-height:48px;background:var(--field);color:var(--text);border:1px solid var(--edge);border-radius:var(--r);font-family:var(--ui-font);font-size:var(--fs);cursor:pointer}
+/* ---- Phone layout (src/88-layout.js): body.phone when touch is present and the short screen side is under 500 px */
+:root{--panel-solid:rgba(10,12,16,.9)}
+.ql{display:block}#quest.clash{visibility:hidden}
+.sheet-bg{position:fixed;inset:0;z-index:43;background:rgba(0,0,0,.35);opacity:0;transition:opacity .2s}.sheet-bg.open{opacity:1}
+.cell.sel{outline:2px solid var(--accent);outline-offset:1px}
+#invActs{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:10px;padding:8px 10px;border:1px solid var(--edge);border-radius:var(--r);background:rgba(20,22,28,.96)}.ia-n{flex:1;min-width:120px;font-weight:600}
+#turn{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;background:#0d0b09;padding:24px}#turn .panel{padding:22px 26px;text-align:center;font-size:18px;font-weight:600}#turn i{display:block;font-style:normal;font-size:44px;margin-bottom:10px}
+/* no glass blur (Graphics Low, or Auto on a phone): solid panels instead */
+body.nofx{--blur:none;--panel:var(--panel-solid)}body.nofx #pause{-webkit-backdrop-filter:none;backdrop-filter:none}
+/* HUD: compact player frame top left, target top centre, 120 px minimap + one quest line top right, party as a stack of portraits with health rings */
+body.phone #pframe{left:calc(10px + env(safe-area-inset-left));top:10px;width:236px;padding:6px 8px;grid-template-columns:44px 1fr;column-gap:8px}
+body.phone #pPort{width:44px;height:44px}body.phone .uname{font-size:14px}body.phone #pframe .gold{margin-top:4px}body.phone #tframe{top:10px}
+body.phone #party{left:calc(10px + env(safe-area-inset-left));width:auto}
+body.phone .pm{width:40px;height:40px;min-height:0;padding:4px;border:0;border-radius:50%;background:conic-gradient(var(--hp) calc(var(--f,100)*1%),rgba(255,255,255,.18) 0);box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none;cursor:pointer}
+body.phone .pm .pmb{display:none}body.phone .pm canvas{width:32px!important;height:32px!important}
+body.phone #right{right:calc(10px + env(safe-area-inset-right));top:10px;width:120px}body.phone #mini{width:120px;height:120px}
+body.phone #quest{margin-top:6px;padding:5px 8px;font-size:12px;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+body.phone #quest .ql{display:inline}body.phone #quest .ql+.ql::before{content:' · '}body.phone #quest .muted{display:none}body.phone #quest b{font-size:12px}
+body.phone #toasts{top:calc(70px + env(safe-area-inset-top))}body.phone .toast{font-size:14px;padding:6px 14px}
+/* windows: fullscreen, header pinned to the top */
+body.phone #inv,body.phone #tal,body.phone #shop,body.phone #prof,body.phone #friends,body.phone #worldmap{left:0;top:0;transform:none;width:calc(100vw/var(--ui));height:calc(100vh/var(--ui));max-width:none;max-height:none;border:0;border-radius:0;background:#0c0e12;padding:0 calc(14px + env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) calc(14px + env(safe-area-inset-left))}
+body.phone .invhead{position:sticky;top:0;z-index:3;margin:0 0 10px;padding:4px 0;background:var(--panel-solid);border-bottom:1px solid var(--line)}
+body.phone #inv .invhead .muted{display:none}body.phone #bag,body.phone #supplies,body.phone #sbag{grid-template-columns:repeat(auto-fill,minmax(64px,1fr))}body.phone #invActs{position:sticky;top:53px;z-index:2}
+body.phone #settings,body.phone #howto{padding:0}
+body.phone #settings>.panel,body.phone #howto>.panel{width:calc(100vw/var(--ui))!important;height:calc(100vh/var(--ui));max-width:none;max-height:none!important;overflow:auto;border:0;border-radius:0;background:#0c0e12;padding:12px calc(24px + env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) calc(24px + env(safe-area-inset-left))!important}
+body.phone #pause h1{font-size:28px;margin:0}body.phone #pause .btn{margin:4px}
+/* world map: fills the window, drag to pan and pinch to zoom */
+body.phone #worldmap{display:flex;flex-direction:column;overflow:hidden}body.phone #worldmap>.muted{display:none}
+body.phone #wmapView{position:relative;flex:1;min-height:0;overflow:hidden;touch-action:none;display:flex;justify-content:center;border:1px solid var(--edge);border-radius:6px}
+body.phone #wmap{flex:none;width:auto;height:100%;border:0;border-radius:0;transform-origin:0 0}
+/* dialogs and loot: bottom sheets with rows of at least 48 px */
+@keyframes sheetUp{from{transform:translateY(100%)}to{transform:none}}
+body.phone #dialog,body.phone #loot{left:0;right:auto;top:auto;bottom:0;transform:none;width:calc(100vw/var(--ui));max-width:none;max-height:calc(70vh/var(--ui));overflow:auto;z-index:44;border-radius:calc(var(--r) * 2) calc(var(--r) * 2) 0 0;padding:12px calc(16px + env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));animation:sheetUp .2s ease-out}
+body.phone #dialog .btn,body.phone #loot .btn{min-height:48px}body.phone #dBtns .btn{flex:1;min-width:0}body.phone .lrow2{min-height:48px}
 </style>
 </head>
 <body>
@@ -315,6 +349,7 @@ body.touch #bottom,body.touch #hint{display:none}
 
 <div id="inv" class="panel hidden">
   <div class="invhead"><h2>Character</h2><span class="muted">Click item: equip · Sell loot at any shop</span><button class="x" id="invClose">✕</button></div>
+  <div id="invActs" class="hidden"></div>
   <div class="invbody">
     <div><canvas id="invPrev" width="200" height="190"></canvas><div id="equip"></div><div id="stats"></div></div>
     <div><div class="muted" style="margin-bottom:6px">Bag</div><div id="bag"></div><div class="muted" style="margin:14px 0 6px">Supplies · click to use · Q heal · Z mana · X eat</div><div id="supplies"></div></div>
@@ -330,7 +365,7 @@ body.touch #bottom,body.touch #hint{display:none}
   <div id="matsRow"></div><div id="profList"></div>
   <div class="muted" style="margin-top:10px">Monsters drop materials: beasts give hide, spiders give silk, goblins and trolls give ore, undead and spirits give arcane dust, and bosses give essence. Herbs grow in the wild (better herbs in harder lands), berry bushes and wells can be gathered with E, and beasts drop meat. Learn a profession from a trainer in a city shop.</div></div>
 <div id="loot" class="panel hidden"><div class="invhead"><h2 id="lootTitle">Loot</h2><button class="x" id="lootClose">✕</button></div><div id="lootList"></div><div class="row"><button class="btn primary" id="lootAll" style="min-width:0;width:100%;margin:8px 0 0">Take all</button></div></div>
-<div id="worldmap" class="panel hidden"><div class="invhead"><h2 id="wmapTitle">World map</h2><span class="muted" id="wmapPct"></span><button class="x" id="wmapClose">✕</button></div><canvas id="wmap" width="640" height="640"></canvas><div class="muted" style="margin-top:6px">Only places you have seen are shown. 🏠 your home city · orange: dungeons · blue: caves · gold ring: your current goal.</div></div>
+<div id="worldmap" class="panel hidden"><div class="invhead"><h2 id="wmapTitle">World map</h2><span class="muted" id="wmapPct"></span><button class="x" id="wmapClose">✕</button></div><div id="wmapView"><canvas id="wmap" width="640" height="640"></canvas></div><div class="muted" style="margin-top:6px">Only places you have seen are shown. 🏠 your home city · orange: dungeons · blue: caves · gold ring: your current goal.</div></div>
 <div id="dialog" class="panel hidden"><h3 id="dTitle"></h3><div class="who" id="dWho">Old Warden Bram</div><p id="dText"></p><div id="dGoal"></div><div class="row" id="dBtns"></div></div>
 <div id="intro" class="screen hidden"><div class="panel" style="max-width:640px;padding:24px 30px;line-height:1.6">
   <h2>The Lamp has gone dark</h2>
@@ -349,6 +384,7 @@ body.touch #bottom,body.touch #hint{display:none}
   <label class="set"><span>Auto loot (walk near corpses)</span><input type="checkbox" id="setAutoLoot"></label>
   <label class="set"><span>Auto loot items of at least</span><select id="setLootRar"></select></label>
   <label class="set"><span>UI size</span><input type="range" id="setUi" min="80" max="130" step="5"><output id="setUiV"></output></label>
+  <label class="set"><span>Graphics</span><select id="setGfx"><option value="auto">Auto</option><option value="high">High</option><option value="low">Low</option></select></label>
   <div class="row"><button class="btn primary" id="btnSetClose">Done</button></div></div></div>
 <div id="howto" class="screen hidden"><div class="panel" style="width:min(620px,100%);padding:20px 26px;line-height:1.55;max-height:92vh;overflow:auto">
   <h2>How to play</h2>
@@ -363,5 +399,6 @@ body.touch #bottom,body.touch #hint{display:none}
   <p><b>Lost?</b> Read the waymarks along the roads (click them) and listen to the bards in each city.</p>
   <div class="row"><button class="btn primary" id="btnHowClose">Got it</button></div></div></div>
 <div id="tip" class="hidden"></div>
+<div id="turn" class="hidden"><div class="panel"><i>📱↻</i>Turn your phone sideways</div></div>
 
 <script>

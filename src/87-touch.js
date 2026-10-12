@@ -72,7 +72,7 @@ function touchFrame(p){if(Touch.built!==p.abil)touchBuild(p);const ab=$('abar').
   const r=$('mini').getBoundingClientRect(),mb=$('menuBtn');mb.style.right=(innerWidth-r.left+8)+'px';mb.style.top=r.top+'px';
   if(isPaused()&&!Touch.paused){touchReset();p.input.abil.fill(false);p.input.fire=false}Touch.paused=isPaused();if(Touch.drag)touchDrawAim()}
 const TMENU={inv:()=>toggleInv(true),tal:()=>toggleTal(true),prof:()=>toggleProf(true),map:()=>toggleMap(true),friends:()=>toggleFriends(true),
-  quest:()=>uiSheet('Quest',[{label:$('quest').innerText.replace(/\s*\n+\s*/g,' · ')}]),
+  quest:()=>uiSheet('Quest',[...$('quest').querySelectorAll('.ql')].map(e=>({label:e.textContent}))),
   settings:()=>{if(!pauseOpen)togglePause();openOverlay('settings','pause')},mute:()=>{Snd.vol.muted=!Snd.vol.muted;applyVol();saveAudio();toast(Snd.vol.muted?'Sound off':'Sound on')},pause:()=>togglePause()};
 function touchMenu(v){const m=$('tmenu');m.classList.toggle('hidden',v===undefined?!m.classList.contains('hidden'):!v);touchReset()}
 {// Wiring. Each control captures its own pointer, so moving and casting work at the same time.

@@ -80,3 +80,13 @@ test('hold then drag still aims and casts',()=>{const pl=players.slice(),p=TP('s
   try{inPlay(()=>{slotDown(2,ev(500,300));Touch.hold={id:3,x:500,y:300,fired:true,t:0};slotUp(ev(502,300));eq(p.input.abil[2],false);
     slotDown(2,ev(500,300));Touch.hold={id:3,x:500,y:300,fired:true,t:0};const m=ev(400,300);slotMove(m);holdMove(m);eq(Touch.hold,null);slotUp(m);eq(p.input.abil[2],true);eq(Touch.aimOverride.x<0,true)})}
   finally{players.length=0;players.push(...pl);enemies.push(...e);touchReset()}});
+
+// ---- Phone layout, graphics (Task 7)
+const FENV=(w,h,coarse,touched)=>({innerWidth:w,innerHeight:h,matchMedia:()=>({matches:coarse}),touchSeen:touched});
+test('renderScale by graphics setting',()=>{eq(renderScale('auto',true,3),1);eq(renderScale('auto',false,3),2);eq(renderScale('low',false,2),1);eq(renderScale('high',true,3),2)});
+test('isPhone: 844x390 coarse yes, 1280x800 no',()=>{eq(isPhone(FENV(844,390,true)),true);eq(isPhone(FENV(1280,800,true)),false)});
+test('isPhone needs touch: a seen touch counts, a mouse alone does not',()=>{eq(isPhone(FENV(844,390,false,true)),true);eq(isPhone(FENV(844,390,false,false)),false)});
+test('touch laptop stays desktop layout',()=>{const e=FENV(1280,800,true);eq(isPhone(e),false);eq(uiScale({uiSize:null},isPhone(e)),1)});
+test('buff stats text tolerates a buff without stats',()=>{eq(statsText(undefined),'');eq(statsText({str:3}),'+3 '+STATLBL.str)});
+test('uiSheet closes on Escape and on a backdrop tap',()=>{const a=uiSheet('x',[]);eq(a.closed,false);dispatchEvent(new KeyboardEvent('keydown',{code:'Escape'}));eq(a.closed,true);
+  const b=uiSheet('y',[]);b.bg.click();eq(b.closed,true)});

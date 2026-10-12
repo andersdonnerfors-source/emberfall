@@ -47,7 +47,7 @@ function drawFogBanks(){const dens=mood.fog+(zone&&zone.kind==='over'?nightness(
     ctx.filter=n>.5?'brightness(.35)':'none';ctx.drawImage(fogSpr,sx-r,sy-r*.45,r*2,r*.9)}ctx.filter='none';ctx.restore();ctx.globalAlpha=1}
 // ---- Ambient life: fireflies, snow, desert dust, bog motes, ash
 function ambientTick(dt){if(!zone||zone.kind!=='over'||state!=='play')return;const p=players[0];if(!p)return;const k=moodKey(),n=nightness(),R=(a,b)=>a+Math.random()*(b-a);
-  const spawn=(rate,f)=>{let c=rate*dt;while(c>0){if(Math.random()<c)f();c--}};const vx=camX+R(0,W),vy=camY+R(0,H/TILT);
+  const spawn=(rate,f)=>{let c=rate*dt*fxScale();while(c>0){if(Math.random()<c)f();c--}};const vx=camX+R(0,W),vy=camY+R(0,H/TILT);
   if(k===1)spawn(28,()=>parts.push({x:camX+R(-100,W),y:camY+R(-50,H/TILT),z:R(80,220),vx:R(-30,-10),vy:R(-5,5),vz:R(-60,-35),life:4,max:4,col:'#f4f8ff',size:R(1.5,3),ng:true}));
   else if(k===2)spawn(6,()=>parts.push({x:camX-20,y:camY+R(0,H/TILT),z:R(2,40),vx:R(160,260),vy:R(-10,10),vz:0,life:R(2,4),max:4,col:'rgba(220,190,140,.5)',size:R(1,2),streak:false,ng:true}));
   else if(k===3||k===0){if(n>.4)spawn(4*n,()=>parts.push({x:camX+R(0,W),y:camY+R(0,H/TILT),z:R(10,60),vx:R(-15,15),vy:R(-15,15),vz:R(-8,8),life:R(3,6),max:6,col:'#d8ff6a',size:1.6,gl:true}));
