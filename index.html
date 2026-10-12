@@ -227,6 +227,7 @@ body.touch #bottom,body.touch #hint{display:none}
 #ctx,#menuBtn,#fsBtn{pointer-events:auto;position:fixed;min-height:44px;color:var(--text);font-family:var(--ui-font);font-size:var(--fs);font-weight:600;cursor:pointer}
 #ctx{right:calc(140px + env(safe-area-inset-right));bottom:calc(232px + env(safe-area-inset-bottom));max-width:200px;padding:0 14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-color:var(--accent)}
 #menuBtn,#fsBtn{width:44px;height:44px;font-size:20px;padding:0}
+body.phone .sheet.fssheet{display:grid;grid-template-columns:repeat(var(--n),1fr);gap:4px 8px;width:min(640px,100%);margin:0 auto}.fssheet>.g-head{grid-column:1/-1}.fssheet .g-row{flex-direction:column;align-items:flex-start;text-align:left}
 #iab{position:fixed;left:50%;bottom:8px;transform:translateX(-50%);z-index:30;display:flex;align-items:center;gap:8px;max-width:min(420px,56vw);padding:6px 8px 6px 12px;font-size:13px;line-height:1.3;pointer-events:auto}#iab .g-btn{min-height:44px;flex:none}#iab .x{min-width:44px;min-height:44px;background:none;border:0;color:var(--text);font-size:16px;cursor:pointer}
 #tmenu{pointer-events:auto;position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:27;display:grid;grid-template-columns:repeat(3,112px);gap:8px;padding:12px}
 #tmenu button{min-height:48px;background:var(--field);color:var(--text);border:1px solid var(--edge);border-radius:var(--r);font-family:var(--ui-font);font-size:var(--fs);cursor:pointer}
@@ -2953,10 +2954,12 @@ function fsEnv(){const d=document.documentElement,mm=q=>{try{return matchMedia(q
 function copyLink(){const u=location.href;try{navigator.clipboard.writeText(u).then(()=>toast('Link copied'),()=>prompt('Copy this link',u))}catch(e){prompt('Copy this link',u)}}
 function fsRequest(){const d=document.documentElement,r=d.requestFullscreen||d.webkitRequestFullscreen;if(!r)return;let pr;try{pr=r.call(d)}catch(e){return}
   const lock=()=>{try{const l=screen.orientation&&screen.orientation.lock&&screen.orientation.lock('landscape');if(l&&l.catch)l.catch(()=>{})}catch(e){}};if(pr&&pr.then)pr.then(lock,()=>{});else lock()}
+// The steps sit side by side (one column each) so the whole sheet fits a 220 px high screen.
+function fsSheet(rows){const sh=uiSheet('Play in fullscreen',rows);sh.el.classList.add('fssheet');sh.el.style.setProperty('--n',rows.length)}
 function fsClick(){const m=fsMode(fsEnv());
   if(m==='api'){if(fsEl()){Settings.fullscreen=false;saveSettings();(document.exitFullscreen||document.webkitExitFullscreen).call(document)}else{Settings.fullscreen=true;saveSettings();fsRequest()}}
-  else if(m==='ios-a2hs')uiSheet('Play in fullscreen',[{icon:'1',label:'Tap the Share button in Safari'},{icon:'2',label:'Choose "Add to Home Screen"'},{icon:'3',label:'Open Emberfall from the new icon'}]);
-  else if(m==='inapp')uiSheet('Play in fullscreen',[{icon:'!',label:'For the full screen, open Emberfall in Safari/Chrome'},{icon:'🔗',label:'Copy link',onTap:copyLink}])}
+  else if(m==='ios-a2hs')fsSheet([{icon:'1',label:'Tap the Share button in Safari'},{icon:'2',label:'Choose "Add to Home Screen"'},{icon:'3',label:'Open Emberfall from the new icon'}]);
+  else if(m==='inapp')fsSheet([{icon:'!',label:'For the full screen, open Emberfall in Safari/Chrome'},{icon:'🔗',label:'Copy link',onTap:copyLink}])}
 // Once per session, in an in-app browser: a dismissible banner with Copy link.
 function fsBanner(){if(fsBanner.done)return;fsBanner.done=true;try{if(sessionStorage.getItem('ef-iab'))return;sessionStorage.setItem('ef-iab','1')}catch(e){}
   const b=uiEl('div','glass'),t=uiEl('span','','For the full screen, open Emberfall in Safari/Chrome'),c=uiEl('button','g-btn','Copy link'),x=uiEl('button','x','✕');b.id='iab';x.setAttribute('aria-label','Close');

@@ -33,10 +33,12 @@ function fsEnv(){const d=document.documentElement,mm=q=>{try{return matchMedia(q
 function copyLink(){const u=location.href;try{navigator.clipboard.writeText(u).then(()=>toast('Link copied'),()=>prompt('Copy this link',u))}catch(e){prompt('Copy this link',u)}}
 function fsRequest(){const d=document.documentElement,r=d.requestFullscreen||d.webkitRequestFullscreen;if(!r)return;let pr;try{pr=r.call(d)}catch(e){return}
   const lock=()=>{try{const l=screen.orientation&&screen.orientation.lock&&screen.orientation.lock('landscape');if(l&&l.catch)l.catch(()=>{})}catch(e){}};if(pr&&pr.then)pr.then(lock,()=>{});else lock()}
+// The steps sit side by side (one column each) so the whole sheet fits a 220 px high screen.
+function fsSheet(rows){const sh=uiSheet('Play in fullscreen',rows);sh.el.classList.add('fssheet');sh.el.style.setProperty('--n',rows.length)}
 function fsClick(){const m=fsMode(fsEnv());
   if(m==='api'){if(fsEl()){Settings.fullscreen=false;saveSettings();(document.exitFullscreen||document.webkitExitFullscreen).call(document)}else{Settings.fullscreen=true;saveSettings();fsRequest()}}
-  else if(m==='ios-a2hs')uiSheet('Play in fullscreen',[{icon:'1',label:'Tap the Share button in Safari'},{icon:'2',label:'Choose "Add to Home Screen"'},{icon:'3',label:'Open Emberfall from the new icon'}]);
-  else if(m==='inapp')uiSheet('Play in fullscreen',[{icon:'!',label:'For the full screen, open Emberfall in Safari/Chrome'},{icon:'🔗',label:'Copy link',onTap:copyLink}])}
+  else if(m==='ios-a2hs')fsSheet([{icon:'1',label:'Tap the Share button in Safari'},{icon:'2',label:'Choose "Add to Home Screen"'},{icon:'3',label:'Open Emberfall from the new icon'}]);
+  else if(m==='inapp')fsSheet([{icon:'!',label:'For the full screen, open Emberfall in Safari/Chrome'},{icon:'🔗',label:'Copy link',onTap:copyLink}])}
 // Once per session, in an in-app browser: a dismissible banner with Copy link.
 function fsBanner(){if(fsBanner.done)return;fsBanner.done=true;try{if(sessionStorage.getItem('ef-iab'))return;sessionStorage.setItem('ef-iab','1')}catch(e){}
   const b=uiEl('div','glass'),t=uiEl('span','','For the full screen, open Emberfall in Safari/Chrome'),c=uiEl('button','g-btn','Copy link'),x=uiEl('button','x','✕');b.id='iab';x.setAttribute('aria-label','Close');
