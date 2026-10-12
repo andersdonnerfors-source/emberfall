@@ -124,9 +124,9 @@ test('party not rebuilt when unchanged',()=>{const o={role:Net.role,pl:players};
 test('party level is numeric',()=>{const o={role:Net.role,pl:players};try{Net.role='host';players=[{x:0,y:0},PMEM({level:'<img src=x>',netName:'<b>x</b>'})];renderParty();const el=$('party');eq(el.querySelector('img'),null);eq(el.querySelector('b'),null);eq(/Lv \?/.test(el.querySelector('small').textContent),true)}
   finally{Net.role=o.role;players=o.pl;renderParty()}});
 test('lvClamp coerces to 1..99',()=>{eq(lvClamp('<img>'),1);eq(lvClamp(500),99);eq(lvClamp(-4),1);eq(lvClamp('12'),12)});
-test('preview target picked when idle on touch',()=>{const pl=players.slice(),p=TP('sorcerer'),on=Touch.on,e=enemies.slice(),t0=Aim.target,en=AU(60,0,{dead:false}),lc=lineClear;players.length=0;players.push(p);enemies.length=0;enemies.push(en);Touch.on=true;touchReset();Aim.target=null;Aim.pt=0;lineClear=()=>true;
+test('preview target picked when idle on touch',()=>{const pl=players.slice(),p=TP('sorcerer'),on=Touch.on,e=enemies.slice(),t0=Aim.target,pt0=Aim.pt,ip=isPaused,en=AU(60,0,{dead:false}),lc=lineClear;isPaused=()=>false;players.length=0;players.push(p);enemies.length=0;enemies.push(en);Touch.on=true;touchReset();Aim.target=null;Aim.pt=0;lineClear=()=>true;
   try{inPlay(()=>{aimPreview(p);eq(Aim.target===en,true);Aim.pt=0;Touch.fire=true;enemies.length=0;aimPreview(p);eq(Aim.target===en,true,'no re-pick while firing');Touch.fire=false;Aim.pt=0;aimPreview(p);eq(Aim.target,null)})}
-  finally{lineClear=lc;players.length=0;players.push(...pl);enemies.length=0;enemies.push(...e);Touch.on=on;Aim.target=t0;touchReset()}});
+  finally{isPaused=ip;lineClear=lc;players.length=0;players.push(...pl);enemies.length=0;enemies.push(...e);Touch.on=on;Aim.target=t0;Aim.pt=pt0;touchReset()}});
 test('guest waits after 5s without snapshots',()=>{const o={role:Net.role,hw:Net.hw,hwT:Net.hwT,host:Net.host,ls:Net.lastSnap};try{Net.role='guest';Net.host={name:'H'};Net.hw=false;Net.hwT=0;Net.lastSnap=rt-4;hostWaitTick();eq(Net.hw,false);Net.lastSnap=rt-6;hostWaitTick();eq(Net.hw,true);eq(Net.hwT,rt);
     netData({uid:'x',name:'X'},{t:'snap',q:0,pl:[],en:[],al:[],ev:[],cs:[]});eq(Net.hw,false)}
   finally{Net.role=o.role;Net.hw=o.hw;Net.hwT=o.hwT;Net.host=o.host;Net.lastSnap=o.ls;hostWaitShow()}});
@@ -164,3 +164,8 @@ test('fsMode picks inapp, ios-a2hs, api or none',()=>{eq(fsMode({ua:UA_MSG,hasFs
 
 // ---- Delete confirm: phone keyboards change case and add spaces
 test('delete name match ignores case and spaces',()=>{eq(nameMatches(' corwin ','Corwin'),true);eq(nameMatches('CORWIN','Corwin'),true);eq(nameMatches('Corwi','Corwin'),false);eq(nameMatches('','Corwin'),false)});
+
+// ---- Fix round 1: safe-area insets, fullscreen state
+test('touchPlace keeps every box inside the safe-area insets',()=>{for(const[W,H]of[[667,220],[844,390]]){const z=touchSizes(H),ir=47,ib=21,il=47,r=touchPlace({W,H,atk:z.atk,ab:z.ab,q:z.q,limit:110,n:5,ir,ib,il}),k=r.quick,bs=[{x:r.atk.x,y:r.atk.y,r:z.atk/2},...r.abil.map(a=>({x:a.x,y:a.y,r:z.ab/2}))],tag=W+'x'+H;
+    for(const b of bs){eq(b.x+b.r<=W-ir&&b.y+b.r<=H-ib&&b.x-b.r>=il,true,tag+' circle inside')}eq(k.x+k.w<=W-ir||k.x+k.w<=r.atk.x,true,tag+' quick right');eq(k.y+k.h<=H-ib,true,tag+' quick bottom');eq(r.mb>=ib,true,tag+' ctx bottom margin')}});
+test('fullscreenchange sync clears and sets Settings.fullscreen',()=>{const o=Settings.fullscreen,fe=fsEl;try{fsEl=()=>null;Settings.fullscreen=true;fsSync();eq(Settings.fullscreen,false,'left fullscreen');fsEl=()=>document.body;fsSync();eq(Settings.fullscreen,true,'entered')}finally{fsEl=fe;if(o===undefined)delete Settings.fullscreen;else Settings.fullscreen=o;saveSettings()}});

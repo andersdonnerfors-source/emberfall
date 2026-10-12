@@ -29,17 +29,17 @@ const touchIsDrag=(dx,dy)=>Math.hypot(dx,dy)>DRAG_PX;
 function touchReset(){Touch.ptr={};Touch.mx=Touch.my=0;Touch.fire=false;Touch.aimOverride=null;Touch.drag=null;Touch.kx=Touch.ky=0;if(Touch.hold)clearTimeout(Touch.hold.t);Touch.hold=null;touchDrawStick();touchDrawAim()}
 function touchShow(on){if(Touch.on===on)return;Touch.on=on;document.body.classList.toggle('touch',on);touchReset();$('tmenu').classList.add('hidden')}
 // Stick: one owner pointer; it appears where the thumb lands in the left 45%.
-function stickDown(e){if(Touch.ptr.stick!=null||e.clientX>innerWidth*STICK_ZONE)return false;Touch.ptr.stick=e.pointerId;Touch.sx=e.clientX;Touch.sy=e.clientY;Touch.mx=Touch.my=Touch.kx=Touch.ky=0;touchDrawStick();return true}
+function stickDown(e){fsBannerClose();if(Touch.ptr.stick!=null||e.clientX>innerWidth*STICK_ZONE)return false;Touch.ptr.stick=e.pointerId;Touch.sx=e.clientX;Touch.sy=e.clientY;Touch.mx=Touch.my=Touch.kx=Touch.ky=0;touchDrawStick();return true}
 // The thumb moves on screen; the world is squashed by TILT, so the move vector is turned to match what the player sees.
 function stickMove(e){if(e.pointerId!==Touch.ptr.stick)return;const dx=e.clientX-Touch.sx,dy=e.clientY-Touch.sy,d=Math.hypot(dx,dy),v=stickVec(dx,dy),m=Math.hypot(v.x,v.y),wy=dy/TILT,wl=Math.hypot(dx,wy)||1,k=Math.min(d,STICK_R)/(d||1);
   Touch.mx=dx/wl*m;Touch.my=wy/wl*m;Touch.kx=dx*k;Touch.ky=dy*k;touchDrawStick()}
 function stickUp(e){if(e.pointerId!==Touch.ptr.stick)return;delete Touch.ptr.stick;Touch.mx=Touch.my=Touch.kx=Touch.ky=0;touchDrawStick()}
 function touchDrawStick(){const s=$('stick'),on=Touch.ptr.stick!=null;s.classList.toggle('on',on);s.style.left=on?Touch.sx+'px':'';s.style.top=on?Touch.sy+'px':'';s.style.setProperty('--kx',(Touch.kx||0)+'px');s.style.setProperty('--ky',(Touch.ky||0)+'px')}
 // Attack: held = attacking the auto-target, like holding the left mouse button.
-function atkDown(e){if(Touch.ptr.atk!=null||state!=='play'||isPaused())return false;Touch.ptr.atk=e.pointerId;Touch.fire=true;return true}
+function atkDown(e){fsBannerClose();if(Touch.ptr.atk!=null||state!=='play'||isPaused())return false;Touch.ptr.atk=e.pointerId;Touch.fire=true;return true}
 function atkUp(e){if(e.pointerId!==Touch.ptr.atk)return;delete Touch.ptr.atk;Touch.fire=false}
 // Ability slots: a tap casts at aimPoint; a drag past 18 px aims (aimOverride) and casts on release; leaving the slot and coming back onto it cancels.
-function slotDown(i,e){if(Touch.ptr.abil!=null||state!=='play'||isPaused())return false;const el=document.querySelector('#arc [data-i="'+i+'"]'),r=el&&el.getBoundingClientRect(),c=r&&r.width?{x:r.left+r.width/2,y:r.top+r.height/2}:{x:e.clientX,y:e.clientY};
+function slotDown(i,e){fsBannerClose();if(Touch.ptr.abil!=null||state!=='play'||isPaused())return false;const el=document.querySelector('#arc [data-i="'+i+'"]'),r=el&&el.getBoundingClientRect(),c=r&&r.width?{x:r.left+r.width/2,y:r.top+r.height/2}:{x:e.clientX,y:e.clientY};
   Touch.ptr.abil=e.pointerId;Touch.drag={i,x0:e.clientX,y0:e.clientY,cx:c.x,cy:c.y,on:false,out:false,cancel:false};Touch.aimOverride=null;return true}
 function slotMove(e){const d=Touch.drag,p=players[0];if(!d||e.pointerId!==Touch.ptr.abil||!p)return;const dx=e.clientX-d.x0,dy=e.clientY-d.y0;if(!d.on&&touchIsDrag(dx,dy))d.on=true;if(!d.on)return;
   const dc=Math.hypot(e.clientX-d.cx,e.clientY-d.cy);if(dc>SLOT_R)d.out=true;d.cancel=d.out&&dc<=SLOT_R;Touch.aimOverride=d.cancel?null:touchAimAt(p,d.i,dx,dy);touchDrawAim()}
@@ -70,9 +70,9 @@ function touchBuild(p){Touch.built=p.abil;touchLayout.key=null;document.querySel
 const touchVis=(p,i)=>i===0||!!p.abil[i]&&p.abil[i]!==SPEC_LOCKED&&p.level>=UNLOCK[i];
 function touchLayout(p){const ph=!!Layout.phone,tc=$('touch'),arc=$('arc'),ql=$('quick'),cx=$('ctx'),sl=[...arc.querySelectorAll('.tslot')];
   if(!ph){if(touchLayout.ph){touchLayout.ph=false;touchLayout.key=null;sl.forEach(s=>{s.style.display=''});for(const e of[arc,ql,cx]){e.style.left=e.style.top=e.style.right=e.style.bottom=''}Touch.built=null;touchBuild(p)}return}
-  const z=touchSizes(innerHeight),lim=Math.ceil($('right').getBoundingClientRect().bottom)+4,vis=sl.map(s=>touchVis(p,+s.dataset.i)),key=[innerWidth,innerHeight,lim,vis.join()].join('|');
+  const z=touchSizes(innerHeight),ins=safeInsets(),lim=Math.ceil($('right').getBoundingClientRect().bottom)+4,vis=sl.map(s=>touchVis(p,+s.dataset.i)),key=[innerWidth,innerHeight,lim,ins.r,ins.b,ins.l,vis.join()].join('|');
   if(touchLayout.ph&&key===touchLayout.key)return;touchLayout.ph=true;touchLayout.key=key;
-  const idx=vis.map((v,i)=>v&&i>0?i:-1).filter(i=>i>0),r=touchPlace({W:innerWidth,H:innerHeight,atk:z.atk,ab:z.ab,q:z.q,limit:lim,n:idx.length}),ax=r.atk.x-z.atk/2,ay=r.atk.y-z.atk/2;
+  const idx=vis.map((v,i)=>v&&i>0?i:-1).filter(i=>i>0),r=touchPlace({W:innerWidth,H:innerHeight,atk:z.atk,ab:z.ab,q:z.q,limit:lim,n:idx.length,ir:ins.r,ib:ins.b,il:ins.l}),ax=r.atk.x-z.atk/2,ay=r.atk.y-z.atk/2;
   sl.forEach((s,i)=>{s.style.display=vis[i]?'':'none'});arc.style.right=arc.style.bottom='auto';arc.style.left=ax+'px';arc.style.top=ay+'px';
   idx.forEach((i,k)=>{const s=sl[i];s.style.left=(r.abil[k].x-z.ab/2-ax)+'px';s.style.top=(r.abil[k].y-z.ab/2-ay)+'px'});
   ql.style.right=ql.style.bottom='auto';ql.style.left=r.quick.x+'px';ql.style.top=r.quick.y+'px';cx.style.right=(innerWidth-r.left+8)+'px';cx.style.bottom=r.mb+'px'}
