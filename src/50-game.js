@@ -5,6 +5,7 @@ function wrapA(a){while(a>Math.PI)a-=TAU;while(a<-Math.PI)a+=TAU;return a}
 function mkArea(o){return Object.assign({t:0,delay:0,dur:0,tick:0,nt:0,tickDmg:0},o,{delay0:o.delay||0})}
 function fireProj(o){projs.push(Object.assign({life:1.5,r:6,hit:new Set(),pierce:0},o))}
 function burst(x,y,col,n,spd){for(let i=0;i<n;i++){const a=rand(0,TAU),s=rand(.2,1)*spd;parts.push({x,y,z:rand(5,25),vx:Math.cos(a)*s,vy:Math.sin(a)*s,vz:rand(20,140),life:rand(.4,.9),max:.9,col,size:rand(1.5,3.5)})}}
+let hudTarget=null;// the enemy shown in the target frame: under the mouse, or the last one you hit (auto-aim also sets it on phones)
 function floatText(x,y,txt,col,size){texts.push({x:x+rand(-8,8),y,z:44,txt,col,size:size||15,life:1})}
 function toast(msg,cls){const d=document.createElement('div');d.className='toast '+(cls||'');d.textContent=msg;const tc=$('toasts');tc.appendChild(d);while(tc.children.length>4)tc.firstChild.remove();setTimeout(()=>d.remove(),3500)}
 function swing(u,a,col,r){fx.push({k:'swing',x:u.x,y:u.y,a,life:.18,max:.18,col,r:r||60})}
@@ -143,7 +144,8 @@ function dealDamage(t,amt,src,o){o=o||{};if(t.dead)return;if(t.invulnUntil>time)
   if(t.isPlayer&&t.eat){t.eat=null;floatText(t.x,t.y-50,'Meal interrupted','#ffb08a',12)}
   if(t.isPlayer&&!o.raw)d*=100/(100+t.stats.armor);d=Math.max(1,Math.round(d));if(Net.role==='host'&&t.side==='enemy')Net.ev.push({k:'h',n:t.nid,d,c:crit?1:0,col:o.hc});
   t.hp-=d;t.hitFlash=.12;t.lastHurt=time;if(t.isPlayer&&(t.mounted||t.mountCast>0)&&!(t.fly&&!free(t.x,t.y,t.r)))dismount(t,true);if(t.isPlayer&&t.hearthCast>0){t.hearthCast=0;toast('Teleport interrupted!')}
-  floatText(t.x,t.y-(t.h||40)*.6,(crit?d+'!':''+d),t.side==='player'?'#ff6a5a':crit?'#ffd84a':'#fff',crit?20:15);
+  floatText(t.x,t.y-(t.h||40)*.6,(crit?d+'!':''+d),t.side==='player'?'#ff6a5a':crit?'#ffd84a':'#fff',crit?21:15);
+  if(own===players[0]&&t.side==='enemy'&&t.type)hudTarget=t;
   if(t.side==='enemy'&&own)hitSpark(t,o.hc||weaponCol(own),crit);else if(t.isPlayer){sparks(t.x,t.y,26,'#ff5a4a',5,120,.25);if(t===players[0])hurtFlash=Math.min(1,hurtFlash+.6)}
   if(o.slow){t.slowUntil=time+o.slow;t.slowF=o.slowF||.5}
   if(o.stun&&!(t.boss&&o.stun>1)){t.stunUntil=time+o.stun}else if(o.stun&&t.boss)t.stunUntil=time+.5;
@@ -521,7 +523,7 @@ function render(){
   drawAir();drawAirFx();
   drawParticles();
   drawFogBanks();drawMood();drawNight();if(state==='play')drawVisionHaze();drawDarkness();if(zone.warm){ctx.fillStyle='rgba(255,170,90,.06)';ctx.fillRect(0,0,W,H)}
-  ctx.textAlign='center';for(const t of texts){const[sx,sy]=S(t.x,t.y);ctx.globalAlpha=Math.min(1,t.life*2);ctx.font=`bold ${t.size}px Georgia`;ctx.fillStyle='rgba(0,0,0,.7)';ctx.fillText(t.txt,sx+1,sy-t.z+1);ctx.fillStyle=t.col;ctx.fillText(t.txt,sx,sy-t.z)}ctx.globalAlpha=1;
+  ctx.textAlign='center';for(const t of texts){const[sx,sy]=S(t.x,t.y);ctx.globalAlpha=Math.min(1,t.life*2);ctx.font=`700 ${t.size}px Inter,system-ui,sans-serif`;ctx.lineJoin='round';ctx.lineWidth=3;ctx.strokeStyle='rgba(8,8,12,.88)';ctx.strokeText(t.txt,sx,sy-t.z);ctx.fillStyle=t.col;ctx.fillText(t.txt,sx,sy-t.z)}ctx.globalAlpha=1;
   for(const d of decor)if(d.k==='fire'&&inView(d,300)){const[sx,sy]=S(d.x,d.y);ctx.save();ctx.globalCompositeOperation='lighter';const r=130+Math.sin(rt*9)*6;const g=ctx.createRadialGradient(sx,sy-10,0,sx,sy-10,r);g.addColorStop(0,'rgba(255,150,60,.28)');g.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=g;ctx.fillRect(sx-r,sy-10-r,r*2,r*2);ctx.restore()}
   if(state==='play'){drawQuestArrow();drawPrompt()}
   const vg=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*.3,W/2,H/2,Math.max(W,H)*.72);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.7)');ctx.fillStyle=vg;ctx.fillRect(0,0,W,H);drawDread()}
@@ -537,7 +539,7 @@ function drawQuestArrow(){const tg=questTarget(),p=players[0];if(!tg||!p||p.dead
   ctx.save();ctx.globalAlpha=questArrowA;ctx.font='12px Georgia';ctx.textAlign='center';ctx.fillStyle='#ffd84a';ctx.fillText(Math.round(dd/TILE)+' m',px-c*26,py-s*26+4);ctx.restore()}
 // ================= HUD & UI =================
 function buildAbar(p){const el=$('abar');el.innerHTML='';const lab=['LMB','RMB/1','2','3','4','R'];
-  p.abil.forEach((a,i)=>{const d=document.createElement('div');d.className='slot';d.innerHTML=`<div class="ic">${a.icon}</div><div class="key">${lab[i]}</div><div class="cd"></div><div class="cdt"></div>`;
+  p.abil.forEach((a,i)=>{const d=document.createElement('div');d.className='slot sw';d.innerHTML=`<div class="ic">${a.icon}</div><div class="key">${lab[i]}</div><div class="cd"></div><div class="cdt"></div>`;
     d.onmouseenter=()=>showTip(`<div class="tn">${a.name}</div><div class="ts">${a.mana?a.mana+' mana · ':''}${a.cd}s cooldown${p.level<UNLOCK[i]?' · <span class="down">Unlocks at level '+UNLOCK[i]+'</span>':''}</div>${a.desc}`);d.onmouseleave=hideTip;el.appendChild(d)});
   const sup=(id,icon,key,tip,fn)=>{const d=document.createElement('div');d.className='slot';d.id=id;d.innerHTML=`<div class="ic">${icon}</div><div class="key">${key}</div><div class="cnt"></div><div class="cd"></div>`;d.onclick=fn;d.onmouseenter=()=>showTip(tip);d.onmouseleave=hideTip;el.appendChild(d)};
   sup('potSlot','🧪','Q','<div class="tn">Healing potion</div>Drinks the smallest healing potion that covers what you are missing. Potions share a short cooldown.',()=>drinkPotion(p,'hp'));
@@ -555,15 +557,21 @@ function updateHud(){const p=players[0];if(!p)return;
   $('xpF').style.width=(p.level>=20?100:p.xp/xpNeed(p.level)*100)+'%';$('hGold').textContent=p.gold;
   const pts=$('pts'),pp=[];if(p.points>0)pp.push(p.points+' attribute (I)');if(p.tpoints>0)pp.push(p.tpoints+' talent (T)');
   if(pp.length){pts.classList.remove('hidden');pts.textContent='+ '+pp.join(' · ')}else pts.classList.add('hidden');
-  const slots=$('abar').children;for(let i=0;i<6;i++){const s=slots[i];if(!s)continue;const locked=p.level<UNLOCK[i];s.classList.toggle('locked',locked);s.classList.toggle('nomana',!locked&&p.mana<p.abil[i].mana);
-    const cd=p.cds[i];s.children[2].style.height=(locked?100:cd>0?cd/p.cdMax[i]*100:0)+'%';s.children[3].textContent=locked?'Lv '+UNLOCK[i]:cd>0&&i>0?(cd>=1?Math.ceil(cd):cd.toFixed(1)):''}
+  const slots=$('abar').children;for(let i=0;i<6;i++){const s=slots[i];if(!s)continue;const locked=p.level<UNLOCK[i];s.classList.toggle('locked',locked);const st=abarState(p,i),cd=st.cd;if(!p.cdEnd)p.cdEnd=[];
+    if(p.cdWas&&p.cdWas[i]>0&&cd<=0)p.cdEnd[i]=rt;(p.cdWas||(p.cdWas=[]))[i]=cd;
+    s.classList.toggle('poor',!locked&&st.poor);s.classList.toggle('rdy',!locked&&i>0&&st.ready);s.style.setProperty('--e',(locked?0:(1-st.cdFrac)*360)+'deg');
+    s.children[3].textContent=locked?'Lv '+UNLOCK[i]:cd>0&&i>0?(cd>=1?Math.ceil(cd):cd.toFixed(1)):''}
   {const cnt=kind=>Object.keys(SUP).filter(k=>SUP[k].kind===kind).reduce((t,k)=>t+supCount(p,k),0);
     for(const[id,kind]of[['potSlot','hp'],['manaSlot','mp'],['foodSlot','food']]){const e=$(id);if(!e)continue;const n=cnt(kind);e.children[2].textContent=n||'';e.classList.toggle('nomana',!n);
       e.children[3].style.height=(kind==='food'?(p.eat?p.eat.left/EAT_TIME*100:0):p.potCd/POT_CD*100)+'%'}}
   renderBuffs(p);
   {const h=$('hearthSlot');if(h){const cd=Math.max(0,(p.hearthCd||0)-time);h.children[2].style.height=(p.hearthCast>0?(1-p.hearthCast/HEARTH_CAST)*100:cd/HEARTH_CD*100)+'%';h.children[2].style.background=p.hearthCast>0?'rgba(120,200,255,.5)':'rgba(0,0,0,.68)';h.children[3].textContent=cd>0?Math.ceil(cd)+'':''}}
-  let boss=null,bd=900;for(const e of enemies)if(e.boss&&e.target&&dist(e,p)<bd){bd=dist(e,p);boss=e}
-  const bb=$('bossbar');if(boss){bb.classList.remove('hidden');$('bossName').textContent=boss.name+' · Level '+boss.lvl+(boss.enraged?' · ENRAGED':'');$('bossF').style.width=(boss.hp/boss.maxHp*100)+'%'}else bb.classList.add('hidden');
+  if(!phoneUI()){const h=enemyUnderMouse();if(h&&!isPaused())hudTarget=h}
+  if(hudTarget&&(hudTarget.dead||hudTarget.hp<=0||dist(hudTarget,p)>1100||!enemies.includes(hudTarget)))hudTarget=null;
+  let tg=hudTarget,bd=900;if(!tg)for(const e of enemies)if(e.boss&&e.target&&dist(e,p)<bd){bd=dist(e,p);tg=e}// an engaged boss shows even with nothing targeted
+  const tf=$('tframe');if(tg){tf.classList.remove('hidden');tf.classList.toggle('boss',!!tg.boss);$('tName').textContent=tg.name+(tg.enraged?' · ENRAGED':'');const tl=$('tLvl');tl.textContent='Lv '+tg.lvl;tl.style.color=lvlColor(p,tg.lvl);
+    $('tF').style.width=Math.max(0,tg.hp/tg.maxHp*100)+'%';$('tT').textContent=Math.max(0,Math.ceil(tg.hp))+' / '+tg.maxHp;
+    const k=monsterKey(tg);if(k!==updateHud.tk){updateHud.tk=k;const c=$('tPort').getContext('2d');c.clearRect(0,0,112,112);c.drawImage(monsterPortrait(tg),0,0)}}else tf.classList.add('hidden');
   partyT-=1/60;if(partyT<=0){partyT=.25;renderParty()}
   drawMini()}
 function updateQuestUI(){const q=QUESTS[quest.idx],el=$('quest');

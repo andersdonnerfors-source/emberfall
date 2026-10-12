@@ -10,7 +10,7 @@
 :root{--gold:#e8c26a;--panel:rgba(10,12,16,.62);--line:rgba(255,255,255,.08);--text:#efe6d2;--muted:#b3a68a;--hp:#e5484d;--mp:#4c8dff;--xp:#c9a227;--r:8px;--ui:1;--fs:14px;--fs-s:12px;--blur:blur(10px);--ui-font:Inter,system-ui,'Segoe UI',sans-serif;--hover:rgba(255,255,255,.1);--accent:#e8c26a;--shadow:0 8px 28px rgba(0,0,0,.45)}
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;background:#0d0b09;color:var(--text);font-family:var(--ui-font);font-size:var(--fs);font-variant-numeric:tabular-nums;overflow:hidden;user-select:none}
-h1,h2,h3,.logo,.uname,.btn.big,#bossName,.selhead h2{font-family:Cinzel,Georgia,serif}
+h1,h2,h3,.logo,.uname,.btn.big,.selhead h2{font-family:Cinzel,Georgia,serif}
 canvas#game{display:block;width:100vw;height:100vh;cursor:crosshair}
 .panel,.glass{border:1px solid var(--line);border-radius:var(--r);background:var(--panel);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);box-shadow:var(--shadow)}
 .hidden{display:none!important}
@@ -111,18 +111,22 @@ h2{margin:0 0 10px;color:var(--gold);font-weight:normal;letter-spacing:.05em}
 #quest{margin-top:8px;padding:10px 12px;font-size:13px;line-height:1.4}
 #quest b{color:var(--gold);font-weight:normal;font-size:14px}
 #bottom{left:50%;bottom:10px;transform:translateX(-50%);display:flex;align-items:flex-end;gap:12px}
-#abar{display:flex;gap:6px;padding:8px 10px;border-radius:10px;margin-bottom:6px;border:1px solid var(--line);background:var(--panel);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);box-shadow:var(--shadow)}
-.slot{position:relative;width:56px;height:56px;background:radial-gradient(circle at 50% 35%,#2a2018,#0c0907);border:1px solid #5a4424;box-shadow:inset 0 0 10px rgba(0,0,0,.9),0 0 0 1px #000;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:27px;overflow:hidden}
-.slot .key{position:absolute;left:3px;top:1px;font-size:10px;color:var(--muted);font-family:system-ui,sans-serif}
+#abar{display:flex;gap:6px;padding:8px 10px;border-radius:var(--r);margin-bottom:6px;border:1px solid var(--line);background:var(--panel);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);box-shadow:var(--shadow)}
+.slot{position:relative;width:56px;height:56px;background:rgba(10,12,16,.5);border:1px solid rgba(255,255,255,.2);border-radius:var(--r);display:flex;align-items:center;justify-content:center;font-size:27px;overflow:hidden}
+.slot .key{position:absolute;left:4px;top:2px;font-size:var(--fs-s);line-height:1;color:var(--muted);font-family:var(--ui-font);font-weight:600;text-shadow:0 1px 2px #000;z-index:2}
 .slot .cd{position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,.68)}
-.slot .cdt{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:bold;color:#fff;text-shadow:0 1px 3px #000;font-family:system-ui,sans-serif}
+.slot .cdt{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;text-shadow:0 1px 3px #000;font-family:var(--ui-font);font-variant-numeric:tabular-nums}
+.slot.sw .cd{top:0;height:100%!important;background:conic-gradient(transparent var(--e,0deg),rgba(0,0,0,.7) 0)}
+.slot.poor .ic{filter:saturate(.5) brightness(.7)}.slot.poor::after{content:'';position:absolute;inset:0;background:rgba(40,80,200,.38);pointer-events:none}
+.slot.rdy{animation:rdyglow .6s ease-out}@keyframes rdyglow{0%{box-shadow:0 0 14px 3px rgba(255,224,138,.95);border-color:#ffe08a}100%{box-shadow:0 0 0 0 rgba(255,224,138,0)}}
 .slot.nomana .ic{filter:grayscale(.9) brightness(.55)}
 .slot.locked .ic{filter:grayscale(1) brightness(.35)}
 .slot .cnt{position:absolute;right:4px;bottom:2px;font-size:12px;font-family:system-ui,sans-serif;font-weight:bold}
-@media (max-width:1000px){#hint{display:none}#bossbar{top:auto!important;bottom:84px;width:80vw!important}}
+@media (max-width:1000px){#hint{display:none}#tframe{top:8px;width:min(260px,44vw)}}
 #hint{transition:opacity 1.5s;left:50%;transform:translateX(-50%);bottom:136px;font-size:12px;color:rgba(239,230,210,.75);font-family:system-ui,sans-serif;max-width:min(760px,92vw);line-height:1.5;text-align:center;background:rgba(0,0,0,.45);padding:5px 12px;border-radius:6px;pointer-events:none}
-#bossbar{top:16px;left:50%;transform:translateX(-50%);width:min(520px,50vw);text-align:center;font-size:17px;color:#e8d0ff;text-shadow:0 2px 4px #000}
-.bar.boss{height:18px}.bar.boss i{background:linear-gradient(#b04ad8,#5a1e8e)}
+#tframe{top:14px;left:50%;transform:translateX(-50%);width:min(300px,40vw);padding:8px 12px;display:grid;grid-template-columns:44px 1fr;column-gap:10px;align-items:center}
+#tframe .uname{font-family:var(--ui-font);font-weight:600;font-size:var(--fs)}#tframe.hidden{display:none}#tPort{width:44px;height:44px;border-radius:50%;display:block}.tf-tx{min-width:0}.tf-tx .bar{height:14px;margin-top:3px}
+#tframe.boss{width:min(460px,46vw);grid-template-columns:56px 1fr;border-color:rgba(200,120,255,.5)}#tframe.boss #tPort{width:56px;height:56px}#tframe.boss .bar{height:18px}#tframe.boss .bar i{background:linear-gradient(#b04ad8,#5a1e8e)}
 #toasts{position:fixed;top:20%;left:50%;transform:translateX(-50%);z-index:30;display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none}
 .toast{background:rgba(15,12,9,.88);border:1px solid var(--line);padding:8px 18px;border-radius:8px;font-size:16px;animation:tf 3.4s forwards;text-align:center}
 .toast.danger{color:#ff8a6a;border-color:#c84a3a}.toast.gold{color:var(--gold);border-color:var(--gold)}
@@ -209,7 +213,7 @@ h2{margin:0 0 10px;color:var(--gold);font-weight:normal;letter-spacing:.05em}
   </div>
   <div id="party" class="hidden"></div>
   <div id="right"><canvas id="mini" width="200" height="200" class="panel"></canvas><div id="quest" class="panel"></div></div>
-  <div id="bossbar" class="hidden"><div id="bossName"></div><div class="bar boss"><i id="bossF"></i></div></div>
+  <div id="tframe" class="panel hidden"><canvas id="tPort" width="112" height="112"></canvas><div class="tf-tx"><div class="uname"><span id="tName"></span><span id="tLvl"></span></div><div class="bar hp"><i id="tF"></i><span id="tT"></span></div></div></div>
   <div id="bottom"><div id="abar"></div></div>
   <div id="hint">WASD / arrows: move · Mouse: aim · Left click: attack · Right click / 1–4: abilities · Q: heal potion · Z: mana potion · X: eat · E: talk, trade, enter · F: mount · H: teleport home · N: world map · O: friends · I: character · T: talents · P: professions · Esc: pause · F1: show this help</div>
 </div>

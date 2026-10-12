@@ -159,7 +159,7 @@ function applySnap(m){Net.hostQ=m.q;if(m.wc!=null)worldClock=m.wc;const same=zon
   // events: new spells, hits, deaths
   for(const v of m.ev){if(v.k==='p')projs.push({x:v.x,y:v.y,vx:v.vx,vy:v.vy,col:v.c,kind:v.kd,r:v.r,life:v.l,side:v.s,pierce:v.pi,explode:v.ex?{r:v.ex,dmg:0}:null,hit:new Set(),net:1});
     else if(v.k==='a'){const f=v.f!=null?enemies.find(e=>e.nid===v.f):null;areas.push(mkArea({x:v.x,y:v.y,r:v.r,delay:v.dl,dur:v.du,kind:v.kd,side:v.s,a:v.an,len:v.ln,follow:f}))}
-    else if(v.k==='h'){const e=enemies.find(e=>e.nid===v.n);if(e){e.hitFlash=.12;floatText(e.x,e.y-(e.h||40)*.6,v.c?v.d+'!':''+v.d,v.c?'#ffd84a':'#fff',v.c?20:15);hitSpark(e,v.col||'#fff3d0',v.c);sfx('hit')}}
+    else if(v.k==='h'){const e=enemies.find(e=>e.nid===v.n);if(e){e.hitFlash=.12;floatText(e.x,e.y-(e.h||40)*.6,v.c?v.d+'!':''+v.d,v.c?'#ffd84a':'#fff',v.c?21:15);hitSpark(e,v.col||'#fff3d0',v.c);sfx('hit')}}
     else if(v.k==='m'){const e=enemies.find(e=>e.nid===v.n);if(e)floatText(e.x,e.y-(e.h||40)*.6,'Miss','#b8b8b8',13)}
     else if(v.k==='d'){bloodAt(v.x,v.y,true,v.ty);burst(v.x,v.y,v.b?'#cfe':'#a33',v.b?70:16,v.b?220:140);sfx(v.b?'bossdie':'die');if(v.b){shake=14;toast(v.n+' has fallen!','gold')}}
     else if(v.k==='t')toast(v.s,v.c||'')}

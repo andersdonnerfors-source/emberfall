@@ -24,3 +24,15 @@ function drawPortrait(cv,look,gear,cls){const p={cls:cls||'paladin',look:look||{
 // One cached 112x112 canvas per look+head+chest gear. Do not put it in the page directly (it is shared): copy it with portraitEl.
 function portraitFor(p){const k=portraitKey(p.look,p.gear,p.cls);let cv=PORT.get(k);if(!cv){if(PORT.size>60)PORT.clear();cv=document.createElement('canvas');cv.width=cv.height=112;drawPortrait(cv,p.look,p.gear,p.cls);PORT.set(k,cv)}return cv}
 function portraitEl(p,px){const d=Math.round(px*(devicePixelRatio||1)),e=document.createElement('canvas');e.width=e.height=d;e.style.cssText=`width:${px}px;height:${px}px;border-radius:50%;flex:none`;e.getContext('2d').drawImage(portraitFor(p),0,0,d,d);return e}
+
+// ================= Target frame, action bar state =================
+// Monster portrait: the same body drawing as corpses (drawUnitBody), cached per monster type.
+const MPORT=new Map(),monsterKey=u=>(u.type||u.kind||'?')+(u.boss?'*':'');
+function monsterPortrait(u){const k=monsterKey(u);let cv=MPORT.get(k);if(!cv){cv=document.createElement('canvas');cv.width=cv.height=112;const c=cv.getContext('2d'),S=112,sc=Math.min(3,78/Math.max(30,u.h||40));
+  c.save();c.beginPath();c.arc(S/2,S/2,S/2-1,0,TAU);c.clip();const g=c.createRadialGradient(S/2,S*.4,S*.05,S/2,S/2,S*.7);g.addColorStop(0,u.boss?'#4a2a5a':'#3a3a46');g.addColorStop(1,'#0e0e14');c.fillStyle=g;c.fillRect(0,0,S,S);
+  c.translate(S/2,S*.9);c.scale(sc,sc);const a=u.aim;u.aim=0;try{drawUnitBody(c,u)}finally{u.aim=a}c.restore();c.strokeStyle=u.boss?'rgba(200,120,255,.6)':'rgba(255,255,255,.28)';c.lineWidth=2;c.beginPath();c.arc(S/2,S/2,S/2-1,0,TAU);c.stroke();MPORT.set(k,cv)}return cv}
+// State of action-bar slot i. cdFrac = share of the cooldown still left, ready = the 0.6 s glow after it ends (p.cdEnd[i] = when it ended).
+function abarState(p,i,now){now=now===undefined?rt:now;const cd=Math.max(0,p.cds[i]||0),mx=p.cdMax[i]||1,e=p.cdEnd&&p.cdEnd[i];
+  return{cd,cdFrac:cd>0?Math.min(1,cd/mx):0,poor:p.mana<abilCost(p,i),ready:cd<=0&&e!=null&&now-e>=0&&now-e<.6}}
+// The enemy under the mouse (desktop). Same screen projection as drawUnit.
+function enemyUnderMouse(){let best=null,bd=1e9;for(const e of enemies){if(e.dead||e.hp<=0)continue;const[sx,sy]=S(e.x,e.y),h=(e.h||40)*.5,d=Math.hypot(mouse.x-sx,mouse.y-(sy-h)),r=Math.max(e.r||12,14)+12+h*.3;if(d<r&&d<bd){bd=d;best=e}}return best}

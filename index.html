@@ -10,7 +10,7 @@
 :root{--gold:#e8c26a;--panel:rgba(10,12,16,.62);--line:rgba(255,255,255,.08);--text:#efe6d2;--muted:#b3a68a;--hp:#e5484d;--mp:#4c8dff;--xp:#c9a227;--r:8px;--ui:1;--fs:14px;--fs-s:12px;--blur:blur(10px);--ui-font:Inter,system-ui,'Segoe UI',sans-serif;--hover:rgba(255,255,255,.1);--accent:#e8c26a;--shadow:0 8px 28px rgba(0,0,0,.45)}
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;background:#0d0b09;color:var(--text);font-family:var(--ui-font);font-size:var(--fs);font-variant-numeric:tabular-nums;overflow:hidden;user-select:none}
-h1,h2,h3,.logo,.uname,.btn.big,#bossName,.selhead h2{font-family:Cinzel,Georgia,serif}
+h1,h2,h3,.logo,.uname,.btn.big,.selhead h2{font-family:Cinzel,Georgia,serif}
 canvas#game{display:block;width:100vw;height:100vh;cursor:crosshair}
 .panel,.glass{border:1px solid var(--line);border-radius:var(--r);background:var(--panel);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);box-shadow:var(--shadow)}
 .hidden{display:none!important}
@@ -111,18 +111,22 @@ h2{margin:0 0 10px;color:var(--gold);font-weight:normal;letter-spacing:.05em}
 #quest{margin-top:8px;padding:10px 12px;font-size:13px;line-height:1.4}
 #quest b{color:var(--gold);font-weight:normal;font-size:14px}
 #bottom{left:50%;bottom:10px;transform:translateX(-50%);display:flex;align-items:flex-end;gap:12px}
-#abar{display:flex;gap:6px;padding:8px 10px;border-radius:10px;margin-bottom:6px;border:1px solid var(--line);background:var(--panel);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);box-shadow:var(--shadow)}
-.slot{position:relative;width:56px;height:56px;background:radial-gradient(circle at 50% 35%,#2a2018,#0c0907);border:1px solid #5a4424;box-shadow:inset 0 0 10px rgba(0,0,0,.9),0 0 0 1px #000;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:27px;overflow:hidden}
-.slot .key{position:absolute;left:3px;top:1px;font-size:10px;color:var(--muted);font-family:system-ui,sans-serif}
+#abar{display:flex;gap:6px;padding:8px 10px;border-radius:var(--r);margin-bottom:6px;border:1px solid var(--line);background:var(--panel);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);box-shadow:var(--shadow)}
+.slot{position:relative;width:56px;height:56px;background:rgba(10,12,16,.5);border:1px solid rgba(255,255,255,.2);border-radius:var(--r);display:flex;align-items:center;justify-content:center;font-size:27px;overflow:hidden}
+.slot .key{position:absolute;left:4px;top:2px;font-size:var(--fs-s);line-height:1;color:var(--muted);font-family:var(--ui-font);font-weight:600;text-shadow:0 1px 2px #000;z-index:2}
 .slot .cd{position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,.68)}
-.slot .cdt{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:bold;color:#fff;text-shadow:0 1px 3px #000;font-family:system-ui,sans-serif}
+.slot .cdt{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;text-shadow:0 1px 3px #000;font-family:var(--ui-font);font-variant-numeric:tabular-nums}
+.slot.sw .cd{top:0;height:100%!important;background:conic-gradient(transparent var(--e,0deg),rgba(0,0,0,.7) 0)}
+.slot.poor .ic{filter:saturate(.5) brightness(.7)}.slot.poor::after{content:'';position:absolute;inset:0;background:rgba(40,80,200,.38);pointer-events:none}
+.slot.rdy{animation:rdyglow .6s ease-out}@keyframes rdyglow{0%{box-shadow:0 0 14px 3px rgba(255,224,138,.95);border-color:#ffe08a}100%{box-shadow:0 0 0 0 rgba(255,224,138,0)}}
 .slot.nomana .ic{filter:grayscale(.9) brightness(.55)}
 .slot.locked .ic{filter:grayscale(1) brightness(.35)}
 .slot .cnt{position:absolute;right:4px;bottom:2px;font-size:12px;font-family:system-ui,sans-serif;font-weight:bold}
-@media (max-width:1000px){#hint{display:none}#bossbar{top:auto!important;bottom:84px;width:80vw!important}}
+@media (max-width:1000px){#hint{display:none}#tframe{top:8px;width:min(260px,44vw)}}
 #hint{transition:opacity 1.5s;left:50%;transform:translateX(-50%);bottom:136px;font-size:12px;color:rgba(239,230,210,.75);font-family:system-ui,sans-serif;max-width:min(760px,92vw);line-height:1.5;text-align:center;background:rgba(0,0,0,.45);padding:5px 12px;border-radius:6px;pointer-events:none}
-#bossbar{top:16px;left:50%;transform:translateX(-50%);width:min(520px,50vw);text-align:center;font-size:17px;color:#e8d0ff;text-shadow:0 2px 4px #000}
-.bar.boss{height:18px}.bar.boss i{background:linear-gradient(#b04ad8,#5a1e8e)}
+#tframe{top:14px;left:50%;transform:translateX(-50%);width:min(300px,40vw);padding:8px 12px;display:grid;grid-template-columns:44px 1fr;column-gap:10px;align-items:center}
+#tframe .uname{font-family:var(--ui-font);font-weight:600;font-size:var(--fs)}#tframe.hidden{display:none}#tPort{width:44px;height:44px;border-radius:50%;display:block}.tf-tx{min-width:0}.tf-tx .bar{height:14px;margin-top:3px}
+#tframe.boss{width:min(460px,46vw);grid-template-columns:56px 1fr;border-color:rgba(200,120,255,.5)}#tframe.boss #tPort{width:56px;height:56px}#tframe.boss .bar{height:18px}#tframe.boss .bar i{background:linear-gradient(#b04ad8,#5a1e8e)}
 #toasts{position:fixed;top:20%;left:50%;transform:translateX(-50%);z-index:30;display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none}
 .toast{background:rgba(15,12,9,.88);border:1px solid var(--line);padding:8px 18px;border-radius:8px;font-size:16px;animation:tf 3.4s forwards;text-align:center}
 .toast.danger{color:#ff8a6a;border-color:#c84a3a}.toast.gold{color:var(--gold);border-color:var(--gold)}
@@ -209,7 +213,7 @@ h2{margin:0 0 10px;color:var(--gold);font-weight:normal;letter-spacing:.05em}
   </div>
   <div id="party" class="hidden"></div>
   <div id="right"><canvas id="mini" width="200" height="200" class="panel"></canvas><div id="quest" class="panel"></div></div>
-  <div id="bossbar" class="hidden"><div id="bossName"></div><div class="bar boss"><i id="bossF"></i></div></div>
+  <div id="tframe" class="panel hidden"><canvas id="tPort" width="112" height="112"></canvas><div class="tf-tx"><div class="uname"><span id="tName"></span><span id="tLvl"></span></div><div class="bar hp"><i id="tF"></i><span id="tT"></span></div></div></div>
   <div id="bottom"><div id="abar"></div></div>
   <div id="hint">WASD / arrows: move · Mouse: aim · Left click: attack · Right click / 1–4: abilities · Q: heal potion · Z: mana potion · X: eat · E: talk, trade, enter · F: mount · H: teleport home · N: world map · O: friends · I: character · T: talents · P: professions · Esc: pause · F1: show this help</div>
 </div>
@@ -967,6 +971,7 @@ function wrapA(a){while(a>Math.PI)a-=TAU;while(a<-Math.PI)a+=TAU;return a}
 function mkArea(o){return Object.assign({t:0,delay:0,dur:0,tick:0,nt:0,tickDmg:0},o,{delay0:o.delay||0})}
 function fireProj(o){projs.push(Object.assign({life:1.5,r:6,hit:new Set(),pierce:0},o))}
 function burst(x,y,col,n,spd){for(let i=0;i<n;i++){const a=rand(0,TAU),s=rand(.2,1)*spd;parts.push({x,y,z:rand(5,25),vx:Math.cos(a)*s,vy:Math.sin(a)*s,vz:rand(20,140),life:rand(.4,.9),max:.9,col,size:rand(1.5,3.5)})}}
+let hudTarget=null;// the enemy shown in the target frame: under the mouse, or the last one you hit (auto-aim also sets it on phones)
 function floatText(x,y,txt,col,size){texts.push({x:x+rand(-8,8),y,z:44,txt,col,size:size||15,life:1})}
 function toast(msg,cls){const d=document.createElement('div');d.className='toast '+(cls||'');d.textContent=msg;const tc=$('toasts');tc.appendChild(d);while(tc.children.length>4)tc.firstChild.remove();setTimeout(()=>d.remove(),3500)}
 function swing(u,a,col,r){fx.push({k:'swing',x:u.x,y:u.y,a,life:.18,max:.18,col,r:r||60})}
@@ -1105,7 +1110,8 @@ function dealDamage(t,amt,src,o){o=o||{};if(t.dead)return;if(t.invulnUntil>time)
   if(t.isPlayer&&t.eat){t.eat=null;floatText(t.x,t.y-50,'Meal interrupted','#ffb08a',12)}
   if(t.isPlayer&&!o.raw)d*=100/(100+t.stats.armor);d=Math.max(1,Math.round(d));if(Net.role==='host'&&t.side==='enemy')Net.ev.push({k:'h',n:t.nid,d,c:crit?1:0,col:o.hc});
   t.hp-=d;t.hitFlash=.12;t.lastHurt=time;if(t.isPlayer&&(t.mounted||t.mountCast>0)&&!(t.fly&&!free(t.x,t.y,t.r)))dismount(t,true);if(t.isPlayer&&t.hearthCast>0){t.hearthCast=0;toast('Teleport interrupted!')}
-  floatText(t.x,t.y-(t.h||40)*.6,(crit?d+'!':''+d),t.side==='player'?'#ff6a5a':crit?'#ffd84a':'#fff',crit?20:15);
+  floatText(t.x,t.y-(t.h||40)*.6,(crit?d+'!':''+d),t.side==='player'?'#ff6a5a':crit?'#ffd84a':'#fff',crit?21:15);
+  if(own===players[0]&&t.side==='enemy'&&t.type)hudTarget=t;
   if(t.side==='enemy'&&own)hitSpark(t,o.hc||weaponCol(own),crit);else if(t.isPlayer){sparks(t.x,t.y,26,'#ff5a4a',5,120,.25);if(t===players[0])hurtFlash=Math.min(1,hurtFlash+.6)}
   if(o.slow){t.slowUntil=time+o.slow;t.slowF=o.slowF||.5}
   if(o.stun&&!(t.boss&&o.stun>1)){t.stunUntil=time+o.stun}else if(o.stun&&t.boss)t.stunUntil=time+.5;
@@ -1483,7 +1489,7 @@ function render(){
   drawAir();drawAirFx();
   drawParticles();
   drawFogBanks();drawMood();drawNight();if(state==='play')drawVisionHaze();drawDarkness();if(zone.warm){ctx.fillStyle='rgba(255,170,90,.06)';ctx.fillRect(0,0,W,H)}
-  ctx.textAlign='center';for(const t of texts){const[sx,sy]=S(t.x,t.y);ctx.globalAlpha=Math.min(1,t.life*2);ctx.font=`bold ${t.size}px Georgia`;ctx.fillStyle='rgba(0,0,0,.7)';ctx.fillText(t.txt,sx+1,sy-t.z+1);ctx.fillStyle=t.col;ctx.fillText(t.txt,sx,sy-t.z)}ctx.globalAlpha=1;
+  ctx.textAlign='center';for(const t of texts){const[sx,sy]=S(t.x,t.y);ctx.globalAlpha=Math.min(1,t.life*2);ctx.font=`700 ${t.size}px Inter,system-ui,sans-serif`;ctx.lineJoin='round';ctx.lineWidth=3;ctx.strokeStyle='rgba(8,8,12,.88)';ctx.strokeText(t.txt,sx,sy-t.z);ctx.fillStyle=t.col;ctx.fillText(t.txt,sx,sy-t.z)}ctx.globalAlpha=1;
   for(const d of decor)if(d.k==='fire'&&inView(d,300)){const[sx,sy]=S(d.x,d.y);ctx.save();ctx.globalCompositeOperation='lighter';const r=130+Math.sin(rt*9)*6;const g=ctx.createRadialGradient(sx,sy-10,0,sx,sy-10,r);g.addColorStop(0,'rgba(255,150,60,.28)');g.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=g;ctx.fillRect(sx-r,sy-10-r,r*2,r*2);ctx.restore()}
   if(state==='play'){drawQuestArrow();drawPrompt()}
   const vg=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*.3,W/2,H/2,Math.max(W,H)*.72);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.7)');ctx.fillStyle=vg;ctx.fillRect(0,0,W,H);drawDread()}
@@ -1499,7 +1505,7 @@ function drawQuestArrow(){const tg=questTarget(),p=players[0];if(!tg||!p||p.dead
   ctx.save();ctx.globalAlpha=questArrowA;ctx.font='12px Georgia';ctx.textAlign='center';ctx.fillStyle='#ffd84a';ctx.fillText(Math.round(dd/TILE)+' m',px-c*26,py-s*26+4);ctx.restore()}
 // ================= HUD & UI =================
 function buildAbar(p){const el=$('abar');el.innerHTML='';const lab=['LMB','RMB/1','2','3','4','R'];
-  p.abil.forEach((a,i)=>{const d=document.createElement('div');d.className='slot';d.innerHTML=`<div class="ic">${a.icon}</div><div class="key">${lab[i]}</div><div class="cd"></div><div class="cdt"></div>`;
+  p.abil.forEach((a,i)=>{const d=document.createElement('div');d.className='slot sw';d.innerHTML=`<div class="ic">${a.icon}</div><div class="key">${lab[i]}</div><div class="cd"></div><div class="cdt"></div>`;
     d.onmouseenter=()=>showTip(`<div class="tn">${a.name}</div><div class="ts">${a.mana?a.mana+' mana · ':''}${a.cd}s cooldown${p.level<UNLOCK[i]?' · <span class="down">Unlocks at level '+UNLOCK[i]+'</span>':''}</div>${a.desc}`);d.onmouseleave=hideTip;el.appendChild(d)});
   const sup=(id,icon,key,tip,fn)=>{const d=document.createElement('div');d.className='slot';d.id=id;d.innerHTML=`<div class="ic">${icon}</div><div class="key">${key}</div><div class="cnt"></div><div class="cd"></div>`;d.onclick=fn;d.onmouseenter=()=>showTip(tip);d.onmouseleave=hideTip;el.appendChild(d)};
   sup('potSlot','🧪','Q','<div class="tn">Healing potion</div>Drinks the smallest healing potion that covers what you are missing. Potions share a short cooldown.',()=>drinkPotion(p,'hp'));
@@ -1517,15 +1523,21 @@ function updateHud(){const p=players[0];if(!p)return;
   $('xpF').style.width=(p.level>=20?100:p.xp/xpNeed(p.level)*100)+'%';$('hGold').textContent=p.gold;
   const pts=$('pts'),pp=[];if(p.points>0)pp.push(p.points+' attribute (I)');if(p.tpoints>0)pp.push(p.tpoints+' talent (T)');
   if(pp.length){pts.classList.remove('hidden');pts.textContent='+ '+pp.join(' · ')}else pts.classList.add('hidden');
-  const slots=$('abar').children;for(let i=0;i<6;i++){const s=slots[i];if(!s)continue;const locked=p.level<UNLOCK[i];s.classList.toggle('locked',locked);s.classList.toggle('nomana',!locked&&p.mana<p.abil[i].mana);
-    const cd=p.cds[i];s.children[2].style.height=(locked?100:cd>0?cd/p.cdMax[i]*100:0)+'%';s.children[3].textContent=locked?'Lv '+UNLOCK[i]:cd>0&&i>0?(cd>=1?Math.ceil(cd):cd.toFixed(1)):''}
+  const slots=$('abar').children;for(let i=0;i<6;i++){const s=slots[i];if(!s)continue;const locked=p.level<UNLOCK[i];s.classList.toggle('locked',locked);const st=abarState(p,i),cd=st.cd;if(!p.cdEnd)p.cdEnd=[];
+    if(p.cdWas&&p.cdWas[i]>0&&cd<=0)p.cdEnd[i]=rt;(p.cdWas||(p.cdWas=[]))[i]=cd;
+    s.classList.toggle('poor',!locked&&st.poor);s.classList.toggle('rdy',!locked&&i>0&&st.ready);s.style.setProperty('--e',(locked?0:(1-st.cdFrac)*360)+'deg');
+    s.children[3].textContent=locked?'Lv '+UNLOCK[i]:cd>0&&i>0?(cd>=1?Math.ceil(cd):cd.toFixed(1)):''}
   {const cnt=kind=>Object.keys(SUP).filter(k=>SUP[k].kind===kind).reduce((t,k)=>t+supCount(p,k),0);
     for(const[id,kind]of[['potSlot','hp'],['manaSlot','mp'],['foodSlot','food']]){const e=$(id);if(!e)continue;const n=cnt(kind);e.children[2].textContent=n||'';e.classList.toggle('nomana',!n);
       e.children[3].style.height=(kind==='food'?(p.eat?p.eat.left/EAT_TIME*100:0):p.potCd/POT_CD*100)+'%'}}
   renderBuffs(p);
   {const h=$('hearthSlot');if(h){const cd=Math.max(0,(p.hearthCd||0)-time);h.children[2].style.height=(p.hearthCast>0?(1-p.hearthCast/HEARTH_CAST)*100:cd/HEARTH_CD*100)+'%';h.children[2].style.background=p.hearthCast>0?'rgba(120,200,255,.5)':'rgba(0,0,0,.68)';h.children[3].textContent=cd>0?Math.ceil(cd)+'':''}}
-  let boss=null,bd=900;for(const e of enemies)if(e.boss&&e.target&&dist(e,p)<bd){bd=dist(e,p);boss=e}
-  const bb=$('bossbar');if(boss){bb.classList.remove('hidden');$('bossName').textContent=boss.name+' · Level '+boss.lvl+(boss.enraged?' · ENRAGED':'');$('bossF').style.width=(boss.hp/boss.maxHp*100)+'%'}else bb.classList.add('hidden');
+  if(!phoneUI()){const h=enemyUnderMouse();if(h&&!isPaused())hudTarget=h}
+  if(hudTarget&&(hudTarget.dead||hudTarget.hp<=0||dist(hudTarget,p)>1100||!enemies.includes(hudTarget)))hudTarget=null;
+  let tg=hudTarget,bd=900;if(!tg)for(const e of enemies)if(e.boss&&e.target&&dist(e,p)<bd){bd=dist(e,p);tg=e}// an engaged boss shows even with nothing targeted
+  const tf=$('tframe');if(tg){tf.classList.remove('hidden');tf.classList.toggle('boss',!!tg.boss);$('tName').textContent=tg.name+(tg.enraged?' · ENRAGED':'');const tl=$('tLvl');tl.textContent='Lv '+tg.lvl;tl.style.color=lvlColor(p,tg.lvl);
+    $('tF').style.width=Math.max(0,tg.hp/tg.maxHp*100)+'%';$('tT').textContent=Math.max(0,Math.ceil(tg.hp))+' / '+tg.maxHp;
+    const k=monsterKey(tg);if(k!==updateHud.tk){updateHud.tk=k;const c=$('tPort').getContext('2d');c.clearRect(0,0,112,112);c.drawImage(monsterPortrait(tg),0,0)}}else tf.classList.add('hidden');
   partyT-=1/60;if(partyT<=0){partyT=.25;renderParty()}
   drawMini()}
 function updateQuestUI(){const q=QUESTS[quest.idx],el=$('quest');
@@ -2355,11 +2367,13 @@ function renderLoot(){const cs=openCorpses(),el=$('lootList');if(!lootOpen)retur
     if(d.item){row.onmouseenter=()=>showTip(itemTip(d.item,players[0].gear[d.item.slot]||null));row.onmouseleave=hideTip}
     row.onclick=()=>{if(takeLoot(c,d)){hideTip();lootChanged();save()}};el.appendChild(row)}}}
 function updateCorpses(){const z=zone;if(!z||!z.corpses)return;const n0=z.corpses.length;z.corpses=z.corpses.filter(c=>c.until>time);if(z.corpses.length!==n0)Net.corpVer++;if(lootOpen){const p=players[0];if(!p||p.dead)closeLoot();else{const ids=lootGroupsRefresh(lootOpen.ids,z.corpses,p);if(ids.length!==lootOpen.ids.length)lootChanged()}}}
+// The creature or humanoid body for a unit (shared by corpses and the target-frame portrait). aim 0, standing still.
+function drawUnitBody(ctx,u){const kind=u.type;try{if(kind==='wolf'||kind==='frostwolf'||kind==='greyfang'||kind==='rimeclaw'||kind==='direwolf')drawWolf(ctx,0,0,{s:kind==='greyfang'||kind==='rimeclaw'?1.8:1,aim:0,walk:0,col:kind==='frostwolf'||kind==='rimeclaw'?'#dfe8f0':'#7c7f86',eye:'#333'});
+    else if(['spider','cspider','webweaver','giantspider','venomfang','broodmother','scarablord','bat','myconid','sporeling'].includes(kind))drawCreature(ctx,0,0,{kind:kind==='scarablord'?'scarab':kind==='venomfang'||kind==='broodmother'?'spider':kind,s:kind==='broodmother'?2.4:kind==='venomfang'?1.8:kind==='scarablord'?2.3:1,aim:0,walk:0});
+    else if(BUGS.has(kind))drawBug(ctx,0,0,{kind,s:1,aim:0,walk:0});else{const o=unitLook(u);o.walk=0;o.glow=false;drawHumanoid(ctx,0,0,o)}}catch(e){}}
 function drawCorpse(c){const u=c.unit,[sx,sy]=S(c.x,c.y),fade=Math.min(1,(c.until-time)/8);ctx.save();ctx.globalAlpha=.85*fade;softShadow(ctx,sx,sy,u.r*1.6,u.r*.6,.6);
   ctx.translate(sx,sy);ctx.rotate(Math.cos(u.aim||0)<0?-1.35:1.35);ctx.filter='grayscale(.45) brightness(.75)';
-  const kind=u.type;try{if(kind==='wolf'||kind==='frostwolf'||kind==='greyfang'||kind==='rimeclaw'||kind==='direwolf')drawWolf(ctx,0,0,{s:kind==='greyfang'||kind==='rimeclaw'?1.8:1,aim:0,walk:0,col:kind==='frostwolf'||kind==='rimeclaw'?'#dfe8f0':'#7c7f86',eye:'#333'});
-    else if(['spider','cspider','webweaver','giantspider','venomfang','broodmother','scarablord','bat','myconid','sporeling'].includes(kind))drawCreature(ctx,0,0,{kind:kind==='scarablord'?'scarab':kind==='venomfang'||kind==='broodmother'?'spider':kind,s:kind==='broodmother'?2.4:kind==='venomfang'?1.8:kind==='scarablord'?2.3:1,aim:0,walk:0});
-    else if(BUGS.has(kind))drawBug(ctx,0,0,{kind,s:1,aim:0,walk:0});else{const o=unitLook(u);o.walk=0;o.glow=false;drawHumanoid(ctx,0,0,o)}}catch(e){}
+  drawUnitBody(ctx,u);
   ctx.filter='none';ctx.restore();
   if(lootable(c)){const b=Math.sin(rt*4+c.x)*.5+.5;ctx.save();ctx.globalCompositeOperation='lighter';const best=Math.max(-1,...c.loot.filter(d=>d.item).map(d=>d.item.rar));const col=best>=0?RAR[best].c:'#ffe08a';
     const g=ctx.createRadialGradient(sx,sy-6,0,sx,sy-6,26);g.addColorStop(0,col+'aa');g.addColorStop(1,'rgba(0,0,0,0)');ctx.globalAlpha=.35+.35*b;ctx.fillStyle=g;ctx.fillRect(sx-26,sy-32,52,52);ctx.restore();
@@ -2651,6 +2665,18 @@ function drawPortrait(cv,look,gear,cls){const p={cls:cls||'paladin',look:look||{
 // One cached 112x112 canvas per look+head+chest gear. Do not put it in the page directly (it is shared): copy it with portraitEl.
 function portraitFor(p){const k=portraitKey(p.look,p.gear,p.cls);let cv=PORT.get(k);if(!cv){if(PORT.size>60)PORT.clear();cv=document.createElement('canvas');cv.width=cv.height=112;drawPortrait(cv,p.look,p.gear,p.cls);PORT.set(k,cv)}return cv}
 function portraitEl(p,px){const d=Math.round(px*(devicePixelRatio||1)),e=document.createElement('canvas');e.width=e.height=d;e.style.cssText=`width:${px}px;height:${px}px;border-radius:50%;flex:none`;e.getContext('2d').drawImage(portraitFor(p),0,0,d,d);return e}
+
+// ================= Target frame, action bar state =================
+// Monster portrait: the same body drawing as corpses (drawUnitBody), cached per monster type.
+const MPORT=new Map(),monsterKey=u=>(u.type||u.kind||'?')+(u.boss?'*':'');
+function monsterPortrait(u){const k=monsterKey(u);let cv=MPORT.get(k);if(!cv){cv=document.createElement('canvas');cv.width=cv.height=112;const c=cv.getContext('2d'),S=112,sc=Math.min(3,78/Math.max(30,u.h||40));
+  c.save();c.beginPath();c.arc(S/2,S/2,S/2-1,0,TAU);c.clip();const g=c.createRadialGradient(S/2,S*.4,S*.05,S/2,S/2,S*.7);g.addColorStop(0,u.boss?'#4a2a5a':'#3a3a46');g.addColorStop(1,'#0e0e14');c.fillStyle=g;c.fillRect(0,0,S,S);
+  c.translate(S/2,S*.9);c.scale(sc,sc);const a=u.aim;u.aim=0;try{drawUnitBody(c,u)}finally{u.aim=a}c.restore();c.strokeStyle=u.boss?'rgba(200,120,255,.6)':'rgba(255,255,255,.28)';c.lineWidth=2;c.beginPath();c.arc(S/2,S/2,S/2-1,0,TAU);c.stroke();MPORT.set(k,cv)}return cv}
+// State of action-bar slot i. cdFrac = share of the cooldown still left, ready = the 0.6 s glow after it ends (p.cdEnd[i] = when it ended).
+function abarState(p,i,now){now=now===undefined?rt:now;const cd=Math.max(0,p.cds[i]||0),mx=p.cdMax[i]||1,e=p.cdEnd&&p.cdEnd[i];
+  return{cd,cdFrac:cd>0?Math.min(1,cd/mx):0,poor:p.mana<abilCost(p,i),ready:cd<=0&&e!=null&&now-e>=0&&now-e<.6}}
+// The enemy under the mouse (desktop). Same screen projection as drawUnit.
+function enemyUnderMouse(){let best=null,bd=1e9;for(const e of enemies){if(e.dead||e.hp<=0)continue;const[sx,sy]=S(e.x,e.y),h=(e.h||40)*.5,d=Math.hypot(mouse.x-sx,mouse.y-(sy-h)),r=Math.max(e.r||12,14)+12+h*.3;if(d<r&&d<bd){bd=d;best=e}}return best}
 // ================= Accounts and hero storage =================
 // Online: heroes are stored in Supabase, and database rules (supabase-setup.sql) make sure each player can only
 // read, change and delete their own heroes. Offline: heroes stay in this browser, as before.
@@ -3011,7 +3037,7 @@ function applySnap(m){Net.hostQ=m.q;if(m.wc!=null)worldClock=m.wc;const same=zon
   // events: new spells, hits, deaths
   for(const v of m.ev){if(v.k==='p')projs.push({x:v.x,y:v.y,vx:v.vx,vy:v.vy,col:v.c,kind:v.kd,r:v.r,life:v.l,side:v.s,pierce:v.pi,explode:v.ex?{r:v.ex,dmg:0}:null,hit:new Set(),net:1});
     else if(v.k==='a'){const f=v.f!=null?enemies.find(e=>e.nid===v.f):null;areas.push(mkArea({x:v.x,y:v.y,r:v.r,delay:v.dl,dur:v.du,kind:v.kd,side:v.s,a:v.an,len:v.ln,follow:f}))}
-    else if(v.k==='h'){const e=enemies.find(e=>e.nid===v.n);if(e){e.hitFlash=.12;floatText(e.x,e.y-(e.h||40)*.6,v.c?v.d+'!':''+v.d,v.c?'#ffd84a':'#fff',v.c?20:15);hitSpark(e,v.col||'#fff3d0',v.c);sfx('hit')}}
+    else if(v.k==='h'){const e=enemies.find(e=>e.nid===v.n);if(e){e.hitFlash=.12;floatText(e.x,e.y-(e.h||40)*.6,v.c?v.d+'!':''+v.d,v.c?'#ffd84a':'#fff',v.c?21:15);hitSpark(e,v.col||'#fff3d0',v.c);sfx('hit')}}
     else if(v.k==='m'){const e=enemies.find(e=>e.nid===v.n);if(e)floatText(e.x,e.y-(e.h||40)*.6,'Miss','#b8b8b8',13)}
     else if(v.k==='d'){bloodAt(v.x,v.y,true,v.ty);burst(v.x,v.y,v.b?'#cfe':'#a33',v.b?70:16,v.b?220:140);sfx(v.b?'bossdie':'die');if(v.b){shake=14;toast(v.n+' has fallen!','gold')}}
     else if(v.k==='t')toast(v.s,v.c||'')}
@@ -3073,6 +3099,13 @@ test('uiSheet makes one row per item',()=>{const s=uiSheet('x',[{label:'a',onTap
 // ---- Portraits
 test('portraitKey stable, changes with hair and helm',()=>{const L={skin:'#e3c3a0',hair:'#552',hairStyle:'short',cloth:'#456'},k=portraitKey(L,{},'paladin');eq(portraitKey(Object.assign({},L),{},'paladin'),k);eq(portraitKey(Object.assign({},L,{hairStyle:'long'}),{},'paladin')===k,false);eq(portraitKey(L,{helm:{name:'Iron Helm',rar:1,ilvl:3}},'paladin')===k,false);eq(portraitKey(L,{weapon:{name:'Sword',rar:2}},'paladin'),k)});
 test('portraitFor caches per hero',()=>{const p={cls:'paladin',look:{skin:'#e3c3a0',hair:'#552',cloth:'#456'},gear:{}};const a=portraitFor(p);eq(portraitFor(p)===a,true);eq(a.width,112)});
+
+// ---- Target frame and action bar (B4-B5)
+const AP=(o)=>Object.assign({cds:[0,2,0],cdMax:[1,4,1],mana:50,tm:{},abil:[{mana:0},{mana:20},{mana:80}],cdEnd:[]},o);
+test('abarState halfway through cooldown',()=>eq(abarState(AP(),1,10).cdFrac,.5));
+test('abarState poor when mana is below the cost',()=>{const p=AP();eq(abarState(p,2,10).poor,true);eq(abarState(p,1,10).poor,false)});
+test('abarState ready glows 0.6 s after the cooldown ends',()=>{const p=AP({cds:[0,0,0],cdEnd:[0,10]});eq(abarState(p,1,10.3).ready,true);eq(abarState(p,1,10.7).ready,false);eq(abarState({...p,cds:[0,1,0]},1,10.3).ready,false)});
+test('monster portrait is cached per type',()=>{const u={type:'wolf',h:30,r:12,x:0,y:0};eq(monsterPortrait(u)===monsterPortrait({...u}),true);eq(monsterPortrait({...u,boss:true})===monsterPortrait(u),false)});
 // ================= Developer test mode for co-op =================
 // Open the game twice on this computer as index.html?nettest=a and index.html?nettest=b: the two tabs act as two
 // friends and introduce each other through the browser (no accounts needed). Ignored without the parameter.

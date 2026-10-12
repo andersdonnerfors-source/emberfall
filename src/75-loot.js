@@ -32,11 +32,13 @@ function renderLoot(){const cs=openCorpses(),el=$('lootList');if(!lootOpen)retur
     if(d.item){row.onmouseenter=()=>showTip(itemTip(d.item,players[0].gear[d.item.slot]||null));row.onmouseleave=hideTip}
     row.onclick=()=>{if(takeLoot(c,d)){hideTip();lootChanged();save()}};el.appendChild(row)}}}
 function updateCorpses(){const z=zone;if(!z||!z.corpses)return;const n0=z.corpses.length;z.corpses=z.corpses.filter(c=>c.until>time);if(z.corpses.length!==n0)Net.corpVer++;if(lootOpen){const p=players[0];if(!p||p.dead)closeLoot();else{const ids=lootGroupsRefresh(lootOpen.ids,z.corpses,p);if(ids.length!==lootOpen.ids.length)lootChanged()}}}
+// The creature or humanoid body for a unit (shared by corpses and the target-frame portrait). aim 0, standing still.
+function drawUnitBody(ctx,u){const kind=u.type;try{if(kind==='wolf'||kind==='frostwolf'||kind==='greyfang'||kind==='rimeclaw'||kind==='direwolf')drawWolf(ctx,0,0,{s:kind==='greyfang'||kind==='rimeclaw'?1.8:1,aim:0,walk:0,col:kind==='frostwolf'||kind==='rimeclaw'?'#dfe8f0':'#7c7f86',eye:'#333'});
+    else if(['spider','cspider','webweaver','giantspider','venomfang','broodmother','scarablord','bat','myconid','sporeling'].includes(kind))drawCreature(ctx,0,0,{kind:kind==='scarablord'?'scarab':kind==='venomfang'||kind==='broodmother'?'spider':kind,s:kind==='broodmother'?2.4:kind==='venomfang'?1.8:kind==='scarablord'?2.3:1,aim:0,walk:0});
+    else if(BUGS.has(kind))drawBug(ctx,0,0,{kind,s:1,aim:0,walk:0});else{const o=unitLook(u);o.walk=0;o.glow=false;drawHumanoid(ctx,0,0,o)}}catch(e){}}
 function drawCorpse(c){const u=c.unit,[sx,sy]=S(c.x,c.y),fade=Math.min(1,(c.until-time)/8);ctx.save();ctx.globalAlpha=.85*fade;softShadow(ctx,sx,sy,u.r*1.6,u.r*.6,.6);
   ctx.translate(sx,sy);ctx.rotate(Math.cos(u.aim||0)<0?-1.35:1.35);ctx.filter='grayscale(.45) brightness(.75)';
-  const kind=u.type;try{if(kind==='wolf'||kind==='frostwolf'||kind==='greyfang'||kind==='rimeclaw'||kind==='direwolf')drawWolf(ctx,0,0,{s:kind==='greyfang'||kind==='rimeclaw'?1.8:1,aim:0,walk:0,col:kind==='frostwolf'||kind==='rimeclaw'?'#dfe8f0':'#7c7f86',eye:'#333'});
-    else if(['spider','cspider','webweaver','giantspider','venomfang','broodmother','scarablord','bat','myconid','sporeling'].includes(kind))drawCreature(ctx,0,0,{kind:kind==='scarablord'?'scarab':kind==='venomfang'||kind==='broodmother'?'spider':kind,s:kind==='broodmother'?2.4:kind==='venomfang'?1.8:kind==='scarablord'?2.3:1,aim:0,walk:0});
-    else if(BUGS.has(kind))drawBug(ctx,0,0,{kind,s:1,aim:0,walk:0});else{const o=unitLook(u);o.walk=0;o.glow=false;drawHumanoid(ctx,0,0,o)}}catch(e){}
+  drawUnitBody(ctx,u);
   ctx.filter='none';ctx.restore();
   if(lootable(c)){const b=Math.sin(rt*4+c.x)*.5+.5;ctx.save();ctx.globalCompositeOperation='lighter';const best=Math.max(-1,...c.loot.filter(d=>d.item).map(d=>d.item.rar));const col=best>=0?RAR[best].c:'#ffe08a';
     const g=ctx.createRadialGradient(sx,sy-6,0,sx,sy-6,26);g.addColorStop(0,col+'aa');g.addColorStop(1,'rgba(0,0,0,0)');ctx.globalAlpha=.35+.35*b;ctx.fillStyle=g;ctx.fillRect(sx-26,sy-32,52,52);ctx.restore();

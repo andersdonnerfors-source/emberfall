@@ -34,3 +34,10 @@ test('uiSheet makes one row per item',()=>{const s=uiSheet('x',[{label:'a',onTap
 // ---- Portraits
 test('portraitKey stable, changes with hair and helm',()=>{const L={skin:'#e3c3a0',hair:'#552',hairStyle:'short',cloth:'#456'},k=portraitKey(L,{},'paladin');eq(portraitKey(Object.assign({},L),{},'paladin'),k);eq(portraitKey(Object.assign({},L,{hairStyle:'long'}),{},'paladin')===k,false);eq(portraitKey(L,{helm:{name:'Iron Helm',rar:1,ilvl:3}},'paladin')===k,false);eq(portraitKey(L,{weapon:{name:'Sword',rar:2}},'paladin'),k)});
 test('portraitFor caches per hero',()=>{const p={cls:'paladin',look:{skin:'#e3c3a0',hair:'#552',cloth:'#456'},gear:{}};const a=portraitFor(p);eq(portraitFor(p)===a,true);eq(a.width,112)});
+
+// ---- Target frame and action bar (B4-B5)
+const AP=(o)=>Object.assign({cds:[0,2,0],cdMax:[1,4,1],mana:50,tm:{},abil:[{mana:0},{mana:20},{mana:80}],cdEnd:[]},o);
+test('abarState halfway through cooldown',()=>eq(abarState(AP(),1,10).cdFrac,.5));
+test('abarState poor when mana is below the cost',()=>{const p=AP();eq(abarState(p,2,10).poor,true);eq(abarState(p,1,10).poor,false)});
+test('abarState ready glows 0.6 s after the cooldown ends',()=>{const p=AP({cds:[0,0,0],cdEnd:[0,10]});eq(abarState(p,1,10.3).ready,true);eq(abarState(p,1,10.7).ready,false);eq(abarState({...p,cds:[0,1,0]},1,10.3).ready,false)});
+test('monster portrait is cached per type',()=>{const u={type:'wolf',h:30,r:12,x:0,y:0};eq(monsterPortrait(u)===monsterPortrait({...u}),true);eq(monsterPortrait({...u,boss:true})===monsterPortrait(u),false)});
