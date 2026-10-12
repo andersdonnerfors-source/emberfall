@@ -141,7 +141,7 @@ test('touchPlace keeps abilities apart and below the minimap',()=>{for(const[W,H
     for(let n=0;n<=5;n++){const r=touchPlace({W,H,atk:z.atk,ab:z.ab,q:z.q,limit:lim,n}),cs=[{x:r.atk.x,y:r.atk.y,r:z.atk/2},...r.abil.map(a=>({x:a.x,y:a.y,r:z.ab/2}))],tag=W+'x'+H+' n'+n;
       eq(r.abil.length,n,tag);
       for(let i=0;i<cs.length;i++){eq(cs[i].y-cs[i].r>=lim,true,tag+' below limit '+i);eq(cs[i].x-cs[i].r>=0&&cs[i].x+cs[i].r<=W&&cs[i].y+cs[i].r<=H,true,tag+' on screen '+i);
-        for(let j=i+1;j<cs.length;j++)eq(Math.hypot(cs[i].x-cs[j].x,cs[i].y-cs[j].y)>=cs[i].r+cs[j].r,true,tag+' overlap '+i+','+j);
+        for(let j=i+1;j<cs.length;j++)eq(Math.max(Math.abs(cs[i].x-cs[j].x),Math.abs(cs[i].y-cs[j].y))>=cs[i].r+cs[j].r,true,tag+' boxes overlap '+i+','+j);
         const k=r.quick;eq(cs[i].x+cs[i].r<=k.x||cs[i].x-cs[i].r>=k.x+k.w||cs[i].y+cs[i].r<=k.y||cs[i].y-cs[i].r>=k.y+k.h,true,tag+' quick overlap '+i)}
       eq(r.quick.y>=lim,true,tag+' quick below limit')}}});
 test('locked abilities hidden on phone',()=>{const lp=Layout.phone,pl=players.slice(),p=TP('sorcerer');p.level=1;p.abil=ABIL.sorcerer.concat([SPEC_LOCKED]);players.length=0;players.push(p);

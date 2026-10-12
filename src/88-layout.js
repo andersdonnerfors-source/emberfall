@@ -11,14 +11,14 @@ function gfxPref(){try{return Settings.gfx||'auto'}catch(e){return'auto'}}// Set
 function touchSizes(h){const t=Math.max(0,Math.min(1,(h-260)/130)),L=(a,b)=>Math.round(a+(b-a)*t);return{atk:L(64,84),ab:L(44,56),q:L(36,40),mini:L(96,120),stick:L(96,120)}}
 function applyTouchSizes(){const r=document.documentElement.style,z=touchSizes(innerHeight);for(const[k,v]of[['--t-atk',z.atk],['--t-ab',z.ab],['--t-q',z.q],['--t-mini',z.mini]])Layout.phone?r.setProperty(k,v+'px'):r.removeProperty(k)}
 // Positions (px centres, CSS pixels) for the right-thumb cluster: attack in the bottom-right corner, the quick pair right above it (else left of it when there is no room),
-// then n abilities packed on rings round the attack button, from straight left up to straight up, always below `limit` (bottom of minimap + quest) and clear of each other.
+// then n abilities (square boxes that never touch) packed on rings round the attack button, from straight left up to straight up, always below `limit` (bottom of minimap + quest) and clear of each other.
 // Returns {atk:{x,y}, quick:{x,y,w,h}, abil:[{x,y}], left (leftmost edge of the cluster), mb (bottom margin)}.
 function touchPlace(o){const{W,H,atk,ab,q,limit,n}=o,mr=o.mr??8,mb=o.mb??4,cx=W-mr-atk/2,cy=H-mb-atk/2,qw=2*q+6,out={atk:{x:cx,y:cy},abil:[],mb};
   let qy=cy-atk/2-6-q;out.quick=qy>=limit?{x:W-mr-qw,y:qy,w:qw,h:q}:{x:cx-atk/2-6-qw,y:cy-q/2,w:qw,h:q};
-  const R1=(atk+ab)/2+6,hit=(x,y,c)=>Math.hypot(x-c.x,y-c.y)<ab+1,k=out.quick,rect=(x,y)=>x+ab/2+1>k.x&&x-ab/2-1<k.x+k.w&&y+ab/2+1>k.y&&y-ab/2-1<k.y+k.h;
+  const R1=(atk+ab)/2+6,hit=(x,y,c)=>Math.max(Math.abs(x-c.x),Math.abs(y-c.y))<ab+1,near=(x,y)=>Math.max(Math.abs(x-cx),Math.abs(y-cy))<(atk+ab)/2+1,k=out.quick,rect=(x,y)=>x+ab/2+1>k.x&&x-ab/2-1<k.x+k.w&&y+ab/2+1>k.y&&y-ab/2-1<k.y+k.h;
   for(let i=0;i<n;i++){let put=null;
     for(let r=R1;r<W&&!put;r+=2)for(let a=180;a>=90;a-=3){const x=cx+r*Math.cos(a*Math.PI/180),y=cy-r*Math.sin(a*Math.PI/180);
-      if(y-ab/2<limit||x-ab/2<0||rect(x,y)||out.abil.some(c=>hit(x,y,c)))continue;put={x,y};break}
+      if(y-ab/2<limit||x-ab/2<0||near(x,y)||rect(x,y)||out.abil.some(c=>hit(x,y,c)))continue;put={x,y};break}
     out.abil.push(put||{x:cx-R1,y:cy})}
   out.left=Math.min(cx-atk/2,out.quick.x,...out.abil.map(c=>c.x-ab/2));return out}
 // Particle counts: halved on a phone unless Graphics is High.
