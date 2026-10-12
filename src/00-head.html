@@ -207,7 +207,7 @@ h2{margin:0 0 10px;color:var(--gold);font-weight:normal;letter-spacing:.05em}
 /* action bar slots shrink so the bar fits the screen at large UI sizes */
 .slot{width:clamp(36px,calc((100vw/var(--ui) - 94px)/10),56px);height:clamp(36px,calc((100vw/var(--ui) - 94px)/10),56px)}
 /* UI size (Settings): zoom scales layout and hit-testing together */
-#hud>*,#inv,#tal,#shop,#prof,#loot,#worldmap,#dialog,#friends,#toasts,#netAsks,#settings>.panel,#howto>.panel,.cfbox{zoom:var(--ui)}
+#hud>*,#inv,#tal,#shop,#prof,#loot,#worldmap,#dialog,#friends,#toasts,#netAsks,#settings>.panel,#howto>.panel,.cfbox{zoom:var(--ui);--tap:calc(44px/var(--ui))}
 #settings>.panel,#howto>.panel,.cfbox{max-width:calc(100%/var(--ui))}
 #inv,#tal,#shop,#prof,#friends,#worldmap,#dialog{max-width:calc(96vw/var(--ui));max-height:calc(94vh/var(--ui))}
 /* Touch controls (src/87-touch.js): shown while body.touch and the HUD is up. Attack in the bottom-right corner, abilities on an arc round it (positions set in touchBuild), quick row and context button above-left of the arc */
@@ -244,7 +244,7 @@ body.phone #pPort{width:44px;height:44px}body.phone .uname{font-size:14px}body.p
 body.phone #party{left:calc(10px + env(safe-area-inset-left));width:auto}
 body.phone .pm{width:40px;height:40px;min-height:0;padding:4px;border:0;border-radius:50%;background:conic-gradient(var(--hp) calc(var(--f,100)*1%),rgba(255,255,255,.18) 0);box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none;cursor:pointer}
 body.phone .pm .pmb{display:none}body.phone .pm canvas{width:32px!important;height:32px!important}
-body.phone #right{right:calc(10px + env(safe-area-inset-right));top:10px;width:120px}body.phone #mini{width:120px;height:120px}
+body.phone #right{zoom:min(var(--ui),1);right:calc(10px + env(safe-area-inset-right));top:10px;width:120px}body.phone #mini{width:120px;height:120px}
 body.phone #quest{margin-top:6px;padding:5px 8px;font-size:12px;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
 body.phone #quest .ql{display:inline}body.phone #quest .ql+.ql::before{content:' · '}body.phone #quest .muted{display:none}body.phone #quest b{font-size:12px}
 body.phone #toasts{top:calc(70px + env(safe-area-inset-top))}body.phone .toast{font-size:14px;padding:6px 14px}
@@ -262,7 +262,7 @@ body.phone #wmap{flex:none;width:auto;height:100%;border:0;border-radius:0;trans
 /* dialogs and loot: bottom sheets with rows of at least 48 px */
 @keyframes sheetUp{from{transform:translateY(100%)}to{transform:none}}
 body.phone #dialog,body.phone #loot{left:0;right:auto;top:auto;bottom:0;transform:none;width:calc(100vw/var(--ui));max-width:none;max-height:calc(70vh/var(--ui));max-height:calc(70dvh/var(--ui));overflow:auto;z-index:44;border-radius:calc(var(--r) * 2) calc(var(--r) * 2) 0 0;padding:12px calc(16px + env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));animation:sheetUp .2s ease-out}
-body.phone #dialog .btn,body.phone #loot .btn{min-height:48px}body.phone #dBtns .btn{flex:1;min-width:0}body.phone .lrow2{min-height:48px}
+body.phone #dialog .btn,body.phone #loot .btn{min-height:calc(48px/var(--ui))}body.phone #dBtns .btn{flex:1;min-width:0}body.phone .lrow2{min-height:calc(48px/var(--ui))}
 /* ---- Co-op chat (src/96-net.js): the last 3 lines in the middle top, a button, a compact desktop bar and the phone sheet */
 #chatLog{position:absolute;left:50%;top:92px;transform:translateX(-50%);width:min(420px,50vw);display:flex;flex-direction:column;align-items:center;gap:2px;pointer-events:none;text-align:center}
 #chatLog div{font-size:var(--fs);line-height:1.3;color:var(--text);text-shadow:0 1px 3px #000,0 0 6px #000;max-width:100%;overflow-wrap:anywhere}#chatLog b{color:var(--gold);font-weight:600}#chatLog .w{color:#d9b8ff}#chatLog .w b{color:#d9b8ff}
@@ -272,7 +272,7 @@ body.phone #dialog .btn,body.phone #loot .btn{min-height:48px}body.phone #dBtns 
 .sheet.chatsheet{display:grid;grid-template-columns:1fr 1fr;gap:4px 8px;left:0;right:0;margin:0 auto;width:min(560px,100%)}.chatsheet>.g-head,.chatsheet>.chatin{grid-column:1/-1}
 .chatin{display:flex;gap:8px}.chatin .g-btn{min-height:48px;padding:0 18px;flex:none}
 body.phone #chatBtn{left:calc(256px + env(safe-area-inset-left));top:10px;bottom:auto}
-body.phone .netask .btn{min-height:48px;min-width:110px}body.phone .frrow{flex-wrap:wrap}body.phone .frrow button{min-height:48px;min-width:48px}
+body.phone .netask .btn{min-height:calc(48px/var(--ui));min-width:calc(110px/var(--ui))}body.phone .frrow{flex-wrap:wrap}body.phone .frrow button{min-height:calc(48px/var(--ui));min-width:calc(48px/var(--ui))}
 body.phone #chatLog{top:76px;width:min(360px,44vw)}
 </style>
 </head>

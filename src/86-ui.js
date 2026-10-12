@@ -43,6 +43,7 @@ function enemyUnderMouse(){let best=null,bd=1e9;for(const e of enemies){if(e.dea
 // HUD column layout: the target frame sits centred when it fits beside the player frame and minimap at this UI size, else (.low) directly under the player frame; the party list follows whichever is lowest. Heights are read live (buffs grow the player frame).
 // On a phone the side columns are narrower (compact player frame, 120 px minimap), and the quest line hides whenever it would reach the touch buttons below it.
 function layoutHud(){const ui=+document.documentElement.style.getPropertyValue('--ui')||1,ph=Layout.phone,tf=$('tframe'),pf=$('pframe'),pa=$('party'),low=innerWidth<((ph?440:588)+(tf.classList.contains('boss')?240:200))*ui+20,h=e=>e.getBoundingClientRect().height/ui;tf.classList.toggle('low',low);
+  const qk=$('quick').getBoundingClientRect();tf.style.width=ph&&Touch.on&&low&&qk.width?Math.max(150,Math.min(280,(qk.left-24)/ui))+'px':'';// phone: a low target frame stops short of the quick buttons
   let y=(ph?10:14)+h(pf)+8;if(low){tf.style.top=y+'px';if(!tf.classList.contains('hidden'))y+=h(tf)+8}else tf.style.top='';pa.style.top=y+'px';
   const q=$('quest');let clash=false;if(ph&&Touch.on){const c=$('right').getBoundingClientRect(),qb=q.getBoundingClientRect().bottom;// .clash only hides it (visibility), so it keeps its box
     for(const e of document.querySelectorAll('#arc .tslot,#quick,#ctx')){const r=e.getBoundingClientRect();if(r.width&&r.right>c.left&&r.left<c.right&&r.top<qb+6)clash=true}}
