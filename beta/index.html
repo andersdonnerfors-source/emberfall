@@ -239,14 +239,21 @@ body.touch #bottom,body.touch #hint{display:none}
 /* no glass blur (Graphics Low, or Auto on a phone): solid panels instead */
 body.nofx{--blur:none;--panel:var(--panel-solid)}body.nofx #pause{-webkit-backdrop-filter:none;backdrop-filter:none}
 /* HUD: compact player frame top left, target top centre, 120 px minimap + one quest line top right, party as a stack of portraits with health rings */
-body.phone #pframe{left:calc(10px + env(safe-area-inset-left));top:10px;width:236px;padding:6px 8px;grid-template-columns:44px 1fr;column-gap:8px}
-body.phone #pPort{width:44px;height:44px}body.phone .uname{font-size:14px}body.phone #pframe .gold{margin-top:4px}body.phone #tframe{top:10px}
-body.phone #party{left:calc(10px + env(safe-area-inset-left));width:auto}
+body.phone #pframe{left:calc(10px + env(safe-area-inset-left));top:10px;width:204px;padding:5px 8px;grid-template-columns:36px 1fr;column-gap:8px}
+body.phone #pPort{width:36px;height:36px}body.phone .uname{font-size:13px}body.phone #pframe .pf-tx .bar{height:13px;margin-top:2px}body.phone #pframe .pf-tx .bar.xp{height:3px}body.phone #pframe .bar span{font-size:12px;line-height:11px}
+body.phone #pframe .gold{margin-top:3px;font-size:12px}body.phone #pframe .gold>span:first-child{display:none}body.phone #pframe .gold:not(:has(>:not(.hidden):not(:first-child))){display:none}body.phone #pframe .badge{font-size:12px;padding:0 5px}body.phone #tframe{top:10px}
+body.phone #party{left:calc(10px + env(safe-area-inset-left));width:auto;flex-direction:row;flex-wrap:wrap}
 body.phone .pm{width:40px;height:40px;min-height:0;padding:4px;border:0;border-radius:50%;background:conic-gradient(var(--hp) calc(var(--f,100)*1%),rgba(255,255,255,.18) 0);box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none;cursor:pointer}
 body.phone .pm .pmb{display:none}body.phone .pm canvas{width:32px!important;height:32px!important}
-body.phone #right{zoom:min(var(--ui),1);right:calc(10px + env(safe-area-inset-right));top:10px;width:120px}body.phone #mini{width:120px;height:120px}
+body.phone #right{zoom:min(var(--ui),1);right:calc(10px + env(safe-area-inset-right));top:10px;width:var(--t-mini,120px)}body.phone #mini{width:var(--t-mini,120px);height:var(--t-mini,120px)}
 body.phone #quest{margin-top:6px;padding:5px 8px;font-size:12px;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
 body.phone #quest .ql{display:inline}body.phone #quest .ql+.ql::before{content:' · '}body.phone #quest .muted{display:none}body.phone #quest b{font-size:12px}
+/* Declutter (beta feedback): sizes come from the screen height (--t-* set in applyTouchSizes), only the two potions stay as quick buttons (food, mount and hearthstone live in the menu), the quest line goes on very short screens */
+body.phone .slot.tslot{font-size:calc(var(--t-ab)*.46)}body.phone #atk.tslot{font-size:calc(var(--t-atk)*.43)}body.phone .slot.qb{font-size:calc(var(--t-q)*.5)}
+body.phone #quick .qb[data-q=food],body.phone #quick .qb[data-q=mount],body.phone #quick .qb[data-q=hearth]{display:none}
+body.phone #stick{left:calc(210px + env(safe-area-inset-left));top:calc(100% - 66px - env(safe-area-inset-bottom))}
+body.phone #tmenu{grid-template-columns:repeat(4,112px)}body:not(.phone) #tmenu .pq{display:none}
+@media (max-height:299px){body.phone #quest{display:none}}
 body.phone #toasts{top:calc(70px + env(safe-area-inset-top))}body.phone .toast{font-size:14px;padding:6px 14px}
 /* windows: fullscreen, header pinned to the top */
 body.phone #inv,body.phone #tal,body.phone #shop,body.phone #prof,body.phone #friends,body.phone #worldmap{left:0;top:0;transform:none;width:calc(100vw/var(--ui));height:calc(100vh/var(--ui));height:calc(100dvh/var(--ui));max-width:none;max-height:none;border:0;border-radius:0;background:#0c0e12;padding:0 calc(14px + env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) calc(14px + env(safe-area-inset-left))}
@@ -271,7 +278,7 @@ body.phone #dialog .btn,body.phone #loot .btn{min-height:calc(48px/var(--ui))}bo
 #chatIn,.chatin input{width:100%;box-sizing:border-box;padding:8px 10px;min-height:var(--tap);background:var(--field);color:var(--text);border:1px solid var(--edge);border-radius:6px;font-family:var(--ui-font);font-size:16px}
 .sheet.chatsheet{display:grid;grid-template-columns:1fr 1fr;gap:4px 8px;left:0;right:0;margin:0 auto;width:min(560px,100%)}.chatsheet>.g-head,.chatsheet>.chatin{grid-column:1/-1}
 .chatin{display:flex;gap:8px}.chatin .g-btn{min-height:48px;padding:0 18px;flex:none}
-body.phone #chatBtn{left:calc(256px + env(safe-area-inset-left));top:10px;bottom:auto}
+body.phone #chatBtn{left:calc(216px + env(safe-area-inset-left));top:10px;bottom:auto}
 body.phone .netask .btn{min-height:calc(48px/var(--ui));min-width:calc(110px/var(--ui))}body.phone .frrow{flex-wrap:wrap}body.phone .frrow button{min-height:calc(48px/var(--ui));min-width:calc(48px/var(--ui))}
 body.phone #chatLog{top:76px;width:min(360px,44vw)}
 </style>
@@ -306,7 +313,7 @@ body.phone #chatLog{top:76px;width:min(360px,44vw)}
   <div id="quick"><div class="slot qb" data-q="hp" data-src="potSlot"><div class="ic">🧪</div><div class="cnt"></div></div><div class="slot qb" data-q="mp" data-src="manaSlot"><div class="ic"><span style="filter:hue-rotate(200deg)">🧪</span></div><div class="cnt"></div></div><div class="slot qb" data-q="food" data-src="foodSlot"><div class="ic">🍖</div><div class="cnt"></div></div><div class="slot qb" data-q="mount"><div class="ic">🐎</div></div><div class="slot qb" data-q="hearth" data-src="hearthSlot"><div class="ic">🏠</div><div class="cnt"></div></div></div>
   <button id="ctx" class="glass hidden"></button>
   <button id="menuBtn" class="glass" aria-label="Menu">☰</button>
-  <div id="tmenu" class="glass hidden"><button data-m="inv">Inventory</button><button data-m="tal">Talents</button><button data-m="prof">Professions</button><button data-m="map">Map</button><button data-m="quest">Quests</button><button data-m="friends">Friends</button><button data-m="settings">Settings</button><button data-m="mute">Mute</button><button data-m="pause">Pause</button></div>
+  <div id="tmenu" class="glass hidden"><button data-m="inv">Inventory</button><button data-m="tal">Talents</button><button data-m="prof">Professions</button><button data-m="map">Map</button><button data-m="quest">Quests</button><button data-m="friends">Friends</button><button data-m="settings">Settings</button><button data-m="food" class="pq">Eat food</button><button data-m="mount" class="pq">Mount</button><button data-m="hearth" class="pq">Hearthstone</button><button data-m="mute">Mute</button><button data-m="pause">Pause</button></div>
 </div>
 <div id="toasts"></div>
 <div id="netAsks"></div><div id="hostWait" class="panel glass hidden"></div>
@@ -2869,10 +2876,21 @@ function holdStart(e){const el=tipEl(e.target);if(!el)return;if(Touch.hold)clear
 function holdMove(e){const h=Touch.hold;if(h&&e.pointerId===h.id&&touchIsDrag(e.clientX-h.x,e.clientY-h.y)){clearTimeout(h.t);Touch.hold=null;if(h.fired)hideTip()}}
 function holdEnd(e){const h=Touch.hold;if(!h||e.pointerId!==h.id)return;clearTimeout(h.t);Touch.hold=null;if(h.fired){hideTip();Touch.noClick=performance.now()+500}}
 // Builds the arc for the hero's class (again whenever the class changes): attack in the corner, abilities 1-4 round it, R on top.
-function touchBuild(p){Touch.built=p.abil;document.querySelectorAll('#arc .tslot').forEach(s=>{const i=+s.dataset.i,a=p.abil[i],src=$('abar').children[i];s.innerHTML=`<div class="ic">${a?a.icon:''}</div><div class="cd"></div><div class="cdt"></div>`;s.onmouseenter=i&&src?src.onmouseenter:null;// no hold-tooltip on the attack button: holding it is attacking
+function touchBuild(p){Touch.built=p.abil;touchLayout.key=null;document.querySelectorAll('#arc .tslot').forEach(s=>{const i=+s.dataset.i,a=p.abil[i],src=$('abar').children[i];s.innerHTML=`<div class="ic">${a?a.icon:''}</div><div class="cd"></div><div class="cdt"></div>`;s.onmouseenter=i&&src?src.onmouseenter:null;// no hold-tooltip on the attack button: holding it is attacking
   if(i){const g=ARC_ANG[i]*Math.PI/180,c=42-28;s.style.left=(c+Math.cos(g)*ARC_R)+'px';s.style.top=(c-Math.sin(g)*ARC_R)+'px'}})}
+// Phone only: hides slots that are not unlocked yet (level below UNLOCK, or no spec for the R slot), sizes the buttons from the screen height (touchSizes)
+// and places attack, abilities, quick pair and context button with touchPlace, all below the minimap + quest stack. Re-runs when level, spec, size or that stack changes.
+const touchVis=(p,i)=>i===0||!!p.abil[i]&&p.abil[i]!==SPEC_LOCKED&&p.level>=UNLOCK[i];
+function touchLayout(p){const ph=!!Layout.phone,tc=$('touch'),arc=$('arc'),ql=$('quick'),cx=$('ctx'),sl=[...arc.querySelectorAll('.tslot')];
+  if(!ph){if(touchLayout.ph){touchLayout.ph=false;touchLayout.key=null;sl.forEach(s=>{s.style.display=''});for(const e of[arc,ql,cx]){e.style.left=e.style.top=e.style.right=e.style.bottom=''}Touch.built=null;touchBuild(p)}return}
+  const z=touchSizes(innerHeight),lim=Math.ceil($('right').getBoundingClientRect().bottom)+4,vis=sl.map(s=>touchVis(p,+s.dataset.i)),key=[innerWidth,innerHeight,lim,vis.join()].join('|');
+  if(touchLayout.ph&&key===touchLayout.key)return;touchLayout.ph=true;touchLayout.key=key;
+  const idx=vis.map((v,i)=>v&&i>0?i:-1).filter(i=>i>0),r=touchPlace({W:innerWidth,H:innerHeight,atk:z.atk,ab:z.ab,q:z.q,limit:lim,n:idx.length}),ax=r.atk.x-z.atk/2,ay=r.atk.y-z.atk/2;
+  sl.forEach((s,i)=>{s.style.display=vis[i]?'':'none'});arc.style.right=arc.style.bottom='auto';arc.style.left=ax+'px';arc.style.top=ay+'px';
+  idx.forEach((i,k)=>{const s=sl[i];s.style.left=(r.abil[k].x-z.ab/2-ax)+'px';s.style.top=(r.abil[k].y-z.ab/2-ay)+'px'});
+  ql.style.right=ql.style.bottom='auto';ql.style.left=r.quick.x+'px';ql.style.top=r.quick.y+'px';cx.style.right=(innerWidth-r.left+8)+'px';cx.style.bottom=r.mb+'px'}
 // Per frame (from updateHud): cooldowns and counts mirror the action bar; the context button follows interactables(); the menu button sits left of the minimap.
-function touchFrame(p){if(Touch.built!==p.abil)touchBuild(p);if(!p.dead)aimPreview(p);else Aim.target=null;const ab=$('abar').children;
+function touchFrame(p){if(Touch.built!==p.abil)touchBuild(p);touchLayout(p);if(!p.dead)aimPreview(p);else Aim.target=null;const ab=$('abar').children;
   document.querySelectorAll('#arc .tslot').forEach(s=>{const a=ab[+s.dataset.i];if(!a)return;for(const c of['locked','poor','rdy'])s.classList.toggle(c,a.classList.contains(c));s.style.setProperty('--e',a.style.getPropertyValue('--e'));s.children[2].textContent=a.children[3].textContent});
   document.querySelectorAll('#quick .qb').forEach(b=>{const src=b.dataset.src&&$(b.dataset.src),n=b.querySelector('.cnt');if(src){b.classList.toggle('nomana',src.classList.contains('nomana'));if(n)n.textContent=(src.querySelector('.cnt')||src.querySelector('.cdt')).textContent}
     else if(b.dataset.q==='mount')b.firstChild.textContent=p.mount?MOUNTS[p.mount].icon:'🐎'});
@@ -2881,7 +2899,7 @@ function touchFrame(p){if(Touch.built!==p.abil)touchBuild(p);if(!p.dead)aimPrevi
   if(isPaused()&&!Touch.paused){touchReset();p.input.abil.fill(false);p.input.fire=false}Touch.paused=isPaused();if(Touch.drag)touchDrawAim()}
 const TMENU={inv:()=>toggleInv(true),tal:()=>toggleTal(true),prof:()=>toggleProf(true),map:()=>toggleMap(true),friends:()=>toggleFriends(true),
   quest:()=>uiSheet('Quest',[...$('quest').querySelectorAll('.ql')].map(e=>({label:e.textContent}))),
-  settings:()=>{if(!pauseOpen)togglePause();openOverlay('settings','pause')},mute:()=>{Snd.vol.muted=!Snd.vol.muted;applyVol();saveAudio();toast(Snd.vol.muted?'Sound off':'Sound on')},pause:()=>togglePause()};
+  settings:()=>{if(!pauseOpen)togglePause();openOverlay('settings','pause')},food:()=>{const p=players[0];if(p)eatFood(p)},mount:()=>{const p=players[0];if(p&&!p.dead)toggleMount(p)},hearth:()=>{const p=players[0];if(p)startHearth(p)},mute:()=>{Snd.vol.muted=!Snd.vol.muted;applyVol();saveAudio();toast(Snd.vol.muted?'Sound off':'Sound on')},pause:()=>togglePause()};
 function touchMenu(v){const m=$('tmenu');m.classList.toggle('hidden',v===undefined?!m.classList.contains('hidden'):!v);touchReset()}
 {// Wiring. Each control captures its own pointer, so moving and casting work at the same time.
   const cap=e=>{try{e.target.setPointerCapture(e.pointerId)}catch(_){}e.preventDefault()};touchShow(matchMedia('(pointer:coarse)').matches);
@@ -2907,6 +2925,20 @@ function isPhone(env=window){return(env.matchMedia('(pointer:coarse)').matches||
 // Canvas pixels per CSS pixel: 1 on Low, and on Auto on a phone; else 1.5-2 by the screen's density.
 function renderScale(gfx,phone,dpr){return gfx==='low'||gfx==='auto'&&phone?1:Math.min(2,Math.max(1.5,dpr))}
 function gfxPref(){try{return Settings.gfx||'auto'}catch(e){return'auto'}}// Settings (src/75-loot.js) does not exist yet on the first resize()
+// Touch button sizes from the screen height: 390 and up keep the full sizes, 260 and under the small ones, linear in between. mini = minimap px, stick = idle stick ring.
+function touchSizes(h){const t=Math.max(0,Math.min(1,(h-260)/130)),L=(a,b)=>Math.round(a+(b-a)*t);return{atk:L(64,84),ab:L(44,56),q:L(36,40),mini:L(96,120),stick:L(96,120)}}
+function applyTouchSizes(){const r=document.documentElement.style,z=touchSizes(innerHeight);for(const[k,v]of[['--t-atk',z.atk],['--t-ab',z.ab],['--t-q',z.q],['--t-mini',z.mini]])Layout.phone?r.setProperty(k,v+'px'):r.removeProperty(k)}
+// Positions (px centres, CSS pixels) for the right-thumb cluster: attack in the bottom-right corner, the quick pair right above it (else left of it when there is no room),
+// then n abilities (square boxes that never touch) packed on rings round the attack button, from straight left up to straight up, always below `limit` (bottom of minimap + quest) and clear of each other.
+// Returns {atk:{x,y}, quick:{x,y,w,h}, abil:[{x,y}], left (leftmost edge of the cluster), mb (bottom margin)}.
+function touchPlace(o){const{W,H,atk,ab,q,limit,n}=o,mr=o.mr??8,mb=o.mb??4,cx=W-mr-atk/2,cy=H-mb-atk/2,qw=2*q+6,out={atk:{x:cx,y:cy},abil:[],mb};
+  let qy=cy-atk/2-6-q;out.quick=qy>=limit?{x:W-mr-qw,y:qy,w:qw,h:q}:{x:cx-atk/2-6-qw,y:cy-q/2,w:qw,h:q};
+  const R1=(atk+ab)/2+6,hit=(x,y,c)=>Math.max(Math.abs(x-c.x),Math.abs(y-c.y))<ab+1,near=(x,y)=>Math.max(Math.abs(x-cx),Math.abs(y-cy))<(atk+ab)/2+1,k=out.quick,rect=(x,y)=>x+ab/2+1>k.x&&x-ab/2-1<k.x+k.w&&y+ab/2+1>k.y&&y-ab/2-1<k.y+k.h;
+  for(let i=0;i<n;i++){let put=null;
+    for(let r=R1;r<W&&!put;r+=2)for(let a=180;a>=90;a-=3){const x=cx+r*Math.cos(a*Math.PI/180),y=cy-r*Math.sin(a*Math.PI/180);
+      if(y-ab/2<limit||x-ab/2<0||near(x,y)||rect(x,y)||out.abil.some(c=>hit(x,y,c)))continue;put={x,y};break}
+    out.abil.push(put||{x:cx-R1,y:cy})}
+  out.left=Math.min(cx-atk/2,out.quick.x,...out.abil.map(c=>c.x-ab/2));return out}
 // Particle counts: halved on a phone unless Graphics is High.
 const Layout={phone:null,turn:false};
 function fxScale(){return Layout.phone&&Settings.gfx!=='high'?.5:1}
@@ -2914,7 +2946,7 @@ function fxScale(){return Layout.phone&&Settings.gfx!=='high'?.5:1}
 // In portrait the card covers the game and solo play pauses (isPaused); in co-op the world keeps going.
 function applyLayout(){const ph=isPhone(),b=document.body;
   if(ph!==Layout.phone){Layout.phone=ph;b.classList.toggle('phone',ph);applyUi();touchReset();resize();if(state==='play')renderParty()}
-  b.classList.toggle('nofx',Settings.gfx==='low'||Settings.gfx==='auto'&&ph);
+  applyTouchSizes();b.classList.toggle('nofx',Settings.gfx==='low'||Settings.gfx==='auto'&&ph);
   const turn=ph&&innerHeight>innerWidth;if(turn!==Layout.turn){Layout.turn=turn;$('turn').classList.toggle('hidden',!turn);touchReset();mouse.l=false}}
 addEventListener('resize',applyLayout);addEventListener('orientationchange',applyLayout);if(screen.orientation)screen.orientation.addEventListener('change',applyLayout);
 addEventListener('pointerdown',e=>{if(e.pointerType==='touch'&&!touchSeen){touchSeen=true;applyLayout()}},true);
@@ -3539,6 +3571,26 @@ test('guest waits after 5s without snapshots',()=>{const o={role:Net.role,hw:Net
   finally{Net.role=o.role;Net.hw=o.hw;Net.hwT=o.hwT;Net.host=o.host;Net.lastSnap=o.ls;hostWaitShow()}});
 test('desktop key hints hidden on touch',()=>{const on=Touch.on;try{Touch.on=true;eq(keyHint('Loot'),'Loot');Touch.on=false;eq(keyHint('Loot'),'[E] Loot')}finally{Touch.on=on}});
 test('drawBubble works without roundRect',()=>{const old=CanvasRenderingContext2D.prototype.roundRect;try{CanvasRenderingContext2D.prototype.roundRect=undefined;const k=myUid();Chat.bub.set(k,{m:'hi',until:rt+3});drawBubble({x:0,y:0},50,50);eq(true,true)}finally{CanvasRenderingContext2D.prototype.roundRect=old;Chat.bub.delete(myUid())}});
+
+// ---- Phone HUD declutter: sizes from the screen height, locked abilities hidden, no overlaps in the arc
+test('touch sizes scale with height',()=>{const a=touchSizes(220),b=touchSizes(300),c=touchSizes(400),d=touchSizes(390);
+  eq([a.atk,a.ab,a.q],[64,44,36]);eq([c.atk,c.ab,c.q],[84,56,40]);eq([d.atk,d.ab,d.q],[84,56,40]);eq([b.atk,b.ab,b.q],[70,48,37]);
+  eq([a.mini,c.mini],[96,120]);eq(touchSizes(100).atk,64);eq(touchSizes(900).atk,84)});
+test('touchPlace keeps abilities apart and below the minimap',()=>{for(const[W,H,lim]of[[667,220,110],[667,375,140],[844,390,140],[915,412,140]]){const z=touchSizes(H);
+    for(let n=0;n<=5;n++){const r=touchPlace({W,H,atk:z.atk,ab:z.ab,q:z.q,limit:lim,n}),cs=[{x:r.atk.x,y:r.atk.y,r:z.atk/2},...r.abil.map(a=>({x:a.x,y:a.y,r:z.ab/2}))],tag=W+'x'+H+' n'+n;
+      eq(r.abil.length,n,tag);
+      for(let i=0;i<cs.length;i++){eq(cs[i].y-cs[i].r>=lim,true,tag+' below limit '+i);eq(cs[i].x-cs[i].r>=0&&cs[i].x+cs[i].r<=W&&cs[i].y+cs[i].r<=H,true,tag+' on screen '+i);
+        for(let j=i+1;j<cs.length;j++)eq(Math.max(Math.abs(cs[i].x-cs[j].x),Math.abs(cs[i].y-cs[j].y))>=cs[i].r+cs[j].r,true,tag+' boxes overlap '+i+','+j);
+        const k=r.quick;eq(cs[i].x+cs[i].r<=k.x||cs[i].x-cs[i].r>=k.x+k.w||cs[i].y+cs[i].r<=k.y||cs[i].y-cs[i].r>=k.y+k.h,true,tag+' quick overlap '+i)}
+      eq(r.quick.y>=lim,true,tag+' quick below limit')}}});
+test('locked abilities hidden on phone',()=>{const lp=Layout.phone,pl=players.slice(),p=TP('sorcerer');p.level=1;p.abil=ABIL.sorcerer.concat([SPEC_LOCKED]);players.length=0;players.push(p);
+  const ds=()=>[...document.querySelectorAll('#arc .tslot')].map(s=>s.style.display!=='none');
+  try{Layout.phone=true;touchBuild(p);touchLayout(p);eq(ds(),[true,true,false,false,false,false]);
+    p.level=5;touchLayout(p);eq(ds(),[true,true,true,true,false,false],'level 5');
+    p.level=10;p.abil=ABIL.sorcerer.concat([{name:'Sig',icon:'x',cd:1,mana:0,cast(){}}]);touchLayout(p);eq(ds(),[true,true,true,true,true,true],'spec slot with a spec');
+    p.abil=ABIL.sorcerer.concat([SPEC_LOCKED]);touchLayout(p);eq(ds()[5],false,'spec slot without a spec');
+    Layout.phone=false;touchLayout(p);eq(ds().every(Boolean),true,'desktop touch keeps all slots')}
+  finally{Layout.phone=lp;players.length=0;players.push(...pl);Touch.built=null;touchLayout.key=null}});
 // ================= Developer test mode for co-op =================
 // Open the game twice on this computer as index.html?nettest=a and index.html?nettest=b: the two tabs act as two
 // friends and introduce each other through the browser (no accounts needed). Ignored without the parameter.
