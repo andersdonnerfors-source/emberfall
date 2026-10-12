@@ -83,8 +83,12 @@ $('lootClose').onclick=closeLoot;$('lootAll').onclick=takeAll;
 const Settings=loadSettings(),Loot={pending:new Map(),t:0,fullAt:-99};
 function lootReset(){Loot.pending.clear();Loot.t=0}
 function bagFree(p){let n=0;if(Net.role==='guest')for(const it of Loot.pending.values())if(it)n++;return p.bagSize-p.bag.length-n}
-function loadSettings(){return Object.assign({autoLoot:false,lootMinRar:1},fetchStore('emberfall-settings')||{})}
+function loadSettings(){return Object.assign({autoLoot:false,lootMinRar:1,uiSize:null,gfx:'auto'},fetchStore('emberfall-settings')||{})}
 function saveSettings(){store('emberfall-settings',Settings)}
+// UI size: null = 100% (85% on a phone), else 80-130. applyUi() sets --ui on :root; zoom on the HUD and windows follows it.
+function uiScale(st,phone){const v=st&&st.uiSize!=null?+st.uiSize:phone?85:100;return Math.min(1.3,Math.max(.8,(isFinite(v)?v:100)/100))}
+function applyUi(){document.documentElement.style.setProperty('--ui',uiScale(Settings,phoneUI()))}
+addEventListener('resize',()=>applyUi());
 function autoLootPick(loot,minRar,bagFree,pending){const take=[];let blocked=false;
   for(const d of loot){if(pending.has(d.id))continue;if(!d.item){take.push(d);continue}if(d.item.rar<minRar)continue;if(bagFree>0){take.push(d);bagFree--}else blocked=true}return{take,blocked}}
 function autoLootPlan(cs,minRar,free,pending){const take=[];let blocked=false;for(const c of cs){const r=autoLootPick(c.loot,minRar,free,pending);if(r.blocked)blocked=true;for(const d of r.take){take.push([c,d]);if(d.item)free--}}return{take,blocked}}

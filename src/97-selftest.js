@@ -16,7 +16,7 @@ const TL=()=>[{id:1,kind:'gold',amount:5},{id:2,kind:'mat',mat:'hide',amount:1},
 test('auto loot takes coins, mats and good items',()=>{const r=autoLootPick(TL(),1,5,new Set());eq(r.take.map(d=>d.id),[1,2,4]);eq(r.blocked,false)});
 test('auto loot with a full bag',()=>{const r=autoLootPick(TL(),1,0,new Set());eq(r.take.map(d=>d.id),[1,2]);eq(r.blocked,true)});
 test('auto loot skips pending takes',()=>eq(autoLootPick(TL(),1,5,new Set([1])).take.map(d=>d.id),[2,4]));
-test('settings default without storage',()=>{const f=fetchStore;fetchStore=()=>null;try{eq(loadSettings(),{autoLoot:false,lootMinRar:1})}finally{fetchStore=f}});
+test('settings default without storage',()=>{const f=fetchStore;fetchStore=()=>null;try{eq(loadSettings(),{autoLoot:false,lootMinRar:1,uiSize:null,gfx:'auto'})}finally{fetchStore=f}});
 
 // ---- Area loot
 test('corpses in reach, nearest first',()=>eq(corpsesInReach({x:0,y:0},[{x:100,y:0,loot:[1]},{x:300,y:0,loot:[1]},{x:50,y:0,loot:[1]},{x:20,y:0,loot:[]}]).map(c=>c.x),[50,100]));
@@ -41,3 +41,7 @@ test('abarState halfway through cooldown',()=>eq(abarState(AP(),1,10).cdFrac,.5)
 test('abarState poor when mana is below the cost',()=>{const p=AP();eq(abarState(p,2,10).poor,true);eq(abarState(p,1,10).poor,false)});
 test('abarState ready glows 0.6 s after the cooldown ends',()=>{const p=AP({cds:[0,0,0],cdEnd:[0,10]});eq(abarState(p,1,10.3).ready,true);eq(abarState(p,1,10.7).ready,false);eq(abarState({...p,cds:[0,1,0]},1,10.3).ready,false)});
 test('monster portrait is cached per type',()=>{const u={type:'wolf',h:30,r:12,x:0,y:0};eq(monsterPortrait(u)===monsterPortrait({...u}),true);eq(monsterPortrait({...u,boss:true})===monsterPortrait(u),false)});
+
+// ---- UI size (B6)
+test('uiScale defaults: 100 desktop, 85 phone',()=>{eq(uiScale({uiSize:null},false),1);eq(uiScale({uiSize:null},true),.85)});
+test('uiScale clamps to 0.8-1.3',()=>{eq(uiScale({uiSize:200},false),1.3);eq(uiScale({uiSize:10},false),.8);eq(uiScale({uiSize:110},true),1.1)});
