@@ -91,10 +91,12 @@ function touchMenu(v){const m=$('tmenu');m.classList.toggle('hidden',v===undefin
 {// Wiring. Each control captures its own pointer, so moving and casting work at the same time.
   const cap=e=>{try{e.target.setPointerCapture(e.pointerId)}catch(_){}e.preventDefault()};touchShow(matchMedia('(pointer:coarse)').matches);
   addEventListener('pointerdown',e=>{Touch.lastType=e.pointerType;if(e.pointerType==='touch'){touchShow(true);holdStart(e)}},true);
-  addEventListener('pointermove',e=>{if(e.pointerType==='mouse'&&Touch.on&&(e.movementX||e.movementY))touchShow(false);stickMove(e);slotMove(e);holdMove(e)});
+  addEventListener('pointermove',e=>{if(e.pointerType==='mouse')Touch.lastType='mouse';if(e.pointerType==='mouse'&&Touch.on&&(e.movementX||e.movementY))touchShow(false);stickMove(e);slotMove(e);holdMove(e)});
   const up=lost=>e=>{stickUp(e);atkUp(e);slotUp(e,lost);holdEnd(e)};addEventListener('pointerup',up(false));addEventListener('pointercancel',up(true));
   addEventListener('keydown',e=>{if(Touch.on&&!/^(INPUT|TEXTAREA)$/.test(e.target.tagName||''))touchShow(false)},true);addEventListener('blur',touchReset);document.addEventListener('visibilitychange',touchReset);addEventListener('orientationchange',touchReset);if(screen.orientation)screen.orientation.addEventListener('change',touchReset);
   addEventListener('click',e=>{if(performance.now()<(Touch.noClick||0)){Touch.noClick=0;e.stopPropagation();e.preventDefault()}},true);
+  // Phones fire a fake hover on every tap and never a leave, so hover tooltips would stick: on touch only a hold (holdStart) shows a tooltip.
+  addEventListener('mouseenter',e=>{if(Touch.lastType==='touch')e.stopPropagation()},true);addEventListener('mouseover',e=>{if(Touch.lastType==='touch')e.stopPropagation()},true);
   addEventListener('contextmenu',e=>{if(Touch.lastType==='touch'){e.preventDefault();e.stopPropagation()}},true);
   cvs.addEventListener('pointerdown',e=>{if(Touch.on&&e.pointerType==='touch'&&state==='play'&&!isPaused()&&stickDown(e))cap(e)});
   $('atk').addEventListener('pointerdown',e=>{if(atkDown(e))cap(e)});

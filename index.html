@@ -2907,10 +2907,12 @@ function touchMenu(v){const m=$('tmenu');m.classList.toggle('hidden',v===undefin
 {// Wiring. Each control captures its own pointer, so moving and casting work at the same time.
   const cap=e=>{try{e.target.setPointerCapture(e.pointerId)}catch(_){}e.preventDefault()};touchShow(matchMedia('(pointer:coarse)').matches);
   addEventListener('pointerdown',e=>{Touch.lastType=e.pointerType;if(e.pointerType==='touch'){touchShow(true);holdStart(e)}},true);
-  addEventListener('pointermove',e=>{if(e.pointerType==='mouse'&&Touch.on&&(e.movementX||e.movementY))touchShow(false);stickMove(e);slotMove(e);holdMove(e)});
+  addEventListener('pointermove',e=>{if(e.pointerType==='mouse')Touch.lastType='mouse';if(e.pointerType==='mouse'&&Touch.on&&(e.movementX||e.movementY))touchShow(false);stickMove(e);slotMove(e);holdMove(e)});
   const up=lost=>e=>{stickUp(e);atkUp(e);slotUp(e,lost);holdEnd(e)};addEventListener('pointerup',up(false));addEventListener('pointercancel',up(true));
   addEventListener('keydown',e=>{if(Touch.on&&!/^(INPUT|TEXTAREA)$/.test(e.target.tagName||''))touchShow(false)},true);addEventListener('blur',touchReset);document.addEventListener('visibilitychange',touchReset);addEventListener('orientationchange',touchReset);if(screen.orientation)screen.orientation.addEventListener('change',touchReset);
   addEventListener('click',e=>{if(performance.now()<(Touch.noClick||0)){Touch.noClick=0;e.stopPropagation();e.preventDefault()}},true);
+  // Phones fire a fake hover on every tap and never a leave, so hover tooltips would stick: on touch only a hold (holdStart) shows a tooltip.
+  addEventListener('mouseenter',e=>{if(Touch.lastType==='touch')e.stopPropagation()},true);addEventListener('mouseover',e=>{if(Touch.lastType==='touch')e.stopPropagation()},true);
   addEventListener('contextmenu',e=>{if(Touch.lastType==='touch'){e.preventDefault();e.stopPropagation()}},true);
   cvs.addEventListener('pointerdown',e=>{if(Touch.on&&e.pointerType==='touch'&&state==='play'&&!isPaused()&&stickDown(e))cap(e)});
   $('atk').addEventListener('pointerdown',e=>{if(atkDown(e))cap(e)});
@@ -3643,6 +3645,9 @@ test('delete name match ignores case and spaces',()=>{eq(nameMatches(' corwin ',
 test('touchPlace keeps every box inside the safe-area insets',()=>{for(const[W,H]of[[667,220],[844,390]]){const z=touchSizes(H),ir=47,ib=21,il=47,r=touchPlace({W,H,atk:z.atk,ab:z.ab,q:z.q,limit:110,n:5,ir,ib,il}),k=r.quick,bs=[{x:r.atk.x,y:r.atk.y,r:z.atk/2},...r.abil.map(a=>({x:a.x,y:a.y,r:z.ab/2}))],tag=W+'x'+H;
     for(const b of bs){eq(b.x+b.r<=W-ir&&b.y+b.r<=H-ib&&b.x-b.r>=il,true,tag+' circle inside')}eq(k.x+k.w<=W-ir||k.x+k.w<=r.atk.x,true,tag+' quick right');eq(k.y+k.h<=H-ib,true,tag+' quick bottom');eq(r.mb>=ib,true,tag+' ctx bottom margin')}});
 test('fullscreenchange sync clears and sets Settings.fullscreen',()=>{const o=Settings.fullscreen,fe=fsEl;try{fsEl=()=>null;Settings.fullscreen=true;fsSync();eq(Settings.fullscreen,false,'left fullscreen');fsEl=()=>document.body;fsSync();eq(Settings.fullscreen,true,'entered')}finally{fsEl=fe;if(o===undefined)delete Settings.fullscreen;else Settings.fullscreen=o;saveSettings()}});
+
+// ---- Phones send a fake hover on tap; only a hold may show a tooltip
+test('tap on touch does not show hover tooltip',()=>{const lt=Touch.lastType,tip=$('tip'),was=tip.classList.contains('hidden');const d=document.createElement('div');d.onmouseenter=()=>showTip('x');document.body.appendChild(d);try{hideTip();Touch.lastType='touch';d.dispatchEvent(new MouseEvent('mouseenter'));eq(tip.classList.contains('hidden'),true,'touch');Touch.lastType='mouse';d.dispatchEvent(new MouseEvent('mouseenter'));eq(tip.classList.contains('hidden'),false,'mouse')}finally{d.remove();hideTip();Touch.lastType=lt;if(!was)tip.classList.remove('hidden')}});
 // ================= Developer test mode for co-op =================
 // Open the game twice on this computer as index.html?nettest=a and index.html?nettest=b: the two tabs act as two
 // friends and introduce each other through the browser (no accounts needed). Ignored without the parameter.
