@@ -63,7 +63,7 @@ function onJoinRequest(m){const no=why=>sig(m.from,{t:'no',why}).catch(()=>{});
   if(Net.role==='guest')return no('They are visiting someone else right now.');
   if(Net.size()>=MAX_PARTY)return no('Their world is full (4 players).');
   const accept=()=>{Net.invited.delete(m.from);sig(m.from,{t:'ok',seed:WSEED,ph:isPhone()?1:0}).catch(()=>{})};
-  if(m.invited&&Net.invited.has(m.from))accept();else netAsk(`${m.fname} (${escapeHtml(m.hero&&m.hero.name||'')}, level ${m.hero&&m.hero.level||'?'}) wants to join your world.`,[['Accept',accept],['Decline',()=>no(`${Friends.me?Friends.me.name:'Your friend'} declined.`)]])}
+  if(m.invited&&Net.invited.has(m.from))accept();else netAsk(`${m.fname} (${escapeHtml(m.hero&&m.hero.name||'')}, level ${(m.hero&&+m.hero.level|0)||'?'}) wants to join your world.`,[['Accept',accept],['Decline',()=>no(`${Friends.me?Friends.me.name:'Your friend'} declined.`)]])}
 function netInvite(uid,name){if(state!=='play'){toast('Enter your world first, then invite.','danger');return}if(Net.role==='guest'){toast('You are visiting someone else right now.','danger');return}
   Net.invited.add(uid);sig(uid,{t:'invite'}).then(()=>toast(`Invitation sent to ${name}.`)).catch(e=>toast(e.message,'danger'))}
 async function onSdp(m){if(m.d.type==='offer'){if(state!=='play')return;let pe=Net.peers.get(m.from);if(pe&&pe.pc)pe.pc.close();pe=newPeer(m.from,m.fname);
@@ -81,7 +81,7 @@ function netData(pe,m){if(Net.role!=='guest'&&m.t==='hello')return hostHello(pe,
   if(Net.role==='host'){const pr=pe.proxy;if(!pr)return;switch(m.t){
     case'st':pr.x=m.x;pr.y=m.y;pr.aim=m.a;pr.walk=m.w;pr.hp=m.hp;pr.maxHp=m.mh;pr.dead=!!m.dd;pr.castAnim=m.ca||0;pr.mounted=!!m.mt;pr.mount=m.mt||pr.mount;pr.away=m.z!==zone.id;break;
     case'cast':castRemote(pr,m.i,m.ax,m.ay);break;
-    case'hero':{const k={x:pr.x,y:pr.y,hp:pr.hp};Object.assign(pr,{level:m.p.level,gear:m.p.gear,attr:m.p.attr,talents:m.p.talents,spec:m.p.spec,skills:m.p.skills,bagSize:m.p.bagSize,look:m.p.look});pr.abil=abilList(pr);calcStats(pr);Object.assign(pr,k);break}
+    case'hero':{const k={x:pr.x,y:pr.y,hp:pr.hp};Object.assign(pr,{level:lvClamp(m.p.level),gear:m.p.gear,attr:m.p.attr,talents:m.p.talents,spec:m.p.spec,skills:m.p.skills,bagSize:m.p.bagSize,look:m.p.look});pr.abil=abilList(pr);calcStats(pr);Object.assign(pr,k);break}
     case'take':hostGiveLoot(pe,m.cid,m.did);break;
     case'chat':hostChat(pe,m);break;
     case'away':pr.awayBg=m.v?time:null;renderParty();break;
@@ -89,7 +89,7 @@ function netData(pe,m){if(Net.role!=='guest'&&m.t==='hello')return hostHello(pe,
     case'bye':peerLost(pe);break}return}
   if(Net.role==='guest'||Net.asking){switch(m.t){
     case'welcome':enterGuestWorld(pe,m);break;
-    case'snap':applySnap(m);break;
+    case'snap':Net.lastSnap=rt;if(Net.hw){Net.hw=false;hostWaitShow()}applySnap(m);break;
     case'dmg':{const p=players[0];if(p&&!p.dead)dealDamage(p,m.d,null,{raw:1,slow:m.sl,slowF:m.sf,stun:m.st,knockFrom:m.kx!=null?{x:m.kx,y:m.ky}:null});break}
     case'heal':{const p=players[0];if(p&&!p.dead)heal(p,m.a);break}
     case'xp':if(players[0])gainXp(players[0],m.a);break;
@@ -101,11 +101,11 @@ function netData(pe,m){if(Net.role!=='guest'&&m.t==='hello')return hostHello(pe,
     case'hpause':if(Net.role!=='guest')break;if(m.v){if(!Net.hw){Net.hw=true;Net.hwT=rt}}else Net.hw=false;hostWaitShow();break;
     case'bye':leaveParty(`${pe.name} left, so their world closed.`);break}}}
 function hostHello(pe,m){if(!m.hero||Net.size()>=MAX_PARTY){netSend(pe,{t:'bye'});return}Net.role='host';const h=players[0];
-  const pr=createPlayer(Object.assign({},m.hero.p,{x:h.x+rand(-40,40),y:h.y+rand(20,50)}));pr.isRemote=true;pr.uid=pe.uid;pr.id=pe.uid;pr.netName=pe.name;pr.x=h.x+rand(-40,40);pr.y=h.y+rand(20,50);
+  const pr=createPlayer(Object.assign({},m.hero.p,{level:lvClamp(m.hero.p.level),x:h.x+rand(-40,40),y:h.y+rand(20,50)}));pr.isRemote=true;pr.uid=pe.uid;pr.id=pe.uid;pr.netName=pe.name;pr.x=h.x+rand(-40,40);pr.y=h.y+rand(20,50);
   pe.proxy=pr;pe.ph=!!m.ph;players.push(pr);rescaleEnemies();Net.corpVer++;Net.apT=0;
   netSend(pe,{t:'welcome',seed:WSEED,q:quest.idx,zone:zone.id,x:pr.x,y:pr.y,host:Friends.me?Friends.me.name:h.name});if(hostHidden()){Net.hid=true;netSend(pe,{t:'hpause',v:1})}// a hidden host gets no frames, so the newcomer must be told now
   toast(`${pe.name} joined your world!`,'gold');sfx('level');renderParty()}
-function enterGuestWorld(pe,m){Net.role='guest';Net.hw=false;Net.hwT=0;hostWaitShow();Net.asking=null;Net.host={uid:pe.uid,name:pe.name,seed:m.seed};Net.hostQ=m.q;Net.hostZone=m.zone;
+function enterGuestWorld(pe,m){Net.role='guest';Net.hw=false;Net.hwT=0;Net.lastSnap=rt;hostWaitShow();Net.asking=null;Net.host={uid:pe.uid,name:pe.name,seed:m.seed};Net.hostQ=m.q;Net.hostZone=m.zone;
   let data;if(Net.pendingHero.data)data=Net.pendingHero.data;else{const c=heroRecord(Net.pendingHero.id);data=c?c.data:{p:heroNetData().p}}
   const id=Net.pendingHero.id;Net.own={x:data.p.x,y:data.p.y,loc:data.p.loc,explored:data.p.explored};
   startGame(data,false,id);const p=players[0];if(m.zone!=='over')enterZone(m.zone,m.x,m.y);p.x=m.x;p.y=m.y;enemies=[];allies=[];
@@ -157,7 +157,7 @@ function netTick(dt){if(!Net.role)return;const p=players[0];netPresence();
 function applySnap(m){Net.hostQ=m.q;if(m.wc!=null)worldClock=m.wc;const same=zone.id===Net.hostZone;
   // other heroes
   const seen=new Set();for(const s of m.pl){seen.add(s.u);let a=Net.avatars.get(s.u);if(!a){a={uid:s.u,isAvatar:true,x:s.x,y:s.y,walk:0,aim:0,look:{},gear:{},cls:'paladin',bagSize:20,r:13,h:52};Net.avatars.set(s.u,a)}
-    Object.assign(a,{name:s.hn,netName:s.n,tx:s.x,ty:s.y,aim:s.a,walk:s.w,hp:s.hp,maxHp:s.mh,dead:!!s.dd,castAnim:s.ca,mounted:!!s.mt,mount:s.mt||a.mount,level:s.lv,bg:!!s.bg,away:s.z!==zone.id});if(s.ap)Object.assign(a,s.ap)}
+    Object.assign(a,{name:s.hn,netName:s.n,tx:s.x,ty:s.y,aim:s.a,walk:s.w,hp:s.hp,maxHp:s.mh,dead:!!s.dd,castAnim:s.ca,mounted:!!s.mt,mount:s.mt||a.mount,level:lvClamp(s.lv),bg:!!s.bg,away:s.z!==zone.id});if(s.ap)Object.assign(a,s.ap)}
   for(const k of[...Net.avatars.keys()])if(!seen.has(k))Net.avatars.delete(k);
   if(!same){enemies=[];allies=[];return}
   // monsters and minions
@@ -185,11 +185,19 @@ function teleportTo(uid,free){const m=partyMembers().find(q=>q.uid===uid),p=play
   if(!free){if(Net.tpCd>time){toast(`Teleport is ready in ${Math.ceil(Net.tpCd-time)} s.`);return}if(time-p.lastHurt<4){toast('You cannot teleport while fighting.','danger');return}Net.tpCd=time+TP_CD}
   if(p.mounted)dismount(p,true);burst(p.x,p.y,'#9fd8ff',24,160);p.x=m.x+rand(-40,40);p.y=m.y+rand(20,50);sfx('blink');burst(p.x,p.y,'#9fd8ff',30,180);fx.push({k:'pillar',x:p.x,y:p.y,life:.8,max:.8,col:'#9fd8ff'})}
 let partyT=0;
-function renderParty(){const el=$('party');if(!el)return;const ms=partyMembers();$('chatBtn').classList.toggle('hidden',!Net.role);el.classList.toggle('hidden',!ms.length);el.innerHTML=ms.map(m=>`<div class="pm${m.dead?' dead':''}${m.bg?' away':''}" style="--f:${Math.max(0,Math.min(100,m.hp/(m.maxHp||1)*100))}"><span class="pmp"></span><div class="pmb"><div class="pmn"><span>${CLASSES[m.cls]?CLASSES[m.cls].icon:''} ${escapeHtml(m.name||m.hero||'')}</span><small>Lv ${m.level||'?'}${m.bg?' · away':m.away?' · inside':''}</small>`+
-  `<button title="Teleport to ${escapeHtml(m.name||'')} (every ${TP_CD} s, not in combat)" data-tp="${m.uid}">⇢</button></div><div class="bar hp"><i style="width:${Math.max(0,m.hp/(m.maxHp||1)*100)}%"></i></div></div></div>`).join('');
-  el.querySelectorAll('.pmp').forEach((e,i)=>e.replaceWith(portraitEl(ms[i],isPhone()?32:40)));
-  for(const b of el.querySelectorAll('[data-tp]'))b.onclick=()=>teleportTo(b.dataset.tp);
-  if(Layout.phone)el.querySelectorAll('.pm').forEach((e,i)=>e.onclick=()=>{const m=ms[i];uiSheet(m.name||m.hero||'',[{icon:'⇢',label:'Teleport to '+(m.name||m.hero||''),onTap:()=>teleportTo(m.uid)},{icon:'💬',label:'Whisper',onTap:()=>openChat(m.uid,m.name||m.hero)},{icon:'🚪',label:'Leave party',onTap:()=>leaveParty()}])})}// phone: the portrait stack has no buttons, so a tap opens them
+const lvClamp=x=>Math.max(1,Math.min(99,+x|0));// levels come from other players: always a whole number 1..99
+const hpPct=m=>Math.max(0,Math.min(100,(+m.hp||0)/(+m.maxHp||1)*100));
+// Rebuilt only when something you can see changes (a rebuild between finger-down and finger-up eats the tap); health is updated in place.
+function renderParty(){const el=$('party');if(!el)return;const ms=partyMembers();$('chatBtn').classList.toggle('hidden',!Net.role);el.classList.toggle('hidden',!ms.length);
+  const sig=ms.map(m=>[m.uid,!!m.dead,!!m.bg,!!m.away,(+m.level|0),portraitKey(m.look,m.gear,m.cls),m.name||m.hero||''].join('|')).join('~')+'#'+isPhone();
+  if(sig!==el._sig){el._sig=sig;el.innerHTML=ms.map(m=>`<div class="pm${m.dead?' dead':''}${m.bg?' away':''}" data-uid="${escapeHtml(m.uid)}"><span class="pmp"></span><div class="pmb"><div class="pmn"><span>${CLASSES[m.cls]?CLASSES[m.cls].icon:''} ${escapeHtml(m.name||m.hero||'')}</span><small>Lv ${(+m.level|0)||'?'}${m.bg?' · away':m.away?' · inside':''}</small>`+
+    `<button title="Teleport to ${escapeHtml(m.name||'')} (every ${TP_CD} s, not in combat)" data-tp="${escapeHtml(m.uid)}">⇢</button></div><div class="bar hp"><i></i></div></div></div>`).join('');
+    el.querySelectorAll('.pmp').forEach((e,i)=>e.replaceWith(portraitEl(ms[i],isPhone()?32:40)))}
+  el.querySelectorAll('.pm').forEach((e,i)=>{const m=ms[i];if(!m)return;const f=hpPct(m);e.style.setProperty('--f',f);const b=e.querySelector('.bar i');if(b)b.style.width=f+'%'})}
+// One listener for the whole stack: it reads the member from the tapped .pm, so it survives rebuilds. Phone: the portrait stack has no buttons, so a tap opens them.
+$('party').addEventListener('click',e=>{const pm=e.target.closest&&e.target.closest('.pm');if(!pm)return;const uid=pm.dataset.uid,m=partyMembers().find(q=>String(q.uid)===uid);if(!m)return;
+  if(e.target.closest('[data-tp]')){teleportTo(m.uid);return}
+  if(Layout.phone)uiSheet(m.name||m.hero||'',[{icon:'⇢',label:'Teleport to '+(m.name||m.hero||''),onTap:()=>teleportTo(m.uid)},{icon:'💬',label:'Whisper',onTap:()=>openChat(m.uid,m.name||m.hero)},{icon:'🚪',label:'Leave party',onTap:()=>leaveParty()}])});
 
 // ---- Dying with friends around: return to town, or rise beside a living friend.
 let deathSheet=null;function closeDeathSheet(){if(deathSheet){deathSheet.close();deathSheet=null}}
@@ -244,5 +252,6 @@ function netPresence(){if(!Net.role)return;const h=Net.role==='host'?hostHidden(
   else{netAll({t:'hpause',v:h?1:0});if(!h){Net.sentCorp=null;Net.apT=0;Net.snapT=0}}}
 const netHold=()=>Net.role==='guest'&&Net.hw||Net.role==='host'&&Net.hid;// the world stands still
 function hostWaitShow(){const el=$('hostWait');if(!el)return;el.classList.toggle('hidden',!(Net.role==='guest'&&Net.hw));if(Net.hw&&Net.host)el.textContent=`Waiting for ${Net.host.name}…`}
-function hostWaitTick(){if(Net.role==='guest'&&Net.hw&&hostWaitExpired(Net.hwT,rt))leaveParty(`${Net.host?Net.host.name:'The host'} did not come back, so you are heading home.`)}
+function hostWaitTick(){if(Net.role==='guest'&&!Net.hw&&Net.lastSnap&&rt-Net.lastSnap>5){Net.hw=true;Net.hwT=rt;hostWaitShow()}// no snapshots for 5 s: a suspended phone host may never have sent hpause
+  if(Net.role==='guest'&&Net.hw&&hostWaitExpired(Net.hwT,rt))leaveParty(`${Net.host?Net.host.name:'The host'} did not come back, so you are heading home.`)}
 document.addEventListener('visibilitychange',()=>{netPresence();if(document.visibilityState==='visible')hostWaitTick()});

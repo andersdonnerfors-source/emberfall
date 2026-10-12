@@ -115,3 +115,20 @@ test('host hello while hidden sends hpause',()=>{const sent=[],o={role:Net.role,
   try{Net.role='host';Net.hid=false;Net.peers=new Map();players=[{x:0,y:0,name:'H'}];hostHidden=()=>true;netSend=(p,m)=>{sent.push([p,m])};createPlayer=d=>({...d});rescaleEnemies=()=>{};renderParty=()=>{};toast=()=>{};sfx=()=>{};
     const pe={uid:'g1',name:'G'};hostHello(pe,{hero:{p:{}},ph:0});eq(sent.some(([p,m])=>p===pe&&m.t==='hpause'&&m.v===1),true);eq(Net.hid,true)}
   finally{Net.role=o.role;Net.hid=o.hid;hostHidden=o.hh;netSend=o.ns;Net.peers=o.peers;players=o.pl;createPlayer=o.cp;rescaleEnemies=o.rs;renderParty=o.rp;toast=o.tt;sfx=o.sf}});
+
+// ---- Final fix wave
+const PMEM=o=>Object.assign({isRemote:true,uid:'u1',netName:'Ann',name:'ann',level:3,cls:'paladin',look:{},gear:{},hp:5,maxHp:10,dead:false,away:false,x:0,y:0},o);
+test('party not rebuilt when unchanged',()=>{const o={role:Net.role,pl:players};try{Net.role='host';players=[{x:0,y:0},PMEM()];renderParty();const a=$('party').querySelector('.pm');renderParty();eq($('party').querySelector('.pm')===a,true);
+    players[1].hp=2;renderParty();eq($('party').querySelector('.pm')===a,true,'hp changes update in place');eq($('party').querySelector('.pm .bar i').style.width,'20%');players[1].level=4;renderParty();eq($('party').querySelector('.pm')===a,false,'level change rebuilds')}
+  finally{Net.role=o.role;players=o.pl;renderParty()}});
+test('party level is numeric',()=>{const o={role:Net.role,pl:players};try{Net.role='host';players=[{x:0,y:0},PMEM({level:'<img src=x>',netName:'<b>x</b>'})];renderParty();const el=$('party');eq(el.querySelector('img'),null);eq(el.querySelector('b'),null);eq(/Lv \?/.test(el.querySelector('small').textContent),true)}
+  finally{Net.role=o.role;players=o.pl;renderParty()}});
+test('lvClamp coerces to 1..99',()=>{eq(lvClamp('<img>'),1);eq(lvClamp(500),99);eq(lvClamp(-4),1);eq(lvClamp('12'),12)});
+test('preview target picked when idle on touch',()=>{const pl=players.slice(),p=TP('sorcerer'),on=Touch.on,e=enemies.slice(),t0=Aim.target,en=AU(60,0,{dead:false}),lc=lineClear;players.length=0;players.push(p);enemies.length=0;enemies.push(en);Touch.on=true;touchReset();Aim.target=null;Aim.pt=0;lineClear=()=>true;
+  try{inPlay(()=>{aimPreview(p);eq(Aim.target===en,true);Aim.pt=0;Touch.fire=true;enemies.length=0;aimPreview(p);eq(Aim.target===en,true,'no re-pick while firing');Touch.fire=false;Aim.pt=0;aimPreview(p);eq(Aim.target,null)})}
+  finally{lineClear=lc;players.length=0;players.push(...pl);enemies.length=0;enemies.push(...e);Touch.on=on;Aim.target=t0;touchReset()}});
+test('guest waits after 5s without snapshots',()=>{const o={role:Net.role,hw:Net.hw,hwT:Net.hwT,host:Net.host,ls:Net.lastSnap};try{Net.role='guest';Net.host={name:'H'};Net.hw=false;Net.hwT=0;Net.lastSnap=rt-4;hostWaitTick();eq(Net.hw,false);Net.lastSnap=rt-6;hostWaitTick();eq(Net.hw,true);eq(Net.hwT,rt);
+    netData({uid:'x',name:'X'},{t:'snap',q:0,pl:[],en:[],al:[],ev:[],cs:[]});eq(Net.hw,false)}
+  finally{Net.role=o.role;Net.hw=o.hw;Net.hwT=o.hwT;Net.host=o.host;Net.lastSnap=o.ls;hostWaitShow()}});
+test('desktop key hints hidden on touch',()=>{const on=Touch.on;try{Touch.on=true;eq(keyHint('Loot'),'Loot');Touch.on=false;eq(keyHint('Loot'),'[E] Loot')}finally{Touch.on=on}});
+test('drawBubble works without roundRect',()=>{const old=CanvasRenderingContext2D.prototype.roundRect;try{CanvasRenderingContext2D.prototype.roundRect=undefined;const k=myUid();Chat.bub.set(k,{m:'hi',until:rt+3});drawBubble({x:0,y:0},50,50);eq(true,true)}finally{CanvasRenderingContext2D.prototype.roundRect=old;Chat.bub.delete(myUid())}});
