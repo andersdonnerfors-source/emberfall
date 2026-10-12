@@ -355,7 +355,7 @@ body.phone #chatLog{top:76px;width:min(360px,44vw)}
   <div id="frMsg"></div><div id="frList"></div></div>
 <div id="namePick" class="hidden"><div class="panel cfbox"><h2>Choose your account name</h2><p>Friends find you by this name. It is shown instead of your email. Use 3–16 letters, numbers or _.</p>
   <input id="npName" maxlength="16" autocomplete="off" spellcheck="false"><div id="npMsg" style="color:#ff9a8a;margin-top:8px;min-height:1em"></div><div class="row"><button class="btn primary" id="npOk">Save name</button></div></div></div>
-<div id="confirm" class="hidden"><div class="panel cfbox"><h2 id="cfTitle"></h2><p id="cfText"></p><input id="cfInput" autocomplete="off" spellcheck="false">
+<div id="confirm" class="hidden"><div class="panel cfbox"><h2 id="cfTitle"></h2><p id="cfText"></p><input id="cfInput" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
   <div class="row"><button class="btn" id="cfNo">Keep</button><button class="btn danger" id="cfOk">Delete forever</button></div></div></div>
 
 <div id="creator" class="screen hidden">
@@ -3154,11 +3154,12 @@ function renderSelect(){const el=$('heroList');el.innerHTML='';const hs=SEL.hero
   $('btnImport').classList.toggle('hidden',!(Account.mode==='online'&&allSaves().heroes.length&&hs.length<MAX_HEROES))}
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function playSelected(){const h=SEL.heroes[SEL.idx];if(!h)return;store(LAST_KEY,h.id);startGame(h.data,false,h.id)}
-// Deleting asks you to type the hero's name, so it never happens by accident.
+// Deleting asks you to type the hero's name, so it never happens by accident. Case and spaces are ignored: phone keyboards capitalise and add spaces.
+function nameMatches(typed,name){return!!typed&&typed.trim().toLowerCase()===String(name).trim().toLowerCase()}
 function askDelete(){const h=SEL.heroes[SEL.idx];if(!h)return;const name=h.data.p.name;$('confirm').classList.remove('hidden');$('cfTitle').textContent='Delete '+name+'?';
   $('cfText').innerHTML=`This removes <b>${escapeHtml(name)}</b> and all their gear forever. Type the hero's name to confirm.`;const inp=$('cfInput');inp.value='';inp.focus();$('cfOk').disabled=true;
-  inp.oninput=()=>{$('cfOk').disabled=inp.value.trim()!==name};
-  $('cfOk').onclick=async()=>{if(inp.value.trim()!==name)return;$('confirm').classList.add('hidden');try{await Account.remove(h.id);sfx('death');toast(name+' has been laid to rest.')}catch(e){toast('Could not delete: '+e.message,'danger')}openSelect()};
+  inp.oninput=()=>{$('cfOk').disabled=!nameMatches(inp.value,name)};
+  $('cfOk').onclick=async()=>{if(!nameMatches(inp.value,name))return;$('confirm').classList.add('hidden');try{await Account.remove(h.id);sfx('death');toast(name+' has been laid to rest.')}catch(e){toast('Could not delete: '+e.message,'danger')}openSelect()};
   $('cfNo').onclick=()=>$('confirm').classList.add('hidden')}
 $('btnPlay').onclick=playSelected;$('btnDel').onclick=askDelete;
 $('btnAcct').onclick=async()=>{await Account.signOut();showLogin()};
@@ -3627,6 +3628,9 @@ const UA_MSG='Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit
 test('Messenger iOS is an in-app browser, Safari and Chrome are not',()=>{eq(isInAppBrowser(UA_MSG),true);eq(isInAppBrowser(UA_IG),true);eq(isInAppBrowser(UA_SAF),false);eq(isInAppBrowser(UA_AND),false);eq(isInAppBrowser('Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148'),true,'WKWebView without Safari')});
 test('fsMode picks inapp, ios-a2hs, api or none',()=>{eq(fsMode({ua:UA_MSG,hasFsApi:false,standalone:false}),'inapp');eq(fsMode({ua:UA_SAF,hasFsApi:false,standalone:false}),'ios-a2hs');
   eq(fsMode({ua:UA_AND,hasFsApi:true,standalone:false}),'api');eq(fsMode({ua:UA_SAF,hasFsApi:false,standalone:true}),'none');eq(fsMode({ua:UA_AND,hasFsApi:true,standalone:true}),'none');eq(fsMode({ua:UA_AND,hasFsApi:false,standalone:false}),'none')});
+
+// ---- Delete confirm: phone keyboards change case and add spaces
+test('delete name match ignores case and spaces',()=>{eq(nameMatches(' corwin ','Corwin'),true);eq(nameMatches('CORWIN','Corwin'),true);eq(nameMatches('Corwi','Corwin'),false);eq(nameMatches('','Corwin'),false)});
 // ================= Developer test mode for co-op =================
 // Open the game twice on this computer as index.html?nettest=a and index.html?nettest=b: the two tabs act as two
 // friends and introduce each other through the browser (no accounts needed). Ignored without the parameter.

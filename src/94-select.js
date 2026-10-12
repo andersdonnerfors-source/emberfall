@@ -23,11 +23,12 @@ function renderSelect(){const el=$('heroList');el.innerHTML='';const hs=SEL.hero
   $('btnImport').classList.toggle('hidden',!(Account.mode==='online'&&allSaves().heroes.length&&hs.length<MAX_HEROES))}
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function playSelected(){const h=SEL.heroes[SEL.idx];if(!h)return;store(LAST_KEY,h.id);startGame(h.data,false,h.id)}
-// Deleting asks you to type the hero's name, so it never happens by accident.
+// Deleting asks you to type the hero's name, so it never happens by accident. Case and spaces are ignored: phone keyboards capitalise and add spaces.
+function nameMatches(typed,name){return!!typed&&typed.trim().toLowerCase()===String(name).trim().toLowerCase()}
 function askDelete(){const h=SEL.heroes[SEL.idx];if(!h)return;const name=h.data.p.name;$('confirm').classList.remove('hidden');$('cfTitle').textContent='Delete '+name+'?';
   $('cfText').innerHTML=`This removes <b>${escapeHtml(name)}</b> and all their gear forever. Type the hero's name to confirm.`;const inp=$('cfInput');inp.value='';inp.focus();$('cfOk').disabled=true;
-  inp.oninput=()=>{$('cfOk').disabled=inp.value.trim()!==name};
-  $('cfOk').onclick=async()=>{if(inp.value.trim()!==name)return;$('confirm').classList.add('hidden');try{await Account.remove(h.id);sfx('death');toast(name+' has been laid to rest.')}catch(e){toast('Could not delete: '+e.message,'danger')}openSelect()};
+  inp.oninput=()=>{$('cfOk').disabled=!nameMatches(inp.value,name)};
+  $('cfOk').onclick=async()=>{if(!nameMatches(inp.value,name))return;$('confirm').classList.add('hidden');try{await Account.remove(h.id);sfx('death');toast(name+' has been laid to rest.')}catch(e){toast('Could not delete: '+e.message,'danger')}openSelect()};
   $('cfNo').onclick=()=>$('confirm').classList.add('hidden')}
 $('btnPlay').onclick=playSelected;$('btnDel').onclick=askDelete;
 $('btnAcct').onclick=async()=>{await Account.signOut();showLogin()};

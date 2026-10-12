@@ -161,3 +161,6 @@ const UA_MSG='Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit
 test('Messenger iOS is an in-app browser, Safari and Chrome are not',()=>{eq(isInAppBrowser(UA_MSG),true);eq(isInAppBrowser(UA_IG),true);eq(isInAppBrowser(UA_SAF),false);eq(isInAppBrowser(UA_AND),false);eq(isInAppBrowser('Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148'),true,'WKWebView without Safari')});
 test('fsMode picks inapp, ios-a2hs, api or none',()=>{eq(fsMode({ua:UA_MSG,hasFsApi:false,standalone:false}),'inapp');eq(fsMode({ua:UA_SAF,hasFsApi:false,standalone:false}),'ios-a2hs');
   eq(fsMode({ua:UA_AND,hasFsApi:true,standalone:false}),'api');eq(fsMode({ua:UA_SAF,hasFsApi:false,standalone:true}),'none');eq(fsMode({ua:UA_AND,hasFsApi:true,standalone:true}),'none');eq(fsMode({ua:UA_AND,hasFsApi:false,standalone:false}),'none')});
+
+// ---- Delete confirm: phone keyboards change case and add spaces
+test('delete name match ignores case and spaces',()=>{eq(nameMatches(' corwin ','Corwin'),true);eq(nameMatches('CORWIN','Corwin'),true);eq(nameMatches('Corwi','Corwin'),false);eq(nameMatches('','Corwin'),false)});
