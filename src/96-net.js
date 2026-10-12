@@ -21,7 +21,7 @@ function isFriend(uid){return Friends.list.some(f=>f.id===uid&&f.status==='accep
 function netSignal(m){if(!m||!isFriend(m.from))return;
   if(m.v!==NET_VER){if(m.t==='join'||m.t==='invite')toast(`${m.fname} has a different game version. Both of you: reload the page.`,'danger');return}
   switch(m.t){
-    case'invite':if(Net.role==='guest'&&Net.host&&Net.host.uid===m.from)return;netAsk(`${m.fname} invites you to their world.`,[['Join',()=>netJoin(m.from,m.fname,true)],['Not now',null]]);break;
+    case'invite':if(Net.role==='guest'&&Net.host&&Net.host.uid===m.from)return;netAsk(`${m.fname} invites you to their world.`,[['Accept',()=>netJoin(m.from,m.fname,true)],['Decline',null]]);break;
     case'join':onJoinRequest(m);break;
     case'ok':if(Net.asking&&Net.asking.uid===m.from){Net.asking.ok=true;toast(`${m.fname} accepted. Connecting…`,'gold');netConnect(m.from,m.fname,m.seed)}break;
     case'no':if(Net.asking&&Net.asking.uid===m.from){Net.asking=null;toast(m.why||`${m.fname} could not take you in right now.`,'danger')}break;
@@ -31,7 +31,7 @@ function netSignal(m){if(!m||!isFriend(m.from))return;
 // A small box at the top of the screen that waits for an answer.
 function netAsk(text,btns,ms){const box=document.createElement('div');box.className='netask panel';box.innerHTML=`<div>${escapeHtml(text)}</div>`;const row=document.createElement('div');row.className='row';
   const close=()=>{box.remove()};for(const[l,fn]of btns){const b=document.createElement('button');b.className='btn'+(fn?' primary':'');b.textContent=l;b.onclick=()=>{close();if(fn)fn()};row.appendChild(b)}
-  box.appendChild(row);$('netAsks').appendChild(box);sfx('quest');setTimeout(close,ms||30000)}
+  box.appendChild(row);$('netAsks').appendChild(box);sfx('quest');setTimeout(close,ms||20000)}
 
 // ---- Joining (guest side)
 function netJoin(uid,name,invited){if(Account.mode!=='online'&&!NETTEST){toast('Sign in online to play with friends.','danger');return}
@@ -79,6 +79,7 @@ function netData(pe,m){if(Net.role!=='guest'&&m.t==='hello')return hostHello(pe,
     case'cast':castRemote(pr,m.i,m.ax,m.ay);break;
     case'hero':{const k={x:pr.x,y:pr.y,hp:pr.hp};Object.assign(pr,{level:m.p.level,gear:m.p.gear,attr:m.p.attr,talents:m.p.talents,spec:m.p.spec,skills:m.p.skills,bagSize:m.p.bagSize,look:m.p.look});pr.abil=abilList(pr);calcStats(pr);Object.assign(pr,k);break}
     case'take':hostGiveLoot(pe,m.cid,m.did);break;
+    case'chat':hostChat(pe,m);break;
     case'bye':peerLost(pe);break}return}
   if(Net.role==='guest'||Net.asking){switch(m.t){
     case'welcome':enterGuestWorld(pe,m);break;
@@ -90,6 +91,7 @@ function netData(pe,m){if(Net.role!=='guest'&&m.t==='hello')return hostHello(pe,
     case'got':guestGot(m.d);break;
     case'setpos':{const p=players[0];if(p){p.x=m.x;p.y=m.y}break}
     case'zone':Net.hostZone=m.id;netFollowZone(m.id,m.x,m.y);break;
+    case'chat':onChat(String(m.fn||'?').slice(0,16),chatClean(m.m),!!m.w,m.f);break;
     case'bye':leaveParty(`${pe.name} left, so their world closed.`);break}}}
 function hostHello(pe,m){if(!m.hero||Net.size()>=MAX_PARTY){netSend(pe,{t:'bye'});return}Net.role='host';const h=players[0];
   const pr=createPlayer(Object.assign({},m.hero.p,{x:h.x+rand(-40,40),y:h.y+rand(20,50)}));pr.isRemote=true;pr.uid=pe.uid;pr.id=pe.uid;pr.netName=pe.name;pr.x=h.x+rand(-40,40);pr.y=h.y+rand(20,50);
@@ -174,15 +176,52 @@ function teleportTo(uid,free){const m=partyMembers().find(q=>q.uid===uid),p=play
   if(!free){if(Net.tpCd>time){toast(`Teleport is ready in ${Math.ceil(Net.tpCd-time)} s.`);return}if(time-p.lastHurt<4){toast('You cannot teleport while fighting.','danger');return}Net.tpCd=time+TP_CD}
   if(p.mounted)dismount(p,true);burst(p.x,p.y,'#9fd8ff',24,160);p.x=m.x+rand(-40,40);p.y=m.y+rand(20,50);sfx('blink');burst(p.x,p.y,'#9fd8ff',30,180);fx.push({k:'pillar',x:p.x,y:p.y,life:.8,max:.8,col:'#9fd8ff'})}
 let partyT=0;
-function renderParty(){const el=$('party');if(!el)return;const ms=partyMembers();el.classList.toggle('hidden',!ms.length);el.innerHTML=ms.map(m=>`<div class="pm${m.dead?' dead':''}" style="--f:${Math.max(0,Math.min(100,m.hp/(m.maxHp||1)*100))}"><span class="pmp"></span><div class="pmb"><div class="pmn"><span>${CLASSES[m.cls]?CLASSES[m.cls].icon:''} ${escapeHtml(m.name||m.hero||'')}</span><small>Lv ${m.level||'?'}${m.away?' · inside':''}</small>`+
+function renderParty(){const el=$('party');if(!el)return;const ms=partyMembers();$('chatBtn').classList.toggle('hidden',!Net.role);el.classList.toggle('hidden',!ms.length);el.innerHTML=ms.map(m=>`<div class="pm${m.dead?' dead':''}" style="--f:${Math.max(0,Math.min(100,m.hp/(m.maxHp||1)*100))}"><span class="pmp"></span><div class="pmb"><div class="pmn"><span>${CLASSES[m.cls]?CLASSES[m.cls].icon:''} ${escapeHtml(m.name||m.hero||'')}</span><small>Lv ${m.level||'?'}${m.away?' · inside':''}</small>`+
   `<button title="Teleport to ${escapeHtml(m.name||'')} (every ${TP_CD} s, not in combat)" data-tp="${m.uid}">⇢</button></div><div class="bar hp"><i style="width:${Math.max(0,m.hp/(m.maxHp||1)*100)}%"></i></div></div></div>`).join('');
   el.querySelectorAll('.pmp').forEach((e,i)=>e.replaceWith(portraitEl(ms[i],isPhone()?32:40)));
   for(const b of el.querySelectorAll('[data-tp]'))b.onclick=()=>teleportTo(b.dataset.tp);
-  if(Layout.phone)el.querySelectorAll('.pm').forEach((e,i)=>e.onclick=()=>{const m=ms[i];uiSheet(m.name||m.hero||'',[{icon:'⇢',label:'Teleport to '+(m.name||m.hero||''),onTap:()=>teleportTo(m.uid)}])})}// phone: the portrait stack has no buttons, so a tap opens them
+  if(Layout.phone)el.querySelectorAll('.pm').forEach((e,i)=>e.onclick=()=>{const m=ms[i];uiSheet(m.name||m.hero||'',[{icon:'⇢',label:'Teleport to '+(m.name||m.hero||''),onTap:()=>teleportTo(m.uid)},{icon:'💬',label:'Whisper',onTap:()=>openChat(m.uid,m.name||m.hero)},{icon:'🚪',label:'Leave party',onTap:()=>leaveParty()}])})}// phone: the portrait stack has no buttons, so a tap opens them
 
 // ---- Dying with friends around: return to town, or rise beside a living friend.
 function showDeathChoices(p){const el=$('deathBtns'),sub=$('death').querySelector('.sub');el.innerHTML='';const alive=partyMembers().filter(m=>!m.dead&&!m.away);
   if(!alive.length){sub.textContent='Returning to '+homeCity(p).name+'…';return}p.deathT=25;sub.textContent='Choose where to rise.';
-  const b=(t,fn)=>{const x=document.createElement('button');x.className='btn';x.textContent=t;x.onclick=fn;el.appendChild(x)};
-  b('Return to '+homeCity(p).name,()=>{if(p.dead)respawn(p)});for(const m of alive)b('Rise beside '+(m.name||m.hero),()=>riseBeside(p,m.uid))}
+  const b=(t,fn)=>{const x=document.createElement('button');x.className='btn';x.textContent=t;x.onclick=fn;el.appendChild(x)},home=()=>{if(p.dead)respawn(p)};
+  if(Layout.phone){const pick=()=>uiSheet('Choose where to rise',[{icon:'🏠',label:'Return to '+homeCity(p).name,onTap:home},...alive.map(m=>({icon:'⇢',label:'Rise beside '+(m.name||m.hero),onTap:()=>riseBeside(p,m.uid)}))]);b('Choose where to rise…',pick);pick();return}
+  b('Return to '+homeCity(p).name,home);for(const m of alive)b('Rise beside '+(m.name||m.hero),()=>riseBeside(p,m.uid))}
 function riseBeside(p,uid){if(!p.dead)return;const m=partyMembers().find(q=>q.uid===uid);respawn(p);if(!m)return;if(Net.role==='guest'&&zone.id!==Net.hostZone)enterZone(Net.hostZone,m.x,m.y);teleportTo(uid,true)}
+
+// ---- Quick chat. Free text from other players is untrusted: it is cleaned on send AND on receive, and only ever
+// shown with textContent (log) or fillText (bubbles), never innerHTML. The host relays; guests talk only to the host.
+const CHAT_LINES=['Help!','Follow me','Wait','Loot here','Ready','Thanks','On my way','Heading back to town'];
+const Chat={log:[],bub:new Map(),sheet:null};// log: {f,m,w,t}; bub: sender uid -> {m,until}
+function chatClean(s){return String(s==null?'':s).replace(/[<>]/g,'').replace(/\s+/g,' ').trim().slice(0,120).trim()}
+function myUid(){return Account.user?Account.user.id:'me'}
+function myName(){return Friends.me?Friends.me.name:players[0]?players[0].name:'Me'}
+function renderChatLog(){const el=$('chatLog');if(!el)return;el.textContent='';const now=Date.now();
+  for(const l of Chat.log.slice(-3)){if(now-l.t>14000)continue;const d=document.createElement('div'),b=document.createElement('b');if(l.w)d.className='w';b.textContent=(l.w?'['+l.w+'] ':'')+l.f+': ';d.append(b,document.createTextNode(l.m));el.appendChild(d)}}
+// whisper: false, or true ('whisper' you received), or the label for one you sent ('to Name')
+function onChat(from,m,whisper,uid){m=chatClean(m);if(!m)return;from=chatClean(from).slice(0,16)||'?';
+  Chat.log.push({f:from,m,w:whisper?(typeof whisper==='string'?whisper:'whisper'):'',t:Date.now()});if(Chat.log.length>50)Chat.log.shift();renderChatLog();setTimeout(renderChatLog,14100);
+  if(uid!=null)Chat.bub.set(uid,{m,until:rt+4})}
+// Sends a line to everyone, or only to one player (to = their uid). Returns false if there is nobody to hear it.
+function sendChat(text,to){const m=chatClean(text);if(!m||!Net.role)return false;
+  if(Net.role==='host'){const out={t:'chat',m,f:myUid(),fn:myName()};if(to){const pe=Net.peers.get(to);if(!pe)return false;out.w=1;netSend(pe,out)}else netAll(out)}
+  else{const pe=[...Net.peers.values()][0];if(!pe)return false;netSend(pe,{t:'chat',m,w:to||undefined})}
+  const tn=to&&(partyMembers().find(q=>q.uid===to)||{}).name;onChat(myName(),m,to?'to '+(tn||'?'):false,myUid());return true}
+// Host: a guest spoke. Say it here, and pass it on (a whisper only to the named uid; never back to the sender).
+function hostChat(pe,m){const now=Date.now();if(now-(pe.chatT||0)<350)return;pe.chatT=now;const t=chatClean(m.m);if(!t)return;
+  const out={t:'chat',m:t,f:pe.uid,fn:pe.name};
+  if(typeof m.w==='string'&&m.w){if(m.w===myUid())onChat(pe.name,t,true,pe.uid);else{const to=Net.peers.get(m.w);if(to&&to!==pe){out.w=1;netSend(to,out)}}return}
+  onChat(pe.name,t,false,pe.uid);for(const q of Net.peers.values())if(q!==pe)netSend(q,out)}
+// The chat UI: a bottom sheet (preset lines + text box) from the chat button or a party portrait; on desktop Enter opens a small bar.
+function openChat(to,toName){if(!Net.role){toast('Chat works when you are playing with friends.');return}if(Chat.sheet&&!Chat.sheet.closed)Chat.sheet.close();
+  const go=t=>{if(!sendChat(t,to))toast('Nobody to hear that right now.','danger')},
+    s=uiSheet(to?'Whisper to '+(toName||'?'):'Chat',CHAT_LINES.map(l=>({label:l,onTap:()=>go(l)}))),row=uiEl('div','chatin'),inp=document.createElement('input'),b=uiEl('button','g-btn','Send');
+  inp.maxLength=120;inp.autocomplete='off';inp.spellcheck=false;inp.placeholder=to?'Whisper…':'Say something…';
+  const send=()=>{const t=chatClean(inp.value);if(t){s.close();go(t)}};b.onclick=send;inp.onkeydown=e=>{e.stopPropagation();if(e.code==='Enter')send()};
+  row.append(inp,b);s.el.classList.add('chatsheet');s.el.insertBefore(row,s.el.children[1]);Chat.sheet=s;if(!Layout.phone)setTimeout(()=>inp.focus(),30)}
+function openChatBar(){if(!Net.role)return;const bar=$('chatBar'),inp=$('chatIn');for(const k in keys)keys[k]=false;bar.classList.remove('hidden');inp.value='';inp.focus()}
+function closeChatBar(){$('chatBar').classList.add('hidden');$('chatIn').blur()}
+$('chatIn').onkeydown=e=>{e.stopPropagation();if(e.code==='Enter'){const t=chatClean($('chatIn').value);closeChatBar();if(t)sendChat(t)}else if(e.code==='Escape')closeChatBar()};
+$('chatIn').onblur=()=>$('chatBar').classList.add('hidden');
+$('chatBtn').onclick=()=>openChat();

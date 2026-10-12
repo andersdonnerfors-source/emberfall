@@ -257,6 +257,7 @@ addEventListener('keydown',e=>{if(storyOpen){if(e.code==='Enter'||e.code==='Esca
   if(e.code==='KeyN'){if(!pauseOpen&&!dialogOpen)toggleMap();return}
   if(e.code==='KeyO'){if(!pauseOpen&&!dialogOpen)toggleFriends();return}
   if(e.code==='KeyE'&&shopOpen){closeShop();return}
+  if(e.code==='Enter'&&!e.repeat&&!isPaused()&&!Layout.phone&&Net.role){e.preventDefault();openChatBar();return}// chat: game keys are ignored while the box is focused (INPUT check above)
   if(isPaused()||!p)return;
   const m=/^Digit([1-5])$/.exec(e.code);if(m)p.input.abil[+m[1]]=true;if(e.code==='KeyR')p.input.abil[5]=true;
   if(e.code==='KeyM'){Snd.vol.muted=!Snd.vol.muted;applyVol();saveAudio();toast(Snd.vol.muted?'Sound off (M)':'Sound on (M)')}
@@ -341,6 +342,10 @@ function drawUnit(u){let[sx,sy]=S(u.x,u.y);softShadow(ctx,sx,sy,u.r*1.5,u.r*.62)
     ctx.fillStyle=players[0]?lvlColor(players[0],u.lvl):'#eee';ctx.font='bold 10px system-ui';ctx.textAlign='center';ctx.fillText('Lv '+u.lvl,sx,y0-3)}
   drawAwareness(u,sx,sy);
   if(u.isAlly){const w=28,y0=sy-u.h-10;ctx.fillStyle='rgba(0,0,0,.6)';ctx.fillRect(sx-w/2-1,y0-1,w+2,5);ctx.fillStyle='#5ac85a';ctx.fillRect(sx-w/2,y0,w*Math.max(0,u.hp/u.maxHp),3)}}
+// A 4 s speech bubble over a hero who just chatted (canvas text only, never HTML).
+function drawBubble(p,sx,sy){const k=p.isRemote||p.isAvatar?p.uid:myUid(),b=Chat.bub.get(k);if(!b)return;if(b.until<rt){Chat.bub.delete(k);return}
+  ctx.font='13px Georgia';const w=Math.min(220,ctx.measureText(b.m).width+16);ctx.globalAlpha=Math.min(1,(b.until-rt)*2);ctx.fillStyle='rgba(20,18,14,.85)';ctx.strokeStyle='rgba(232,194,106,.7)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.roundRect(sx-w/2,sy-22,w,22,6);ctx.fill();ctx.stroke();ctx.fillStyle='#fff3d0';ctx.textAlign='center';ctx.fillText(b.m,sx,sy-6,w-12);ctx.globalAlpha=1}
 function drawPlayer(p){if(p.dead||p.away||(p.isAvatar&&!(p.look&&p.look.skin)))return;const[sx,sy]=S(p.x,p.y);softShadow(ctx,sx,sy,20,8);
   const o=playerLook(p);o.aim=p.aim;o.aimS=aimScreen(p.aim);o.walk=p.walk;const moved=p.walk!==p._lw;p._lw=p.walk;p._mv=moved?.15:Math.max(0,(p._mv||0)-1/60);o.moving=p._mv>0&&!p.mounted;o.atk=(p.castAnim||0)/.3;let seat=0;
   if(p.mounted){drawMount(ctx,p.mount,sx,sy,p.aim,p.walk);seat=mountSeat(p.mount)+(p.mount==='dragon'?Math.sin(rt*3)*3:0);o.walk=0}
@@ -349,7 +354,7 @@ function drawPlayer(p){if(p.dead||p.away||(p.isAvatar&&!(p.look&&p.look.skin)))r
   if(p.hitFlash>0){ctx.fillStyle='rgba(255,80,60,.35)';ell(ctx,sx,sy-26,13,26);ctx.fill()}
   if(p.invulnUntil>time){ctx.strokeStyle=`rgba(255,230,140,${.5+.3*Math.sin(rt*10)})`;ctx.lineWidth=3;ell(ctx,sx,sy-26,26,34);ctx.stroke()}
   if(p.stunUntil>time){ctx.fillStyle='#ffe066';for(let k=0;k<3;k++){const a=rt*5+k*2.1;circ(ctx,sx+Math.cos(a)*11,sy-62+Math.sin(a)*3,2.2);ctx.fill()}}
-  ctx.font='12px Georgia';ctx.textAlign='center';ctx.fillStyle='rgba(0,0,0,.6)';ctx.fillText(p.name,sx+1,sy-68);ctx.fillStyle='#f3e6c0';ctx.fillText(p.name,sx,sy-69)}
+  ctx.font='12px Georgia';ctx.textAlign='center';ctx.fillStyle='rgba(0,0,0,.6)';ctx.fillText(p.name,sx+1,sy-68);ctx.fillStyle='#f3e6c0';ctx.fillText(p.name,sx,sy-69);drawBubble(p,sx,sy-84)}
 function drawWarden(){const[sx,sy]=S(warden.x,warden.y);const p=players[0];if(p)warden.aim=Math.atan2(p.y-warden.y,p.x-warden.x);
   ctx.fillStyle='rgba(0,0,0,.3)';ell(ctx,sx,sy,15,6);ctx.fill();
   drawHumanoid(ctx,sx,sy,{s:1.05,skin:'#e3c3a0',hair:'#d8d8d0',beard:'#d8d8d0',cloth:'#4a5a6a',robe:true,weapon:'staff',orb:'#fff1b0',aim:-Math.PI/2+.25,aimS:-Math.PI/2+.25,walk:0,legs:'#2a2a2a'});

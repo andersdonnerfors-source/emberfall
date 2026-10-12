@@ -260,6 +260,17 @@ body.phone #wmap{flex:none;width:auto;height:100%;border:0;border-radius:0;trans
 @keyframes sheetUp{from{transform:translateY(100%)}to{transform:none}}
 body.phone #dialog,body.phone #loot{left:0;right:auto;top:auto;bottom:0;transform:none;width:calc(100vw/var(--ui));max-width:none;max-height:calc(70vh/var(--ui));overflow:auto;z-index:44;border-radius:calc(var(--r) * 2) calc(var(--r) * 2) 0 0;padding:12px calc(16px + env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));animation:sheetUp .2s ease-out}
 body.phone #dialog .btn,body.phone #loot .btn{min-height:48px}body.phone #dBtns .btn{flex:1;min-width:0}body.phone .lrow2{min-height:48px}
+/* ---- Co-op chat (src/96-net.js): the last 3 lines in the middle top, a button, a compact desktop bar and the phone sheet */
+#chatLog{position:absolute;left:50%;top:92px;transform:translateX(-50%);width:min(420px,50vw);display:flex;flex-direction:column;align-items:center;gap:2px;pointer-events:none;text-align:center}
+#chatLog div{font-size:var(--fs);line-height:1.3;color:var(--text);text-shadow:0 1px 3px #000,0 0 6px #000;max-width:100%;overflow-wrap:anywhere}#chatLog b{color:var(--gold);font-weight:600}#chatLog .w{color:#d9b8ff}#chatLog .w b{color:#d9b8ff}
+#chatBtn{pointer-events:auto;position:absolute;left:14px;bottom:14px;width:44px;height:44px;padding:0;font-size:20px;cursor:pointer;color:var(--text)}#chatBtn.hidden{display:none}
+#chatBar{position:fixed;left:50%;bottom:150px;transform:translateX(-50%);z-index:31;width:min(420px,90vw);padding:8px}#chatBar.hidden{display:none}
+#chatIn,.chatin input{width:100%;box-sizing:border-box;padding:8px 10px;min-height:var(--tap);background:var(--field);color:var(--text);border:1px solid var(--edge);border-radius:6px;font-family:var(--ui-font);font-size:16px}
+.sheet.chatsheet{display:grid;grid-template-columns:1fr 1fr;gap:4px 8px;left:0;right:0;margin:0 auto;width:min(560px,100%)}.chatsheet>.g-head,.chatsheet>.chatin{grid-column:1/-1}
+.chatin{display:flex;gap:8px}.chatin .g-btn{min-height:48px;padding:0 18px;flex:none}
+body.phone #chatBtn{left:calc(256px + env(safe-area-inset-left));top:10px;bottom:auto}
+body.phone .netask .btn{min-height:48px;min-width:110px}body.phone .frrow{flex-wrap:wrap}body.phone .frrow button{min-height:48px;min-width:48px}
+body.phone #chatLog{top:76px;width:min(360px,44vw)}
 </style>
 </head>
 <body>
@@ -278,6 +289,8 @@ body.phone #dialog .btn,body.phone #loot .btn{min-height:48px}body.phone #dBtns 
     <div id="buffs"></div>
   </div>
   <div id="party" class="hidden"></div>
+  <div id="chatLog"></div>
+  <button id="chatBtn" class="glass hidden" aria-label="Chat">💬</button>
   <div id="right"><canvas id="mini" width="200" height="200" class="panel"></canvas><div id="quest" class="panel"></div></div>
   <div id="tframe" class="panel hidden"><canvas id="tPort" width="112" height="112"></canvas><div class="tf-tx"><div class="uname"><span id="tName"></span><span id="tLvl"></span></div><div class="bar hp"><i id="tF"></i><span id="tT"></span></div></div></div>
   <div id="bottom"><div id="abar"></div></div>
@@ -294,6 +307,7 @@ body.phone #dialog .btn,body.phone #loot .btn{min-height:48px}body.phone #dBtns 
 </div>
 <div id="toasts"></div>
 <div id="netAsks"></div>
+<div id="chatBar" class="glass hidden"><input id="chatIn" maxlength="120" autocomplete="off" spellcheck="false" placeholder="Say something (Enter sends, Esc cancels)"></div>
 
 <div id="login" class="screen hidden">
   <div class="logo">EMBERFALL<small>A tale of the Westmark</small></div>

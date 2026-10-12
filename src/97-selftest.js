@@ -90,3 +90,11 @@ test('touch laptop stays desktop layout',()=>{const e=FENV(1280,800,true);eq(isP
 test('buff stats text tolerates a buff without stats',()=>{eq(statsText(undefined),'');eq(statsText({str:3}),'+3 '+STATLBL.str)});
 test('uiSheet closes on Escape and on a backdrop tap',()=>{const a=uiSheet('x',[]);eq(a.closed,false);dispatchEvent(new KeyboardEvent('keydown',{code:'Escape'}));eq(a.closed,true);
   const b=uiSheet('y',[]);b.bg.click();eq(b.closed,true)});
+
+// ---- Quick chat (Task 8)
+test('chatClean trims, collapses, strips <> and caps at 120',()=>{eq(chatClean('  hi   there '),'hi there');eq(chatClean('<b>x'),'bx');eq(chatClean('a'.repeat(300)).length,120);eq(chatClean(null),'')});
+test('CHAT_LINES are the 8 preset lines',()=>{eq(CHAT_LINES.length,8);eq(CHAT_LINES[0],'Help!');eq(CHAT_LINES[7],'Heading back to town')});
+test('onChat keeps 50, shows 3 newest, and renders text not HTML',()=>{const old=Chat.log.slice(),bub=new Map(Chat.bub);Chat.log.length=0;
+  try{for(let i=0;i<60;i++)onChat('N'+i,'m'+i,false);eq(Chat.log.length,50);eq($('chatLog').children.length,3);eq($('chatLog').lastChild.textContent.includes('m59'),true);
+    onChat('<img src=x onerror=1>','<b>hi</b>',true);eq($('chatLog').querySelector('img'),null);eq($('chatLog').lastChild.querySelectorAll('b').length,1);eq($('chatLog').lastChild.textContent.includes('bhi/b'),true)}
+  finally{Chat.log.length=0;Chat.log.push(...old);Chat.bub=bub;renderChatLog()}});
