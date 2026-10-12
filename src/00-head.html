@@ -52,6 +52,8 @@ h2{margin:0 0 10px;color:var(--gold);font-weight:normal;letter-spacing:.05em}
 .badge{display:inline-block;min-width:16px;padding:0 5px;border-radius:9px;background:#c84a3a;color:#fff;font:bold 12px/16px system-ui,sans-serif;text-align:center;margin-left:4px}
 #namePick{position:fixed;inset:0;z-index:41;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center}
 #npName{width:100%;box-sizing:border-box;padding:10px;min-height:var(--tap);background:var(--field);color:var(--text);border:1px solid var(--edge);border-radius:6px;font-family:inherit;font-size:16px}
+#hostWait{position:fixed;top:56px;left:50%;transform:translateX(-50%);z-index:46;padding:10px 18px;font-weight:600;font-size:var(--fs);zoom:var(--ui)}#hostWait.hidden{display:none}
+.pm.away{filter:grayscale(1);opacity:.55}
 #netAsks{position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:45;display:flex;flex-direction:column;gap:8px;align-items:center}
 .netask{padding:12px 16px;text-align:center;min-width:280px;max-width:90vw}.netask .row{display:flex;gap:8px;justify-content:center;margin-top:10px}.netask .btn{min-width:0;margin:0;padding:7px 18px;font-size:15px}
 #party{position:absolute;left:14px;top:176px;width:210px;display:flex;flex-direction:column;gap:6px;pointer-events:auto}
@@ -306,7 +308,7 @@ body.phone #chatLog{top:76px;width:min(360px,44vw)}
   <div id="tmenu" class="glass hidden"><button data-m="inv">Inventory</button><button data-m="tal">Talents</button><button data-m="prof">Professions</button><button data-m="map">Map</button><button data-m="quest">Quests</button><button data-m="friends">Friends</button><button data-m="settings">Settings</button><button data-m="mute">Mute</button><button data-m="pause">Pause</button></div>
 </div>
 <div id="toasts"></div>
-<div id="netAsks"></div>
+<div id="netAsks"></div><div id="hostWait" class="panel glass hidden"></div>
 <div id="chatBar" class="glass hidden"><input id="chatIn" maxlength="120" autocomplete="off" spellcheck="false" placeholder="Say something (Enter sends, Esc cancels)"></div>
 
 <div id="login" class="screen hidden">

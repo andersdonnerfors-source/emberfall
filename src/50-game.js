@@ -1,5 +1,5 @@
 // ================= Helpers =================
-function friendlies(){const r=[];for(const p of players)if(!p.dead&&!p.away)r.push(p);for(const a of allies)if(!a.dead)r.push(a);return r}
+function friendlies(){const r=[];for(const p of players)if(!p.dead&&!p.away&&p.awayBg==null)r.push(p);for(const a of allies)if(!a.dead)r.push(a);return r}
 function inRadius(list,x,y,r){return list.filter(e=>!e.dead&&Math.hypot(e.x-x,e.y-y)<=r+e.r)}
 function wrapA(a){while(a>Math.PI)a-=TAU;while(a<-Math.PI)a+=TAU;return a}
 function mkArea(o){return Object.assign({t:0,delay:0,dur:0,tick:0,nt:0,tickDmg:0},o,{delay0:o.delay||0})}
@@ -69,7 +69,7 @@ function updatePlayer(p,dt){p.playT=(p.playT||0)+dt;
   p.mana=Math.min(p.maxMana,p.mana+p.stats.mregen*dt);
   if(time-p.lastHurt>5&&p.hp<p.maxHp)p.hp=Math.min(p.maxHp,p.hp+p.maxHp*.03*dt);
   if(i.fire)useAbility(p,0);for(let k=1;k<6;k++)if(i.abil[k])useAbility(p,k);i.abil.fill(false)}
-function respawn(p){$('deathBtns').innerHTML='';p.dead=false;p.hp=p.maxHp;p.mana=p.maxMana;const hs=homeSpot(p);if(zone.id!=='over')enterZone('over',hs.x,hs.y);p.x=hs.x;p.y=hs.y;p.gold=Math.floor(p.gold*.9);p.invulnUntil=time+2;$('death').classList.add('hidden');for(const e of enemies)if(e.target===p){e.target=null;e.returning=true}}
+function respawn(p){$('deathBtns').innerHTML='';closeDeathSheet();p.dead=false;p.hp=p.maxHp;p.mana=p.maxMana;const hs=homeSpot(p);if(zone.id!=='over')enterZone('over',hs.x,hs.y);p.x=hs.x;p.y=hs.y;p.gold=Math.floor(p.gold*.9);p.invulnUntil=time+2;$('death').classList.add('hidden');for(const e of enemies)if(e.target===p){e.target=null;e.returning=true}}
 
 // ================= Enemies =================
 function spawnEnemy(type,x,y,lvl,extra){const b=ETYPES[type],m=1+.45*(lvl-1),dm=1+.3*(lvl-1);
@@ -133,7 +133,7 @@ function updateAlly(a,dt){if(time>a.until||a.hp<=0||a.owner.dead){a.dead=true;bu
 // ================= Combat =================
 function dealDamage(t,amt,src,o){o=o||{};if(t.dead)return;if(t.invulnUntil>time){if(rt>(t.immT||0)){t.immT=rt+.4;floatText(t.x,t.y-20,'Immune','#ffe9a0',13)}return}
   if(Net.role==='guest'&&!o.raw)return;// guests only show spells; the host decides what hits
-  if(t.isRemote){if(t.away)return;let d=amt*(t.cursedUntil>time?1.4:1)*100/(100+t.stats.armor);d=Math.max(1,Math.round(d));t.hp=Math.max(1,t.hp-d);t.hitFlash=.12;floatText(t.x,t.y-30,''+d,'#ff6a5a',15);
+  if(t.isRemote){if(t.away||t.awayBg!=null)return;let d=amt*(t.cursedUntil>time?1.4:1)*100/(100+t.stats.armor);d=Math.max(1,Math.round(d));t.hp=Math.max(1,t.hp-d);t.hitFlash=.12;floatText(t.x,t.y-30,''+d,'#ff6a5a',15);
     netSend(Net.peers.get(t.uid),{t:'dmg',d,sl:o.slow,sf:o.slowF,st:o.stun,kx:o.knockFrom?o.knockFrom.x:null,ky:o.knockFrom?o.knockFrom.y:null});return}
   let d=amt,crit=false;if(t.cursedUntil>time)d*=1.4;
   // Your attacks (and your minions') can miss higher-level monsters. Crits only happen at 75%+ hit chance.
@@ -272,7 +272,7 @@ cvs.addEventListener('mousedown',e=>{if(state!=='play'||isPaused())return;if(e.b
 addEventListener('mouseup',e=>{if(e.button===0)mouse.l=false});
 cvs.addEventListener('contextmenu',e=>e.preventDefault());
 let storyOpen=false;
-function isPaused(){return Friends.open||invOpen||dialogOpen||pauseOpen||talOpen||shopOpen||storyOpen||profOpen||mapOpen||Layout.turn&&!Net.role}// Layout.turn: phone held upright (solo only)
+function isPaused(){return Friends.open||invOpen||dialogOpen||pauseOpen||talOpen||shopOpen||storyOpen||profOpen||mapOpen||Layout.turn&&Net.role!=='guest'}// Layout.turn: phone held upright (solo only)
 function showStory(id,on){storyOpen=on;$(id).classList.toggle('hidden',!on);mouse.l=false}
 function fmtTime(s){const m=Math.floor(s/60);return m>=60?Math.floor(m/60)+' h '+(m%60)+' min':m+' min'}
 function showVictory(){const p=players[0];sfx('victory');$('vicText').innerHTML=`The Barrow King is no more, and the Lamp of Emberfall shines over the whole valley.<br><br>${p.name} the ${CLASSES[p.cls].name} · level ${p.level}<br>${p.kills||0} foes defeated · fallen ${p.deaths||0} times · ${fmtTime(p.playT||0)} played<br><br>The world stays open: keep hunting for epic gear and growing stronger.`;showStory('victory',true)}
@@ -740,7 +740,7 @@ let last=performance.now();
 // One frame. If anything throws, keep the loop alive and show the error instead of freezing the game.
 let errT=0;function frame(now){try{frameStep(now)}catch(e){console.error(e);if(rt>errT){errT=rt+5;toast('Something went wrong: '+e.message,'danger')}}requestAnimationFrame(frame)}
 function frameStep(now){const dt=Math.min(.05,(now-last)/1000);last=now;rt+=dt;
-  if(state==='play'&&(!isPaused()||Net.role))update(dt);
+  netPresence();hostWaitTick();if(state==='play'&&!netHold()&&(!isPaused()||Net.role))update(dt);
   const p=players[0];let tx,ty;
   if(state==='play'&&p){tx=p.x-W/2;ty=p.y-H/2/TILT}else{tx=(VC.x+.5)*TILE+Math.cos(rt*.06)*380-W/2;ty=(VC.y+.5)*TILE+Math.sin(rt*.06)*300-H/2/TILT}
   const zw=MW*TILE,zh=MH*TILE;camX=zw<W?(zw-W)/2:clamp(tx,0,zw-W);camY=zh<H/TILT?(zh-H/TILT)/2:clamp(ty,0,zh-H/TILT);

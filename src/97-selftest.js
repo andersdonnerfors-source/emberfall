@@ -98,3 +98,15 @@ test('onChat keeps 50, shows 3 newest, and renders text not HTML',()=>{const old
   try{for(let i=0;i<60;i++)onChat('N'+i,'m'+i,false);eq(Chat.log.length,50);eq($('chatLog').children.length,3);eq($('chatLog').lastChild.textContent.includes('m59'),true);
     onChat('<img src=x onerror=1>','<b>hi</b>',true);eq($('chatLog').querySelector('img'),null);eq($('chatLog').lastChild.querySelectorAll('b').length,1);eq($('chatLog').lastChild.textContent.includes('bhi/b'),true)}
   finally{Chat.log.length=0;Chat.log.push(...old);Chat.bub=bub;renderChatLog()}});
+
+// ---- Co-op in the background: away guests, waiting for a hidden host, relay timing, phone snapshot rate
+test('awayExpired is true after 60 s',()=>{eq(awayExpired(0,59),false);eq(awayExpired(0,61),true)});
+test('hostWaitExpired is true after 180 s',()=>{eq(hostWaitExpired(0,179),false);eq(hostWaitExpired(0,181),true)});
+test('relayDelay is 4 s with a phone, else 9 s',()=>{eq(relayDelay(true,false),4000);eq(relayDelay(false,true),4000);eq(relayDelay(false,false),9000)});
+test('snapDt is 0.1 for a phone host',()=>{eq(snapDt(true),.1);eq(snapDt(false),SNAP_DT)});
+test('away guest past 60s is dropped',()=>{const role=Net.role,pl=players,t0=time,np=Net.peers;
+  try{Net.role='host';time=61;const pr={isRemote:true,uid:'ghost',awayBg:0,hp:1,maxHp:1,x:0,y:0},pe={uid:'ghost',name:'Ghost',proxy:pr,open:false};players=[pr];Net.peers=new Map([['ghost',pe]]);
+    netTick(.01);eq(Net.peers.has('ghost'),false);eq(players.includes(pr),false)}
+  finally{time=t0;players=pl;Net.peers=np;Net.role=role;}});
+test('monsters skip an away-in-background proxy',()=>{const pl=players,a={isRemote:true,x:0,y:0,hp:5,away:false,awayBg:3},b={x:0,y:0,hp:5};players=[a,b];try{eq(friendlies().includes(a),false);eq(friendlies().includes(b),true)}finally{players=pl}});
+test('closeDeathSheet closes the Rise beside sheet',()=>{let n=0;deathSheet={close:()=>n++};closeDeathSheet();closeDeathSheet();eq(n,1);eq(deathSheet,null)});

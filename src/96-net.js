@@ -3,9 +3,12 @@
 // what it does; the host sends back what happens. Browsers talk directly (WebRTC data channel); Supabase Realtime only
 // introduces them, and relays the game if a network blocks direct connections. Only accepted friends can join.
 const NET_VER=1,MAX_PARTY=4,SNAP_DT=1/12,ST_DT=1/15,TP_CD=30;
+// Backgrounding: a guest that is away is protected up to 60 s; guests wait up to 180 s for a hidden host. A phone is slower to connect directly (relay after 4 s) and hosts at 10 snapshots/s.
+const awayExpired=(since,now)=>now-since>60,hostWaitExpired=(since,now)=>now-since>180,relayDelay=(a,b)=>a||b?4000:9000,snapDt=hostPhone=>hostPhone?.1:SNAP_DT;
+const NETRELAY=/[?&]relay\b/.test(location.search);// developer option: skip WebRTC and play through the relay from the start
 const ICE=[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}];
 const Net={role:null,peers:new Map(),chan:null,out:new Map(),nid:0,ev:[],snapT:0,stT:0,heroT:0,heroSig:'',apT:0,corpVer:0,
-  host:null,hostZone:'over',hostQ:0,own:null,avatars:new Map(),invited:new Set(),asking:null,pendingHero:null,tpCd:0,
+  host:null,hostZone:'over',hostQ:0,own:null,avatars:new Map(),invited:new Set(),asking:null,pendingHero:null,tpCd:0,hid:false,hw:false,hwT:0,
   active(){return!!this.role},size(){return this.role==='host'?1+[...this.peers.values()].filter(p=>p.proxy&&!p.proxy.away).length:this.role==='guest'?1+this.avatars.size:1}};
 
 // ---- Signalling through Supabase Realtime (each player listens on their own channel)
@@ -23,11 +26,11 @@ function netSignal(m){if(!m||!isFriend(m.from))return;
   switch(m.t){
     case'invite':if(Net.role==='guest'&&Net.host&&Net.host.uid===m.from)return;netAsk(`${m.fname} invites you to their world.`,[['Accept',()=>netJoin(m.from,m.fname,true)],['Decline',null]]);break;
     case'join':onJoinRequest(m);break;
-    case'ok':if(Net.asking&&Net.asking.uid===m.from){Net.asking.ok=true;toast(`${m.fname} accepted. Connecting…`,'gold');netConnect(m.from,m.fname,m.seed)}break;
+    case'ok':if(Net.asking&&Net.asking.uid===m.from){Net.asking.ok=true;toast(`${m.fname} accepted. Connecting…`,'gold');netConnect(m.from,m.fname,m.seed,m.ph)}break;
     case'no':if(Net.asking&&Net.asking.uid===m.from){Net.asking=null;toast(m.why||`${m.fname} could not take you in right now.`,'danger')}break;
     case'sdp':onSdp(m);break;
     case'ice':{const pe=Net.peers.get(m.from);if(!pe)return;if(pe.pc&&pe.pc.remoteDescription)pe.pc.addIceCandidate(m.c).catch(()=>{});else(pe.iceQ=pe.iceQ||[]).push(m.c);break}
-    case'g':{let pe=Net.peers.get(m.from);if(!pe&&Net.role!=='guest'&&m.d&&m.d.t==='hello'){pe=newPeer(m.from,m.fname)}if(!pe)return;if(!pe.open){pe.relay=true;pe.open=true;clearTimeout(pe.fallT)}netData(pe,m.d);break}}}
+    case'g':{let pe=Net.peers.get(m.from);if(!pe&&Net.role!=='guest'&&m.d&&m.d.t==='hello'){pe=newPeer(m.from,m.fname)}if(!pe){if(Net.role!=='guest'&&m.d&&m.d.t!=='bye')sig(m.from,{t:'g',d:{t:'bye'}}).catch(()=>{});return}if(!pe.open){pe.relay=true;pe.open=true;clearTimeout(pe.fallT)}netData(pe,m.d);break}}}
 // A small box at the top of the screen that waits for an answer.
 function netAsk(text,btns,ms){const box=document.createElement('div');box.className='netask panel';box.innerHTML=`<div>${escapeHtml(text)}</div>`;const row=document.createElement('div');row.className='row';
   const close=()=>{box.remove()};for(const[l,fn]of btns){const b=document.createElement('button');b.className='btn'+(fn?' primary':'');b.textContent=l;b.onclick=()=>{close();if(fn)fn()};row.appendChild(b)}
@@ -40,13 +43,14 @@ function netJoin(uid,name,invited){if(Account.mode!=='online'&&!NETTEST){toast('
   Net.pendingHero=hero;Net.asking={uid,name,ok:false};sig(uid,{t:'join',invited:!!invited,hero:{name:(hero.data||{p:players[0]}).p.name,level:(hero.data||{p:players[0]}).p.level}}).catch(e=>toast(e.message,'danger'));
   toast(`Asking ${name} to join their world…`);setTimeout(()=>{if(Net.asking&&Net.asking.uid===uid&&!Net.asking.ok){Net.asking=null;toast(`${name} did not answer.`,'danger')}},35000)}
 function newPeer(uid,name){const pe={uid,name,pc:null,dc:null,open:false,relay:false,proxy:null,iceQ:[]};Net.peers.set(uid,pe);return pe}
-async function netConnect(uid,name,seed){const pe=newPeer(uid,name);pe.seed=seed;const pc=pe.pc=new RTCPeerConnection({iceServers:ICE});
+const helloMsg=()=>({t:'hello',hero:heroNetData(),ph:isPhone()?1:0});
+async function netConnect(uid,name,seed,hostPh){const pe=newPeer(uid,name);pe.seed=seed;if(NETRELAY){pe.relay=true;pe.open=true;netSend(pe,helloMsg());return}const pc=pe.pc=new RTCPeerConnection({iceServers:ICE});
   pc.onicecandidate=e=>{if(e.candidate)sig(uid,{t:'ice',c:e.candidate.toJSON()}).catch(()=>{})};
   pc.onconnectionstatechange=()=>{if(pc.connectionState==='failed'&&!pe.relay&&pe.open)peerLost(pe)};
   setupDC(pe,pc.createDataChannel('g',{ordered:true}));await pc.setLocalDescription(await pc.createOffer());await sig(uid,{t:'sdp',d:pc.localDescription.toJSON()});
-  // No direct connection within 9 s (strict network): play through the relay instead.
-  pe.fallT=setTimeout(()=>{if(!pe.open){pe.relay=true;pe.open=true;netSend(pe,{t:'hello',hero:heroNetData()})}},9000)}
-function setupDC(pe,dc){pe.dc=dc;dc.onopen=()=>{if(pe.relay)return;pe.open=true;clearTimeout(pe.fallT);if(Net.role!=='host'&&Net.asking)netSend(pe,{t:'hello',hero:heroNetData()})};
+  // No direct connection within 4 s (a phone on either side) or 9 s (strict network): play through the relay instead.
+  pe.fallT=setTimeout(()=>{if(!pe.open){pe.relay=true;pe.open=true;netSend(pe,helloMsg())}},relayDelay(isPhone(),!!hostPh))}
+function setupDC(pe,dc){pe.dc=dc;dc.onopen=()=>{if(pe.relay)return;pe.open=true;clearTimeout(pe.fallT);if(Net.role!=='host'&&Net.asking)netSend(pe,helloMsg())};
   dc.onmessage=e=>{try{netData(pe,JSON.parse(e.data))}catch(err){console.error(err)}};dc.onclose=()=>{if(!pe.relay)peerLost(pe)}}
 function netSend(pe,m){if(!pe||!pe.open)return;if(pe.relay)sig(pe.uid,{t:'g',d:m}).catch(()=>{});else if(pe.dc&&pe.dc.readyState==='open')pe.dc.send(JSON.stringify(m))}
 function netAll(m){for(const pe of Net.peers.values())netSend(pe,m)}
@@ -58,7 +62,7 @@ function onJoinRequest(m){const no=why=>sig(m.from,{t:'no',why}).catch(()=>{});
   if(state!=='play'||!players[0])return no(`${Friends.me?Friends.me.name:'Your friend'} is not in a world right now.`);
   if(Net.role==='guest')return no('They are visiting someone else right now.');
   if(Net.size()>=MAX_PARTY)return no('Their world is full (4 players).');
-  const accept=()=>{Net.invited.delete(m.from);sig(m.from,{t:'ok',seed:WSEED}).catch(()=>{})};
+  const accept=()=>{Net.invited.delete(m.from);sig(m.from,{t:'ok',seed:WSEED,ph:isPhone()?1:0}).catch(()=>{})};
   if(m.invited&&Net.invited.has(m.from))accept();else netAsk(`${m.fname} (${escapeHtml(m.hero&&m.hero.name||'')}, level ${m.hero&&m.hero.level||'?'}) wants to join your world.`,[['Accept',accept],['Decline',()=>no(`${Friends.me?Friends.me.name:'Your friend'} declined.`)]])}
 function netInvite(uid,name){if(state!=='play'){toast('Enter your world first, then invite.','danger');return}if(Net.role==='guest'){toast('You are visiting someone else right now.','danger');return}
   Net.invited.add(uid);sig(uid,{t:'invite'}).then(()=>toast(`Invitation sent to ${name}.`)).catch(e=>toast(e.message,'danger'))}
@@ -80,6 +84,8 @@ function netData(pe,m){if(Net.role!=='guest'&&m.t==='hello')return hostHello(pe,
     case'hero':{const k={x:pr.x,y:pr.y,hp:pr.hp};Object.assign(pr,{level:m.p.level,gear:m.p.gear,attr:m.p.attr,talents:m.p.talents,spec:m.p.spec,skills:m.p.skills,bagSize:m.p.bagSize,look:m.p.look});pr.abil=abilList(pr);calcStats(pr);Object.assign(pr,k);break}
     case'take':hostGiveLoot(pe,m.cid,m.did);break;
     case'chat':hostChat(pe,m);break;
+    case'away':pr.awayBg=m.v?time:null;renderParty();break;
+    case'resync':Net.sentCorp=null;Net.apT=0;Net.snapT=0;break;
     case'bye':peerLost(pe);break}return}
   if(Net.role==='guest'||Net.asking){switch(m.t){
     case'welcome':enterGuestWorld(pe,m);break;
@@ -92,17 +98,18 @@ function netData(pe,m){if(Net.role!=='guest'&&m.t==='hello')return hostHello(pe,
     case'setpos':{const p=players[0];if(p){p.x=m.x;p.y=m.y}break}
     case'zone':Net.hostZone=m.id;netFollowZone(m.id,m.x,m.y);break;
     case'chat':onChat(String(m.fn||'?').slice(0,16),chatClean(m.m),!!m.w,m.f);break;
+    case'hpause':if(m.v){if(!Net.hw){Net.hw=true;Net.hwT=rt}}else Net.hw=false;hostWaitShow();break;
     case'bye':leaveParty(`${pe.name} left, so their world closed.`);break}}}
 function hostHello(pe,m){if(!m.hero||Net.size()>=MAX_PARTY){netSend(pe,{t:'bye'});return}Net.role='host';const h=players[0];
   const pr=createPlayer(Object.assign({},m.hero.p,{x:h.x+rand(-40,40),y:h.y+rand(20,50)}));pr.isRemote=true;pr.uid=pe.uid;pr.id=pe.uid;pr.netName=pe.name;pr.x=h.x+rand(-40,40);pr.y=h.y+rand(20,50);
-  pe.proxy=pr;players.push(pr);rescaleEnemies();Net.corpVer++;Net.apT=0;
+  pe.proxy=pr;pe.ph=!!m.ph;players.push(pr);rescaleEnemies();Net.corpVer++;Net.apT=0;
   netSend(pe,{t:'welcome',seed:WSEED,q:quest.idx,zone:zone.id,x:pr.x,y:pr.y,host:Friends.me?Friends.me.name:h.name});toast(`${pe.name} joined your world!`,'gold');sfx('level');renderParty()}
 function enterGuestWorld(pe,m){Net.role='guest';Net.asking=null;Net.host={uid:pe.uid,name:pe.name,seed:m.seed};Net.hostQ=m.q;Net.hostZone=m.zone;
   let data;if(Net.pendingHero.data)data=Net.pendingHero.data;else{const c=heroRecord(Net.pendingHero.id);data=c?c.data:{p:heroNetData().p}}
   const id=Net.pendingHero.id;Net.own={x:data.p.x,y:data.p.y,loc:data.p.loc,explored:data.p.explored};
   startGame(data,false,id);const p=players[0];if(m.zone!=='over')enterZone(m.zone,m.x,m.y);p.x=m.x;p.y=m.y;enemies=[];allies=[];
   toast(`You entered ${pe.name}'s world. Press Esc to leave the party.`,'gold');sfx('level');renderParty()}
-function leaveParty(msg){const wasGuest=Net.role==='guest';netAll({t:'bye'});for(const pe of Net.peers.values()){try{pe.pc&&pe.pc.close()}catch(e){}}Net.peers.clear();
+function leaveParty(msg){const wasGuest=Net.role==='guest';Net.hw=false;Net.hid=false;hostWaitShow();closeDeathSheet();netAll({t:'bye'});for(const pe of Net.peers.values()){try{pe.pc&&pe.pc.close()}catch(e){}}Net.peers.clear();
   Net.avatars.clear();if(msg)toast(msg,'danger');
   if(wasGuest&&state==='play'){save();const id=heroId,c=heroRecord(id);Net.role=null;Net.host=null;if(c)startGame(c.data,false,id);else openSelect()}
   else{players=players.filter(p=>!p.isRemote);Net.role=null}renderParty()}
@@ -128,19 +135,20 @@ function guestGot(d){Loot.pending.delete(d.id);const p=players[0];if(!p)return;i
 function netSaveFix(d){if(Net.role==='guest'&&Net.own){d.p.x=Net.own.x;d.p.y=Net.own.y;d.p.loc=Net.own.loc;d.p.explored=Net.own.explored}return d}
 
 // ---- The steady stream: host sends snapshots (12/s), guests send their hero (15/s)
-function netTick(dt){if(!Net.role)return;const p=players[0];
+function netTick(dt){if(!Net.role)return;const p=players[0];netPresence();
   if(Net.role==='guest'){Net.stT-=dt;const pe=[...Net.peers.values()][0];
     if(pe&&Net.stT<=0&&p){Net.stT=ST_DT;netSend(pe,{t:'st',x:Math.round(p.x),y:Math.round(p.y),a:+p.aim.toFixed(2),w:+p.walk.toFixed(1),hp:Math.ceil(p.hp),mh:p.maxHp,dd:p.dead?1:0,ca:+(p.castAnim||0).toFixed(2),mt:p.mounted?p.mount:0,z:zone.id})}
     Net.heroT-=dt;if(pe&&Net.heroT<=0&&p){Net.heroT=2;const h=heroNetData(),s=JSON.stringify([h.p.level,h.p.gear,h.p.attr,h.p.talents,h.p.spec]);if(s!==Net.heroSig){Net.heroSig=s;netSend(pe,{t:'hero',p:h.p})}}
     guestLerp(dt);return}
-  Net.snapT-=dt;if(Net.snapT>0)return;Net.snapT=SNAP_DT;Net.apT-=SNAP_DT;
+  for(const pe of[...Net.peers.values()])if(pe.proxy&&pe.proxy.awayBg!=null&&awayExpired(pe.proxy.awayBg,time)){netSend(pe,{t:'bye'});peerLost(pe)}
+  Net.snapT-=dt;if(Net.snapT>0)return;const sd=snapDt(isPhone());Net.snapT=sd;Net.apT-=sd;
   for(const pr of projs)if(!pr.sent){pr.sent=1;Net.ev.push({k:'p',x:Math.round(pr.x),y:Math.round(pr.y),vx:Math.round(pr.vx),vy:Math.round(pr.vy),c:pr.col,kd:pr.kind,r:pr.r,l:+pr.life.toFixed(2),s:pr.side,pi:pr.pierce||0,ex:pr.explode?pr.explode.r:0})}
   for(const a of areas)if(!a.sent){a.sent=1;Net.ev.push({k:'a',x:Math.round(a.x),y:Math.round(a.y),r:a.r,dl:+a.delay.toFixed(2),du:a.dur,kd:a.kind,s:a.side,an:a.a,ln:a.len,f:a.follow&&a.follow.nid})}
   const near=e=>{for(const q of players)if(!q.away&&Math.hypot(q.x-e.x,q.y-e.y)<1700)return true;return false};
   const en=enemies.filter(e=>!e.dead&&near(e)).map(e=>[e.nid,e.type,Math.round(e.x),Math.round(e.y),+(e.aim||0).toFixed(2),+(e.walk||0).toFixed(1),Math.ceil(e.hp),e.maxHp,e.lvl,(e.boss?1:0)|(e.target?2:0)|(e.enraged?4:0)|(e.stunUntil>time?8:0)|(e.slowUntil>time?16:0)|(e.cursedUntil>time?32:0),e.atkT?Math.min(9,+(time-e.atkT).toFixed(2)):9]);
   const al=allies.filter(a=>!a.dead).map(a=>[a.nid,a.kind,Math.round(a.x),Math.round(a.y),+(a.aim||0).toFixed(2),+(a.walk||0).toFixed(1),Math.ceil(a.hp),a.maxHp]);
   const ap=Net.apT<=0;if(ap)Net.apT=2;
-  const pl=players.map(q=>({u:q.isRemote?q.uid:Account.user.id,n:q.isRemote?q.netName:(Friends.me?Friends.me.name:q.name),hn:q.name,x:Math.round(q.x),y:Math.round(q.y),a:+(q.aim||0).toFixed(2),w:+(q.walk||0).toFixed(1),hp:Math.ceil(q.hp),mh:q.maxHp,dd:q.dead?1:0,ca:+(q.castAnim||0).toFixed(2),mt:q.mounted?q.mount:0,z:q.away?'-':zone.id,lv:q.level,
+  const pl=players.map(q=>({u:q.isRemote?q.uid:Account.user.id,n:q.isRemote?q.netName:(Friends.me?Friends.me.name:q.name),hn:q.name,x:Math.round(q.x),y:Math.round(q.y),a:+(q.aim||0).toFixed(2),w:+(q.walk||0).toFixed(1),hp:Math.ceil(q.hp),mh:q.maxHp,dd:q.dead?1:0,ca:+(q.castAnim||0).toFixed(2),mt:q.mounted?q.mount:0,z:q.away?'-':zone.id,lv:q.level,bg:q.awayBg!=null?1:0,
     ap:ap?{cls:q.cls,look:q.look,gear:q.gear,bagSize:q.bagSize,spec:q.spec}:undefined}));
   const cv=Net.corpVer!==Net.sentCorp,cs=cv?corpsesOf(zone).map(c=>({id:c.id,x:Math.round(c.x),y:Math.round(c.y),u:{type:c.unit.type,name:c.unit.name,r:c.unit.r,h:c.unit.h,aim:c.unit.aim,boss:c.unit.boss},l:+(c.until-time).toFixed(1),lo:c.loot.map(d=>({id:d.id,kind:d.kind,amount:d.amount,mat:d.mat,sup:d.sup,item:d.item}))})):undefined;Net.sentCorp=Net.corpVer;
   const ev=Net.ev;Net.ev=[];
@@ -148,7 +156,7 @@ function netTick(dt){if(!Net.role)return;const p=players[0];
 function applySnap(m){Net.hostQ=m.q;if(m.wc!=null)worldClock=m.wc;const same=zone.id===Net.hostZone;
   // other heroes
   const seen=new Set();for(const s of m.pl){seen.add(s.u);let a=Net.avatars.get(s.u);if(!a){a={uid:s.u,isAvatar:true,x:s.x,y:s.y,walk:0,aim:0,look:{},gear:{},cls:'paladin',bagSize:20,r:13,h:52};Net.avatars.set(s.u,a)}
-    Object.assign(a,{name:s.hn,netName:s.n,tx:s.x,ty:s.y,aim:s.a,walk:s.w,hp:s.hp,maxHp:s.mh,dead:!!s.dd,castAnim:s.ca,mounted:!!s.mt,mount:s.mt||a.mount,level:s.lv,away:s.z!==zone.id});if(s.ap)Object.assign(a,s.ap)}
+    Object.assign(a,{name:s.hn,netName:s.n,tx:s.x,ty:s.y,aim:s.a,walk:s.w,hp:s.hp,maxHp:s.mh,dead:!!s.dd,castAnim:s.ca,mounted:!!s.mt,mount:s.mt||a.mount,level:s.lv,bg:!!s.bg,away:s.z!==zone.id});if(s.ap)Object.assign(a,s.ap)}
   for(const k of[...Net.avatars.keys()])if(!seen.has(k))Net.avatars.delete(k);
   if(!same){enemies=[];allies=[];return}
   // monsters and minions
@@ -170,23 +178,24 @@ function applySnap(m){Net.hostQ=m.q;if(m.wc!=null)worldClock=m.wc;const same=zon
 function guestLerp(dt){const k=Math.min(1,dt*12);for(const list of[enemies,allies,Net.avatars.values()])for(const u of list){if(u.tx==null)continue;if(Math.hypot(u.tx-u.x,u.ty-u.y)>300){u.x=u.tx;u.y=u.ty}else{u.x+=(u.tx-u.x)*k;u.y+=(u.ty-u.y)*k}}}
 
 // ---- Party frames: everyone in the world, their health, and teleport (also used when you die)
-function partyMembers(){if(Net.role==='host')return players.filter(p=>p.isRemote).map(p=>({uid:p.uid,name:p.netName,hero:p.name,level:p.level,cls:p.cls,look:p.look,gear:p.gear,hp:p.hp,maxHp:p.maxHp,dead:p.dead,away:p.away,x:p.x,y:p.y}));
-  if(Net.role==='guest')return[...Net.avatars.values()].map(a=>({uid:a.uid,name:a.netName,hero:a.name,level:a.level,cls:a.cls,look:a.look,gear:a.gear,hp:a.hp,maxHp:a.maxHp,dead:a.dead,away:a.away,x:a.tx,y:a.ty}));return[]}
-function teleportTo(uid,free){const m=partyMembers().find(q=>q.uid===uid),p=players[0];if(!m||!p)return;if(m.away||m.dead){toast(`You cannot reach ${m.name} right now.`,'danger');return}
+function partyMembers(){if(Net.role==='host')return players.filter(p=>p.isRemote).map(p=>({uid:p.uid,name:p.netName,hero:p.name,level:p.level,cls:p.cls,look:p.look,gear:p.gear,hp:p.hp,maxHp:p.maxHp,dead:p.dead,away:p.away,bg:p.awayBg!=null,x:p.x,y:p.y}));
+  if(Net.role==='guest')return[...Net.avatars.values()].map(a=>({uid:a.uid,name:a.netName,hero:a.name,level:a.level,cls:a.cls,look:a.look,gear:a.gear,hp:a.hp,maxHp:a.maxHp,dead:a.dead,away:a.away,bg:a.bg,x:a.tx,y:a.ty}));return[]}
+function teleportTo(uid,free){const m=partyMembers().find(q=>q.uid===uid),p=players[0];if(!m||!p)return;if(m.away||m.bg||m.dead){toast(`You cannot reach ${m.name} right now.`,'danger');return}
   if(!free){if(Net.tpCd>time){toast(`Teleport is ready in ${Math.ceil(Net.tpCd-time)} s.`);return}if(time-p.lastHurt<4){toast('You cannot teleport while fighting.','danger');return}Net.tpCd=time+TP_CD}
   if(p.mounted)dismount(p,true);burst(p.x,p.y,'#9fd8ff',24,160);p.x=m.x+rand(-40,40);p.y=m.y+rand(20,50);sfx('blink');burst(p.x,p.y,'#9fd8ff',30,180);fx.push({k:'pillar',x:p.x,y:p.y,life:.8,max:.8,col:'#9fd8ff'})}
 let partyT=0;
-function renderParty(){const el=$('party');if(!el)return;const ms=partyMembers();$('chatBtn').classList.toggle('hidden',!Net.role);el.classList.toggle('hidden',!ms.length);el.innerHTML=ms.map(m=>`<div class="pm${m.dead?' dead':''}" style="--f:${Math.max(0,Math.min(100,m.hp/(m.maxHp||1)*100))}"><span class="pmp"></span><div class="pmb"><div class="pmn"><span>${CLASSES[m.cls]?CLASSES[m.cls].icon:''} ${escapeHtml(m.name||m.hero||'')}</span><small>Lv ${m.level||'?'}${m.away?' · inside':''}</small>`+
+function renderParty(){const el=$('party');if(!el)return;const ms=partyMembers();$('chatBtn').classList.toggle('hidden',!Net.role);el.classList.toggle('hidden',!ms.length);el.innerHTML=ms.map(m=>`<div class="pm${m.dead?' dead':''}${m.bg?' away':''}" style="--f:${Math.max(0,Math.min(100,m.hp/(m.maxHp||1)*100))}"><span class="pmp"></span><div class="pmb"><div class="pmn"><span>${CLASSES[m.cls]?CLASSES[m.cls].icon:''} ${escapeHtml(m.name||m.hero||'')}</span><small>Lv ${m.level||'?'}${m.bg?' · away':m.away?' · inside':''}</small>`+
   `<button title="Teleport to ${escapeHtml(m.name||'')} (every ${TP_CD} s, not in combat)" data-tp="${m.uid}">⇢</button></div><div class="bar hp"><i style="width:${Math.max(0,m.hp/(m.maxHp||1)*100)}%"></i></div></div></div>`).join('');
   el.querySelectorAll('.pmp').forEach((e,i)=>e.replaceWith(portraitEl(ms[i],isPhone()?32:40)));
   for(const b of el.querySelectorAll('[data-tp]'))b.onclick=()=>teleportTo(b.dataset.tp);
   if(Layout.phone)el.querySelectorAll('.pm').forEach((e,i)=>e.onclick=()=>{const m=ms[i];uiSheet(m.name||m.hero||'',[{icon:'⇢',label:'Teleport to '+(m.name||m.hero||''),onTap:()=>teleportTo(m.uid)},{icon:'💬',label:'Whisper',onTap:()=>openChat(m.uid,m.name||m.hero)},{icon:'🚪',label:'Leave party',onTap:()=>leaveParty()}])})}// phone: the portrait stack has no buttons, so a tap opens them
 
 // ---- Dying with friends around: return to town, or rise beside a living friend.
-function showDeathChoices(p){const el=$('deathBtns'),sub=$('death').querySelector('.sub');el.innerHTML='';const alive=partyMembers().filter(m=>!m.dead&&!m.away);
+let deathSheet=null;function closeDeathSheet(){if(deathSheet){deathSheet.close();deathSheet=null}}
+function showDeathChoices(p){closeDeathSheet();const el=$('deathBtns'),sub=$('death').querySelector('.sub');el.innerHTML='';const alive=partyMembers().filter(m=>!m.dead&&!m.away);
   if(!alive.length){sub.textContent='Returning to '+homeCity(p).name+'…';return}p.deathT=25;sub.textContent='Choose where to rise.';
   const b=(t,fn)=>{const x=document.createElement('button');x.className='btn';x.textContent=t;x.onclick=fn;el.appendChild(x)},home=()=>{if(p.dead)respawn(p)};
-  if(Layout.phone){const pick=()=>uiSheet('Choose where to rise',[{icon:'🏠',label:'Return to '+homeCity(p).name,onTap:home},...alive.map(m=>({icon:'⇢',label:'Rise beside '+(m.name||m.hero),onTap:()=>riseBeside(p,m.uid)}))]);b('Choose where to rise…',pick);pick();return}
+  if(Layout.phone){const pick=()=>deathSheet=uiSheet('Choose where to rise',[{icon:'🏠',label:'Return to '+homeCity(p).name,onTap:home},...alive.map(m=>({icon:'⇢',label:'Rise beside '+(m.name||m.hero),onTap:()=>riseBeside(p,m.uid)}))]);b('Choose where to rise…',pick);pick();return}
   b('Return to '+homeCity(p).name,home);for(const m of alive)b('Rise beside '+(m.name||m.hero),()=>riseBeside(p,m.uid))}
 function riseBeside(p,uid){if(!p.dead)return;const m=partyMembers().find(q=>q.uid===uid);respawn(p);if(!m)return;if(Net.role==='guest'&&zone.id!==Net.hostZone)enterZone(Net.hostZone,m.x,m.y);teleportTo(uid,true)}
 
@@ -225,3 +234,14 @@ function closeChatBar(){$('chatBar').classList.add('hidden');$('chatIn').blur()}
 $('chatIn').onkeydown=e=>{e.stopPropagation();if(e.code==='Enter'){const t=chatClean($('chatIn').value);closeChatBar();if(t)sendChat(t)}else if(e.code==='Escape')closeChatBar()};
 $('chatIn').onblur=()=>$('chatBar').classList.add('hidden');
 $('chatBtn').onclick=()=>openChat();
+
+// ---- Background and reconnect. A guest that goes to the background tells the host (monsters then leave its hero alone, up to 60 s) and asks for a full snapshot on return.
+// A host that goes to the background (or shows the portrait card on a phone) pauses the world; guests see "Waiting for ..." and are sent home after 3 minutes.
+const hostHidden=()=>document.visibilityState==='hidden'||!!Layout.turn;
+function netPresence(){if(!Net.role)return;const h=Net.role==='host'?hostHidden():document.visibilityState==='hidden';if(h===Net.hid)return;Net.hid=h;
+  if(Net.role==='guest'){netAll({t:'away',v:h?1:0});if(!h){netAll({t:'resync'});Net.stT=0}}
+  else{netAll({t:'hpause',v:h?1:0});if(!h){Net.sentCorp=null;Net.apT=0;Net.snapT=0}}}
+const netHold=()=>Net.role==='guest'&&Net.hw||Net.role==='host'&&Net.hid;// the world stands still
+function hostWaitShow(){const el=$('hostWait');if(!el)return;el.classList.toggle('hidden',!(Net.role==='guest'&&Net.hw));if(Net.hw&&Net.host)el.textContent=`Waiting for ${Net.host.name}…`}
+function hostWaitTick(){if(Net.role==='guest'&&Net.hw&&hostWaitExpired(Net.hwT,rt))leaveParty(`${Net.host?Net.host.name:'The host'} did not come back, so you are heading home.`)}
+document.addEventListener('visibilitychange',()=>{netPresence();if(document.visibilityState==='visible')hostWaitTick()});
