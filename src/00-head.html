@@ -198,9 +198,9 @@ h2{margin:0 0 10px;color:var(--gold);font-weight:normal;letter-spacing:.05em}
 /* windows use Inter (Cinzel stays on title, banners and story screens) */
 #inv h2,#tal h2,#shop h2,#prof h2,#loot h2,#worldmap h2,#friends h2,#settings h2,#howto h2,#namePick h2,#confirm h2,#dialog h3,.branch h3,#pause h1{font-family:var(--ui-font);font-weight:600}
 #pause h1{font-size:40px}
-/* target frame keeps clear of the player frame and minimap at any UI size; below 900 px it drops under the top row */
+/* target frame keeps clear of the player frame and minimap at any UI size; below 1100 px it drops under the top row */
 #tframe{width:clamp(200px,calc((100vw - 640px*var(--ui))/var(--ui)),300px)}#tframe.boss{width:clamp(240px,calc((100vw - 640px*var(--ui))/var(--ui)),460px)}
-@media (max-width:900px){#tframe,#tframe.boss{top:128px;left:14px;transform:none;width:min(280px,calc((100vw - 10px)/var(--ui) - 228px))}#party{top:204px}}
+@media (max-width:1100px){#tframe,#tframe.boss{top:128px;left:14px;transform:none;width:min(280px,calc((100vw - 10px)/var(--ui) - 228px))}#party{top:204px}}
 /* action bar slots shrink so the bar fits the screen at large UI sizes */
 .slot{width:clamp(36px,calc((100vw/var(--ui) - 94px)/10),56px);height:clamp(36px,calc((100vw/var(--ui) - 94px)/10),56px)}
 /* UI size (Settings): zoom scales layout and hit-testing together */
