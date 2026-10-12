@@ -550,7 +550,8 @@ function updateHud(){const p=players[0];if(!p)return;
   $('hpF').style.width=(Math.max(0,p.hp)/p.maxHp*100)+'%';$('hpT').textContent=Math.max(0,Math.ceil(p.hp))+' / '+p.maxHp;
   $('mpF').style.width=(p.mana/p.maxMana*100)+'%';$('mpT').textContent=Math.floor(p.mana)+' / '+p.maxMana;
   $('hint').style.opacity=time<90||keys.F1?1:0;// the key help fades after a minute and a half (hold F1 to see it again)
-  {const hf=Math.max(0,p.hp)/p.maxHp,o=$('orbHp'),m=$('orbMp');o.children[0].style.height=hf*100+'%';o.children[2].textContent=Math.max(0,Math.ceil(p.hp));o.classList.toggle('low',hf<.3&&!p.dead);m.children[0].style.height=p.mana/p.maxMana*100+'%';m.children[2].textContent=Math.floor(p.mana)}
+  $('pframe').classList.toggle('low',p.hp/p.maxHp<.3&&!p.dead);
+  if(rt>=(updateHud.pt||0)){updateHud.pt=rt+.25;const k=portraitKey(p.look,p.gear,p.cls);if(k!==updateHud.pk){updateHud.pk=k;const c=$('pPort').getContext('2d');c.clearRect(0,0,112,112);c.drawImage(portraitFor(p),0,0)}}
   $('xpF').style.width=(p.level>=20?100:p.xp/xpNeed(p.level)*100)+'%';$('hGold').textContent=p.gold;
   const pts=$('pts'),pp=[];if(p.points>0)pp.push(p.points+' attribute (I)');if(p.tpoints>0)pp.push(p.tpoints+' talent (T)');
   if(pp.length){pts.classList.remove('hidden');pts.textContent='+ '+pp.join(' · ')}else pts.classList.add('hidden');

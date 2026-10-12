@@ -25,7 +25,7 @@ h2{margin:0 0 10px;color:var(--gold);font-weight:normal;letter-spacing:.05em}
 #heroList{overflow:auto;display:flex;flex-direction:column;gap:8px;padding:2px}
 .herocard{display:flex;gap:12px;align-items:center;padding:10px 12px;border:2px solid #3a2e1e;border-radius:9px;background:rgba(0,0,0,.35);cursor:pointer;transition:border-color .15s,background .15s}
 .herocard:hover{border-color:#8a6a3a}.herocard.on{border-color:var(--gold);background:linear-gradient(90deg,rgba(232,150,60,.18),rgba(0,0,0,.3));box-shadow:0 0 16px rgba(232,150,60,.25)}
-.hc-ic{font-size:28px;width:38px;text-align:center}.hc-tx{display:flex;flex-direction:column;min-width:0}.hc-tx b{font-weight:normal;font-size:18px;color:#f3e2b0}
+.hc-ic{font-size:28px;width:38px;text-align:center}.hc-ic canvas{display:block}.hc-tx{display:flex;flex-direction:column;min-width:0}.hc-tx b{font-weight:normal;font-size:18px;color:#f3e2b0}
 .hc-tx span{font-size:13px;color:var(--text)}.hc-tx small{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .selempty{color:var(--muted);text-align:center;padding:22px 8px;font-style:italic;line-height:1.5}
 #selBottom{position:absolute;left:36%;bottom:clamp(14px,4vh,40px);transform:translateX(-50%);display:flex;gap:10px;align-items:center}
@@ -54,8 +54,8 @@ h2{margin:0 0 10px;color:var(--gold);font-weight:normal;letter-spacing:.05em}
 #npName{width:100%;box-sizing:border-box;padding:10px;background:#15110d;color:var(--text);border:1px solid var(--line);border-radius:6px;font-family:inherit;font-size:16px}
 #netAsks{position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:45;display:flex;flex-direction:column;gap:8px;align-items:center}
 .netask{padding:12px 16px;text-align:center;min-width:280px;max-width:90vw}.netask .row{display:flex;gap:8px;justify-content:center;margin-top:10px}.netask .btn{min-width:0;margin:0;padding:7px 18px;font-size:15px}
-#party{position:absolute;left:14px;top:150px;width:210px;display:flex;flex-direction:column;gap:6px;pointer-events:auto}
-.pm{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:5px 8px}.pm.dead{opacity:.5}
+#party{position:absolute;left:14px;top:176px;width:210px;display:flex;flex-direction:column;gap:6px;pointer-events:auto}
+.pm{display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:5px 8px}.pm.dead{opacity:.5}.pm .pmb{flex:1;min-width:0}
 .pmn{display:flex;align-items:center;gap:6px;font-size:13px}.pmn span{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pmn small{color:var(--muted);font-size:11px}
 .pmn button{background:none;border:1px solid var(--line);color:var(--text);border-radius:5px;cursor:pointer;font-size:12px;padding:0 6px}.pmn button:hover{border-color:var(--gold)}
 .pm .bar{height:6px;margin-top:4px}
@@ -92,15 +92,17 @@ h2{margin:0 0 10px;color:var(--gold);font-weight:normal;letter-spacing:.05em}
 .row{display:flex;justify-content:flex-end;flex-wrap:wrap;margin-top:14px}
 @media (max-width:760px){#creator .wrap{grid-template-columns:1fr}#classes{grid-template-columns:1fr}}
 #hud>*{position:fixed;z-index:5}
-#unit{left:14px;top:14px;width:270px;padding:10px 12px}
-.uname{display:flex;justify-content:space-between;font-size:16px}
+#pframe{left:14px;top:14px;width:280px;padding:10px 12px;display:grid;grid-template-columns:56px 1fr;column-gap:10px;align-items:center}#pframe .gold,#pframe #buffs{grid-column:1/3}
+#pPort{width:56px;height:56px;border-radius:50%;display:block}.pf-tx{min-width:0}.pf-tx .bar{height:14px;margin-top:3px}.pf-tx .bar.xp{height:5px}
+#pframe.low{animation:lowhp .9s ease-in-out infinite}@keyframes lowhp{50%{border-color:var(--hp);box-shadow:0 0 14px var(--hp),inset 0 0 14px rgba(229,72,77,.35)}}
+.uname{display:flex;justify-content:space-between;gap:6px;font-size:15px;white-space:nowrap}.uname span:first-child{overflow:hidden;text-overflow:ellipsis;min-width:0}
 .uname span:last-child{color:var(--gold)}
 .bar{position:relative;height:16px;background:#0e0a08;border:1px solid #000;box-shadow:0 0 0 1px #4a3820;border-radius:3px;margin-top:6px;overflow:hidden}
 .bar i{position:absolute;left:0;top:0;bottom:0;display:block}
-.bar.hp i{background:linear-gradient(#d8443a,#8e1e18)}
-.bar.mp i{background:linear-gradient(#4a86e8,#1e3f8e)}
-.bar.xp{height:8px}.bar.xp i{background:linear-gradient(#e8c26a,#a07a2a)}
-.bar span{position:absolute;inset:0;text-align:center;font-size:11px;line-height:15px;color:#fff;text-shadow:0 1px 2px #000;font-family:system-ui,sans-serif}
+.bar.hp i{background:var(--hp)}
+.bar.mp i{background:var(--mp)}
+.bar.xp{height:8px}.bar.xp i{background:var(--xp)}
+.bar span{position:absolute;inset:0;text-align:center;font-size:12px;line-height:13px;color:#fff;text-shadow:0 1px 2px #000;font-family:system-ui,sans-serif}
 .gold{margin-top:6px;font-size:13px;display:flex;justify-content:space-between}
 #pts{color:#9fe07a;cursor:pointer}
 #right{right:14px;top:14px;width:200px}
@@ -110,13 +112,6 @@ h2{margin:0 0 10px;color:var(--gold);font-weight:normal;letter-spacing:.05em}
 #quest b{color:var(--gold);font-weight:normal;font-size:14px}
 #bottom{left:50%;bottom:10px;transform:translateX(-50%);display:flex;align-items:flex-end;gap:12px}
 #abar{display:flex;gap:6px;padding:8px 10px;border-radius:10px;margin-bottom:6px;border:1px solid var(--line);background:var(--panel);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);box-shadow:var(--shadow)}
-.orb{position:relative;width:104px;height:104px;border-radius:50%;overflow:hidden;background:radial-gradient(circle at 50% 60%,#120c0a,#050404);box-shadow:0 0 0 3px #1a120a,0 0 0 5px #b8924a,0 0 0 7px #3a2a14,0 8px 22px rgba(0,0,0,.8),inset 0 0 22px rgba(0,0,0,.9)}
-.orb i{position:absolute;left:0;right:0;bottom:0;transition:height .15s}.orb.hp i{background:radial-gradient(circle at 40% 30%,#ff6a5a,#b0141a 45%,#4a0408 100%)}.orb.mp i{background:radial-gradient(circle at 40% 30%,#7ab8ff,#1a4ab8 45%,#06123a 100%)}
-.orb i:before{content:'';position:absolute;left:-10%;right:-10%;top:-5px;height:10px;border-radius:50%;background:rgba(255,255,255,.18);animation:wave 3s ease-in-out infinite}@keyframes wave{0%,100%{transform:translateX(-6px)}50%{transform:translateX(6px)}}
-.orb b{position:absolute;left:18%;top:10%;width:42%;height:28%;border-radius:50%;background:radial-gradient(ellipse at 50% 40%,rgba(255,255,255,.45),rgba(255,255,255,0) 70%);pointer-events:none}
-.orb span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:600 14px 'Crimson Text',Georgia,serif;color:#fff;text-shadow:0 1px 3px #000,0 0 6px #000}
-.orb.low{animation:lowhp .9s ease-in-out infinite}@keyframes lowhp{50%{box-shadow:0 0 0 3px #1a120a,0 0 0 5px #ff4a3a,0 0 0 7px #3a2a14,0 0 26px #ff2a1a,inset 0 0 22px rgba(0,0,0,.9)}}
-#unit .bar.hp,#unit .bar.mp{display:none}@media (max-width:760px){.orb{width:70px;height:70px}}
 .slot{position:relative;width:56px;height:56px;background:radial-gradient(circle at 50% 35%,#2a2018,#0c0907);border:1px solid #5a4424;box-shadow:inset 0 0 10px rgba(0,0,0,.9),0 0 0 1px #000;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:27px;overflow:hidden}
 .slot .key{position:absolute;left:3px;top:1px;font-size:10px;color:var(--muted);font-family:system-ui,sans-serif}
 .slot .cd{position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,.68)}
@@ -201,18 +196,21 @@ h2{margin:0 0 10px;color:var(--gold);font-weight:normal;letter-spacing:.05em}
 <canvas id="game"></canvas>
 
 <div id="hud" class="hidden">
-  <div id="unit" class="panel">
-    <div class="uname"><span id="hName"></span><span id="hLvl"></span></div>
-    <div class="bar hp"><i id="hpF"></i><span id="hpT"></span></div>
-    <div class="bar mp"><i id="mpF"></i><span id="mpT"></span></div>
-    <div class="bar xp"><i id="xpF"></i></div>
+  <div id="pframe" class="panel">
+    <canvas id="pPort" width="112" height="112"></canvas>
+    <div class="pf-tx">
+      <div class="uname"><span id="hName"></span><span id="hLvl"></span></div>
+      <div class="bar hp"><i id="hpF"></i><span id="hpT"></span></div>
+      <div class="bar mp"><i id="mpF"></i><span id="mpT"></span></div>
+      <div class="bar xp"><i id="xpF"></i></div>
+    </div>
     <div class="gold"><span>🪙 <span id="hGold">0</span></span><span id="pts" class="hidden"></span><span class="badge hidden" id="frBadge2" title="Friend requests (O)"></span></div>
     <div id="buffs"></div>
   </div>
   <div id="party" class="hidden"></div>
   <div id="right"><canvas id="mini" width="200" height="200" class="panel"></canvas><div id="quest" class="panel"></div></div>
   <div id="bossbar" class="hidden"><div id="bossName"></div><div class="bar boss"><i id="bossF"></i></div></div>
-  <div id="bottom"><div id="orbHp" class="orb hp" title="Health"><i></i><b></b><span></span></div><div id="abar"></div><div id="orbMp" class="orb mp" title="Mana"><i></i><b></b><span></span></div></div>
+  <div id="bottom"><div id="abar"></div></div>
   <div id="hint">WASD / arrows: move · Mouse: aim · Left click: attack · Right click / 1–4: abilities · Q: heal potion · Z: mana potion · X: eat · E: talk, trade, enter · F: mount · H: teleport home · N: world map · O: friends · I: character · T: talents · P: professions · Esc: pause · F1: show this help</div>
 </div>
 <div id="toasts"></div>

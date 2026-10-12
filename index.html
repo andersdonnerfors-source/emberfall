@@ -25,7 +25,7 @@ h2{margin:0 0 10px;color:var(--gold);font-weight:normal;letter-spacing:.05em}
 #heroList{overflow:auto;display:flex;flex-direction:column;gap:8px;padding:2px}
 .herocard{display:flex;gap:12px;align-items:center;padding:10px 12px;border:2px solid #3a2e1e;border-radius:9px;background:rgba(0,0,0,.35);cursor:pointer;transition:border-color .15s,background .15s}
 .herocard:hover{border-color:#8a6a3a}.herocard.on{border-color:var(--gold);background:linear-gradient(90deg,rgba(232,150,60,.18),rgba(0,0,0,.3));box-shadow:0 0 16px rgba(232,150,60,.25)}
-.hc-ic{font-size:28px;width:38px;text-align:center}.hc-tx{display:flex;flex-direction:column;min-width:0}.hc-tx b{font-weight:normal;font-size:18px;color:#f3e2b0}
+.hc-ic{font-size:28px;width:38px;text-align:center}.hc-ic canvas{display:block}.hc-tx{display:flex;flex-direction:column;min-width:0}.hc-tx b{font-weight:normal;font-size:18px;color:#f3e2b0}
 .hc-tx span{font-size:13px;color:var(--text)}.hc-tx small{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .selempty{color:var(--muted);text-align:center;padding:22px 8px;font-style:italic;line-height:1.5}
 #selBottom{position:absolute;left:36%;bottom:clamp(14px,4vh,40px);transform:translateX(-50%);display:flex;gap:10px;align-items:center}
@@ -54,8 +54,8 @@ h2{margin:0 0 10px;color:var(--gold);font-weight:normal;letter-spacing:.05em}
 #npName{width:100%;box-sizing:border-box;padding:10px;background:#15110d;color:var(--text);border:1px solid var(--line);border-radius:6px;font-family:inherit;font-size:16px}
 #netAsks{position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:45;display:flex;flex-direction:column;gap:8px;align-items:center}
 .netask{padding:12px 16px;text-align:center;min-width:280px;max-width:90vw}.netask .row{display:flex;gap:8px;justify-content:center;margin-top:10px}.netask .btn{min-width:0;margin:0;padding:7px 18px;font-size:15px}
-#party{position:absolute;left:14px;top:150px;width:210px;display:flex;flex-direction:column;gap:6px;pointer-events:auto}
-.pm{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:5px 8px}.pm.dead{opacity:.5}
+#party{position:absolute;left:14px;top:176px;width:210px;display:flex;flex-direction:column;gap:6px;pointer-events:auto}
+.pm{display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:5px 8px}.pm.dead{opacity:.5}.pm .pmb{flex:1;min-width:0}
 .pmn{display:flex;align-items:center;gap:6px;font-size:13px}.pmn span{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pmn small{color:var(--muted);font-size:11px}
 .pmn button{background:none;border:1px solid var(--line);color:var(--text);border-radius:5px;cursor:pointer;font-size:12px;padding:0 6px}.pmn button:hover{border-color:var(--gold)}
 .pm .bar{height:6px;margin-top:4px}
@@ -92,15 +92,17 @@ h2{margin:0 0 10px;color:var(--gold);font-weight:normal;letter-spacing:.05em}
 .row{display:flex;justify-content:flex-end;flex-wrap:wrap;margin-top:14px}
 @media (max-width:760px){#creator .wrap{grid-template-columns:1fr}#classes{grid-template-columns:1fr}}
 #hud>*{position:fixed;z-index:5}
-#unit{left:14px;top:14px;width:270px;padding:10px 12px}
-.uname{display:flex;justify-content:space-between;font-size:16px}
+#pframe{left:14px;top:14px;width:280px;padding:10px 12px;display:grid;grid-template-columns:56px 1fr;column-gap:10px;align-items:center}#pframe .gold,#pframe #buffs{grid-column:1/3}
+#pPort{width:56px;height:56px;border-radius:50%;display:block}.pf-tx{min-width:0}.pf-tx .bar{height:14px;margin-top:3px}.pf-tx .bar.xp{height:5px}
+#pframe.low{animation:lowhp .9s ease-in-out infinite}@keyframes lowhp{50%{border-color:var(--hp);box-shadow:0 0 14px var(--hp),inset 0 0 14px rgba(229,72,77,.35)}}
+.uname{display:flex;justify-content:space-between;gap:6px;font-size:15px;white-space:nowrap}.uname span:first-child{overflow:hidden;text-overflow:ellipsis;min-width:0}
 .uname span:last-child{color:var(--gold)}
 .bar{position:relative;height:16px;background:#0e0a08;border:1px solid #000;box-shadow:0 0 0 1px #4a3820;border-radius:3px;margin-top:6px;overflow:hidden}
 .bar i{position:absolute;left:0;top:0;bottom:0;display:block}
-.bar.hp i{background:linear-gradient(#d8443a,#8e1e18)}
-.bar.mp i{background:linear-gradient(#4a86e8,#1e3f8e)}
-.bar.xp{height:8px}.bar.xp i{background:linear-gradient(#e8c26a,#a07a2a)}
-.bar span{position:absolute;inset:0;text-align:center;font-size:11px;line-height:15px;color:#fff;text-shadow:0 1px 2px #000;font-family:system-ui,sans-serif}
+.bar.hp i{background:var(--hp)}
+.bar.mp i{background:var(--mp)}
+.bar.xp{height:8px}.bar.xp i{background:var(--xp)}
+.bar span{position:absolute;inset:0;text-align:center;font-size:12px;line-height:13px;color:#fff;text-shadow:0 1px 2px #000;font-family:system-ui,sans-serif}
 .gold{margin-top:6px;font-size:13px;display:flex;justify-content:space-between}
 #pts{color:#9fe07a;cursor:pointer}
 #right{right:14px;top:14px;width:200px}
@@ -110,13 +112,6 @@ h2{margin:0 0 10px;color:var(--gold);font-weight:normal;letter-spacing:.05em}
 #quest b{color:var(--gold);font-weight:normal;font-size:14px}
 #bottom{left:50%;bottom:10px;transform:translateX(-50%);display:flex;align-items:flex-end;gap:12px}
 #abar{display:flex;gap:6px;padding:8px 10px;border-radius:10px;margin-bottom:6px;border:1px solid var(--line);background:var(--panel);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);box-shadow:var(--shadow)}
-.orb{position:relative;width:104px;height:104px;border-radius:50%;overflow:hidden;background:radial-gradient(circle at 50% 60%,#120c0a,#050404);box-shadow:0 0 0 3px #1a120a,0 0 0 5px #b8924a,0 0 0 7px #3a2a14,0 8px 22px rgba(0,0,0,.8),inset 0 0 22px rgba(0,0,0,.9)}
-.orb i{position:absolute;left:0;right:0;bottom:0;transition:height .15s}.orb.hp i{background:radial-gradient(circle at 40% 30%,#ff6a5a,#b0141a 45%,#4a0408 100%)}.orb.mp i{background:radial-gradient(circle at 40% 30%,#7ab8ff,#1a4ab8 45%,#06123a 100%)}
-.orb i:before{content:'';position:absolute;left:-10%;right:-10%;top:-5px;height:10px;border-radius:50%;background:rgba(255,255,255,.18);animation:wave 3s ease-in-out infinite}@keyframes wave{0%,100%{transform:translateX(-6px)}50%{transform:translateX(6px)}}
-.orb b{position:absolute;left:18%;top:10%;width:42%;height:28%;border-radius:50%;background:radial-gradient(ellipse at 50% 40%,rgba(255,255,255,.45),rgba(255,255,255,0) 70%);pointer-events:none}
-.orb span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:600 14px 'Crimson Text',Georgia,serif;color:#fff;text-shadow:0 1px 3px #000,0 0 6px #000}
-.orb.low{animation:lowhp .9s ease-in-out infinite}@keyframes lowhp{50%{box-shadow:0 0 0 3px #1a120a,0 0 0 5px #ff4a3a,0 0 0 7px #3a2a14,0 0 26px #ff2a1a,inset 0 0 22px rgba(0,0,0,.9)}}
-#unit .bar.hp,#unit .bar.mp{display:none}@media (max-width:760px){.orb{width:70px;height:70px}}
 .slot{position:relative;width:56px;height:56px;background:radial-gradient(circle at 50% 35%,#2a2018,#0c0907);border:1px solid #5a4424;box-shadow:inset 0 0 10px rgba(0,0,0,.9),0 0 0 1px #000;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:27px;overflow:hidden}
 .slot .key{position:absolute;left:3px;top:1px;font-size:10px;color:var(--muted);font-family:system-ui,sans-serif}
 .slot .cd{position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,.68)}
@@ -201,18 +196,21 @@ h2{margin:0 0 10px;color:var(--gold);font-weight:normal;letter-spacing:.05em}
 <canvas id="game"></canvas>
 
 <div id="hud" class="hidden">
-  <div id="unit" class="panel">
-    <div class="uname"><span id="hName"></span><span id="hLvl"></span></div>
-    <div class="bar hp"><i id="hpF"></i><span id="hpT"></span></div>
-    <div class="bar mp"><i id="mpF"></i><span id="mpT"></span></div>
-    <div class="bar xp"><i id="xpF"></i></div>
+  <div id="pframe" class="panel">
+    <canvas id="pPort" width="112" height="112"></canvas>
+    <div class="pf-tx">
+      <div class="uname"><span id="hName"></span><span id="hLvl"></span></div>
+      <div class="bar hp"><i id="hpF"></i><span id="hpT"></span></div>
+      <div class="bar mp"><i id="mpF"></i><span id="mpT"></span></div>
+      <div class="bar xp"><i id="xpF"></i></div>
+    </div>
     <div class="gold"><span>🪙 <span id="hGold">0</span></span><span id="pts" class="hidden"></span><span class="badge hidden" id="frBadge2" title="Friend requests (O)"></span></div>
     <div id="buffs"></div>
   </div>
   <div id="party" class="hidden"></div>
   <div id="right"><canvas id="mini" width="200" height="200" class="panel"></canvas><div id="quest" class="panel"></div></div>
   <div id="bossbar" class="hidden"><div id="bossName"></div><div class="bar boss"><i id="bossF"></i></div></div>
-  <div id="bottom"><div id="orbHp" class="orb hp" title="Health"><i></i><b></b><span></span></div><div id="abar"></div><div id="orbMp" class="orb mp" title="Mana"><i></i><b></b><span></span></div></div>
+  <div id="bottom"><div id="abar"></div></div>
   <div id="hint">WASD / arrows: move · Mouse: aim · Left click: attack · Right click / 1–4: abilities · Q: heal potion · Z: mana potion · X: eat · E: talk, trade, enter · F: mount · H: teleport home · N: world map · O: friends · I: character · T: talents · P: professions · Esc: pause · F1: show this help</div>
 </div>
 <div id="toasts"></div>
@@ -1514,7 +1512,8 @@ function updateHud(){const p=players[0];if(!p)return;
   $('hpF').style.width=(Math.max(0,p.hp)/p.maxHp*100)+'%';$('hpT').textContent=Math.max(0,Math.ceil(p.hp))+' / '+p.maxHp;
   $('mpF').style.width=(p.mana/p.maxMana*100)+'%';$('mpT').textContent=Math.floor(p.mana)+' / '+p.maxMana;
   $('hint').style.opacity=time<90||keys.F1?1:0;// the key help fades after a minute and a half (hold F1 to see it again)
-  {const hf=Math.max(0,p.hp)/p.maxHp,o=$('orbHp'),m=$('orbMp');o.children[0].style.height=hf*100+'%';o.children[2].textContent=Math.max(0,Math.ceil(p.hp));o.classList.toggle('low',hf<.3&&!p.dead);m.children[0].style.height=p.mana/p.maxMana*100+'%';m.children[2].textContent=Math.floor(p.mana)}
+  $('pframe').classList.toggle('low',p.hp/p.maxHp<.3&&!p.dead);
+  if(rt>=(updateHud.pt||0)){updateHud.pt=rt+.25;const k=portraitKey(p.look,p.gear,p.cls);if(k!==updateHud.pk){updateHud.pk=k;const c=$('pPort').getContext('2d');c.clearRect(0,0,112,112);c.drawImage(portraitFor(p),0,0)}}
   $('xpF').style.width=(p.level>=20?100:p.xp/xpNeed(p.level)*100)+'%';$('hGold').textContent=p.gold;
   const pts=$('pts'),pp=[];if(p.points>0)pp.push(p.points+' attribute (I)');if(p.tpoints>0)pp.push(p.tpoints+' talent (T)');
   if(pp.length){pts.classList.remove('hidden');pts.textContent='+ '+pp.join(' · ')}else pts.classList.add('hidden');
@@ -2640,6 +2639,18 @@ function uiSheet(title,rows){const el=uiEl('div','sheet panel glass'),done=()=>{
  el.appendChild(uiEl('div','g-head',title));
  for(const r of rows){const b=uiEl('button','g-row');if(r.icon)b.appendChild(uiEl('span','g-ic',r.icon));b.appendChild(uiEl('span','',r.label));b.onclick=()=>{done();if(r.onTap)r.onTap()};el.appendChild(b)}
  document.body.appendChild(el);requestAnimationFrame(()=>el.classList.add('open'));return {el,close:done}}
+
+// ================= Live portraits (head and shoulders, drawn with the in-game hero figure) =================
+const phoneUI=()=>matchMedia('(pointer:coarse)').matches&&Math.min(innerWidth,innerHeight)<500,PORT=new Map();
+const portraitKey=(look,gear,cls)=>{const L=look||{},g=gear||{},f=it=>it?it.name+'|'+it.rar+'|'+(it.ilvl||it.lvl||''):'';return JSON.stringify([cls||'',L.skin,L.hair,L.eyes,L.hairStyle,L.beard,L.headgear,L.body,L.cloth,L.trim,f(g.helm),f(g.armor)])};
+function drawPortrait(cv,look,gear,cls){const p={cls:cls||'paladin',look:look||{},gear:gear||{},bagSize:20},o=playerLook(p),S=cv.width,c=cv.getContext('2d');
+  if(o.gv){delete o.gv.cape;delete o.gv.pack;delete o.gv.offhand;delete o.gv.aura}o.wv=null;o.weapon=null;o.shield=false;o.aim=.3;o.aimS=.3;o.walk=0;o.moving=false;o.s=S/112*3.4;
+  c.clearRect(0,0,S,S);c.save();c.beginPath();c.arc(S/2,S/2,S/2-1,0,TAU);c.clip();
+  const g=c.createRadialGradient(S/2,S*.4,S*.05,S/2,S/2,S*.7);g.addColorStop(0,'#3a3a46');g.addColorStop(1,'#0e0e14');c.fillStyle=g;c.fillRect(0,0,S,S);
+  drawHumanoid(c,S/2,S*.5+39*o.s,o);c.restore();c.strokeStyle='rgba(255,255,255,.28)';c.lineWidth=Math.max(1,S/56);c.beginPath();c.arc(S/2,S/2,S/2-c.lineWidth/2,0,TAU);c.stroke()}
+// One cached 112x112 canvas per look+head+chest gear. Do not put it in the page directly (it is shared): copy it with portraitEl.
+function portraitFor(p){const k=portraitKey(p.look,p.gear,p.cls);let cv=PORT.get(k);if(!cv){if(PORT.size>60)PORT.clear();cv=document.createElement('canvas');cv.width=cv.height=112;drawPortrait(cv,p.look,p.gear,p.cls);PORT.set(k,cv)}return cv}
+function portraitEl(p,px){const d=Math.round(px*(devicePixelRatio||1)),e=document.createElement('canvas');e.width=e.height=d;e.style.cssText=`width:${px}px;height:${px}px;border-radius:50%;flex:none`;e.getContext('2d').drawImage(portraitFor(p),0,0,d,d);return e}
 // ================= Accounts and hero storage =================
 // Online: heroes are stored in Supabase, and database rules (supabase-setup.sql) make sure each player can only
 // read, change and delete their own heroes. Offline: heroes stay in this browser, as before.
@@ -2779,8 +2790,8 @@ function refreshTitle(){if(state==='title')openSelect()}
 function renderSelect(){const el=$('heroList');el.innerHTML='';const hs=SEL.heroes;
   if(!hs.length)el.innerHTML='<div class="selempty">No heroes yet.<br>The fire is lit and waiting.<br><br>Create your first hero to begin.</div>';
   hs.forEach((h,i)=>{const d=h.data.p,c=CLASSES[d.cls],spec=d.spec&&TAL[d.cls].specs[d.spec],row=document.createElement('div');row.className='herocard'+(i===SEL.idx?' on':'');
-    row.innerHTML=`<div class="hc-ic">${c.icon}</div><div class="hc-tx"><b>${escapeHtml(d.name)}</b><span>Level ${d.level||1} ${c.name}${spec?' · '+spec.name:''}</span><small>📍 ${escapeHtml(heroLoc(h.data))}</small></div>`;
-    row.onclick=()=>{SEL.idx=i;sfx('click');renderSelect()};row.ondblclick=()=>playSelected();el.appendChild(row)});
+    row.innerHTML=`<div class="hc-ic"></div><div class="hc-tx"><b>${escapeHtml(d.name)}</b><span>Level ${d.level||1} ${c.name}${spec?' · '+spec.name:''}</span><small>📍 ${escapeHtml(heroLoc(h.data))}</small></div>`;
+    row.firstChild.appendChild(portraitEl(selHero(i),40));row.onclick=()=>{SEL.idx=i;sfx('click');renderSelect()};row.ondblclick=()=>playSelected();el.appendChild(row)});
   const full=hs.length>=MAX_HEROES;$('btnNew').disabled=full;$('btnNew').title=full?`You can have ${MAX_HEROES} heroes. Delete one to make room.`:'';
   $('btnPlay').disabled=!hs.length;$('btnDel').disabled=!hs.length;$('selCount').textContent=`${hs.length} / ${MAX_HEROES}`;
   $('btnImport').classList.toggle('hidden',!(Account.mode==='online'&&allSaves().heroes.length&&hs.length<MAX_HEROES))}
@@ -3009,14 +3020,15 @@ function applySnap(m){Net.hostQ=m.q;if(m.wc!=null)worldClock=m.wc;const same=zon
 function guestLerp(dt){const k=Math.min(1,dt*12);for(const list of[enemies,allies,Net.avatars.values()])for(const u of list){if(u.tx==null)continue;if(Math.hypot(u.tx-u.x,u.ty-u.y)>300){u.x=u.tx;u.y=u.ty}else{u.x+=(u.tx-u.x)*k;u.y+=(u.ty-u.y)*k}}}
 
 // ---- Party frames: everyone in the world, their health, and teleport (also used when you die)
-function partyMembers(){if(Net.role==='host')return players.filter(p=>p.isRemote).map(p=>({uid:p.uid,name:p.netName,hero:p.name,level:p.level,cls:p.cls,hp:p.hp,maxHp:p.maxHp,dead:p.dead,away:p.away,x:p.x,y:p.y}));
-  if(Net.role==='guest')return[...Net.avatars.values()].map(a=>({uid:a.uid,name:a.netName,hero:a.name,level:a.level,cls:a.cls,hp:a.hp,maxHp:a.maxHp,dead:a.dead,away:a.away,x:a.tx,y:a.ty}));return[]}
+function partyMembers(){if(Net.role==='host')return players.filter(p=>p.isRemote).map(p=>({uid:p.uid,name:p.netName,hero:p.name,level:p.level,cls:p.cls,look:p.look,gear:p.gear,hp:p.hp,maxHp:p.maxHp,dead:p.dead,away:p.away,x:p.x,y:p.y}));
+  if(Net.role==='guest')return[...Net.avatars.values()].map(a=>({uid:a.uid,name:a.netName,hero:a.name,level:a.level,cls:a.cls,look:a.look,gear:a.gear,hp:a.hp,maxHp:a.maxHp,dead:a.dead,away:a.away,x:a.tx,y:a.ty}));return[]}
 function teleportTo(uid,free){const m=partyMembers().find(q=>q.uid===uid),p=players[0];if(!m||!p)return;if(m.away||m.dead){toast(`You cannot reach ${m.name} right now.`,'danger');return}
   if(!free){if(Net.tpCd>time){toast(`Teleport is ready in ${Math.ceil(Net.tpCd-time)} s.`);return}if(time-p.lastHurt<4){toast('You cannot teleport while fighting.','danger');return}Net.tpCd=time+TP_CD}
   if(p.mounted)dismount(p,true);burst(p.x,p.y,'#9fd8ff',24,160);p.x=m.x+rand(-40,40);p.y=m.y+rand(20,50);sfx('blink');burst(p.x,p.y,'#9fd8ff',30,180);fx.push({k:'pillar',x:p.x,y:p.y,life:.8,max:.8,col:'#9fd8ff'})}
 let partyT=0;
-function renderParty(){const el=$('party');if(!el)return;const ms=partyMembers();el.classList.toggle('hidden',!ms.length);el.innerHTML=ms.map(m=>`<div class="pm${m.dead?' dead':''}"><div class="pmn"><span>${CLASSES[m.cls]?CLASSES[m.cls].icon:''} ${escapeHtml(m.name||m.hero||'')}</span><small>Lv ${m.level||'?'}${m.away?' · inside':''}</small>`+
-  `<button title="Teleport to ${escapeHtml(m.name||'')} (every ${TP_CD} s, not in combat)" data-tp="${m.uid}">⇢</button></div><div class="bar hp"><i style="width:${Math.max(0,m.hp/(m.maxHp||1)*100)}%"></i></div></div>`).join('');
+function renderParty(){const el=$('party');if(!el)return;const ms=partyMembers();el.classList.toggle('hidden',!ms.length);el.innerHTML=ms.map(m=>`<div class="pm${m.dead?' dead':''}"><span class="pmp"></span><div class="pmb"><div class="pmn"><span>${CLASSES[m.cls]?CLASSES[m.cls].icon:''} ${escapeHtml(m.name||m.hero||'')}</span><small>Lv ${m.level||'?'}${m.away?' · inside':''}</small>`+
+  `<button title="Teleport to ${escapeHtml(m.name||'')} (every ${TP_CD} s, not in combat)" data-tp="${m.uid}">⇢</button></div><div class="bar hp"><i style="width:${Math.max(0,m.hp/(m.maxHp||1)*100)}%"></i></div></div></div>`).join('');
+  el.querySelectorAll('.pmp').forEach((e,i)=>e.replaceWith(portraitEl(ms[i],phoneUI()?32:40)));
   for(const b of el.querySelectorAll('[data-tp]'))b.onclick=()=>teleportTo(b.dataset.tp)}
 
 // ---- Dying with friends around: return to town, or rise beside a living friend.
@@ -3057,6 +3069,10 @@ test('pending loot clears on reset',()=>{const pend=Loot.pending;Loot.pending=ne
 // ---- Glass UI tokens and shared components
 test('ui tokens read from :root',()=>{eq(uiToken('--hp'),'#e5484d');eq(uiToken('--mp'),'#4c8dff')});
 test('uiSheet makes one row per item',()=>{const s=uiSheet('x',[{label:'a',onTap(){}}]);eq(s.el.querySelectorAll('.g-row').length,1);s.close()});
+
+// ---- Portraits
+test('portraitKey stable, changes with hair and helm',()=>{const L={skin:'#e3c3a0',hair:'#552',hairStyle:'short',cloth:'#456'},k=portraitKey(L,{},'paladin');eq(portraitKey(Object.assign({},L),{},'paladin'),k);eq(portraitKey(Object.assign({},L,{hairStyle:'long'}),{},'paladin')===k,false);eq(portraitKey(L,{helm:{name:'Iron Helm',rar:1,ilvl:3}},'paladin')===k,false);eq(portraitKey(L,{weapon:{name:'Sword',rar:2}},'paladin'),k)});
+test('portraitFor caches per hero',()=>{const p={cls:'paladin',look:{skin:'#e3c3a0',hair:'#552',cloth:'#456'},gear:{}};const a=portraitFor(p);eq(portraitFor(p)===a,true);eq(a.width,112)});
 // ================= Developer test mode for co-op =================
 // Open the game twice on this computer as index.html?nettest=a and index.html?nettest=b: the two tabs act as two
 // friends and introduce each other through the browser (no accounts needed). Ignored without the parameter.

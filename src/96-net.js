@@ -168,14 +168,15 @@ function applySnap(m){Net.hostQ=m.q;if(m.wc!=null)worldClock=m.wc;const same=zon
 function guestLerp(dt){const k=Math.min(1,dt*12);for(const list of[enemies,allies,Net.avatars.values()])for(const u of list){if(u.tx==null)continue;if(Math.hypot(u.tx-u.x,u.ty-u.y)>300){u.x=u.tx;u.y=u.ty}else{u.x+=(u.tx-u.x)*k;u.y+=(u.ty-u.y)*k}}}
 
 // ---- Party frames: everyone in the world, their health, and teleport (also used when you die)
-function partyMembers(){if(Net.role==='host')return players.filter(p=>p.isRemote).map(p=>({uid:p.uid,name:p.netName,hero:p.name,level:p.level,cls:p.cls,hp:p.hp,maxHp:p.maxHp,dead:p.dead,away:p.away,x:p.x,y:p.y}));
-  if(Net.role==='guest')return[...Net.avatars.values()].map(a=>({uid:a.uid,name:a.netName,hero:a.name,level:a.level,cls:a.cls,hp:a.hp,maxHp:a.maxHp,dead:a.dead,away:a.away,x:a.tx,y:a.ty}));return[]}
+function partyMembers(){if(Net.role==='host')return players.filter(p=>p.isRemote).map(p=>({uid:p.uid,name:p.netName,hero:p.name,level:p.level,cls:p.cls,look:p.look,gear:p.gear,hp:p.hp,maxHp:p.maxHp,dead:p.dead,away:p.away,x:p.x,y:p.y}));
+  if(Net.role==='guest')return[...Net.avatars.values()].map(a=>({uid:a.uid,name:a.netName,hero:a.name,level:a.level,cls:a.cls,look:a.look,gear:a.gear,hp:a.hp,maxHp:a.maxHp,dead:a.dead,away:a.away,x:a.tx,y:a.ty}));return[]}
 function teleportTo(uid,free){const m=partyMembers().find(q=>q.uid===uid),p=players[0];if(!m||!p)return;if(m.away||m.dead){toast(`You cannot reach ${m.name} right now.`,'danger');return}
   if(!free){if(Net.tpCd>time){toast(`Teleport is ready in ${Math.ceil(Net.tpCd-time)} s.`);return}if(time-p.lastHurt<4){toast('You cannot teleport while fighting.','danger');return}Net.tpCd=time+TP_CD}
   if(p.mounted)dismount(p,true);burst(p.x,p.y,'#9fd8ff',24,160);p.x=m.x+rand(-40,40);p.y=m.y+rand(20,50);sfx('blink');burst(p.x,p.y,'#9fd8ff',30,180);fx.push({k:'pillar',x:p.x,y:p.y,life:.8,max:.8,col:'#9fd8ff'})}
 let partyT=0;
-function renderParty(){const el=$('party');if(!el)return;const ms=partyMembers();el.classList.toggle('hidden',!ms.length);el.innerHTML=ms.map(m=>`<div class="pm${m.dead?' dead':''}"><div class="pmn"><span>${CLASSES[m.cls]?CLASSES[m.cls].icon:''} ${escapeHtml(m.name||m.hero||'')}</span><small>Lv ${m.level||'?'}${m.away?' · inside':''}</small>`+
-  `<button title="Teleport to ${escapeHtml(m.name||'')} (every ${TP_CD} s, not in combat)" data-tp="${m.uid}">⇢</button></div><div class="bar hp"><i style="width:${Math.max(0,m.hp/(m.maxHp||1)*100)}%"></i></div></div>`).join('');
+function renderParty(){const el=$('party');if(!el)return;const ms=partyMembers();el.classList.toggle('hidden',!ms.length);el.innerHTML=ms.map(m=>`<div class="pm${m.dead?' dead':''}"><span class="pmp"></span><div class="pmb"><div class="pmn"><span>${CLASSES[m.cls]?CLASSES[m.cls].icon:''} ${escapeHtml(m.name||m.hero||'')}</span><small>Lv ${m.level||'?'}${m.away?' · inside':''}</small>`+
+  `<button title="Teleport to ${escapeHtml(m.name||'')} (every ${TP_CD} s, not in combat)" data-tp="${m.uid}">⇢</button></div><div class="bar hp"><i style="width:${Math.max(0,m.hp/(m.maxHp||1)*100)}%"></i></div></div></div>`).join('');
+  el.querySelectorAll('.pmp').forEach((e,i)=>e.replaceWith(portraitEl(ms[i],phoneUI()?32:40)));
   for(const b of el.querySelectorAll('[data-tp]'))b.onclick=()=>teleportTo(b.dataset.tp)}
 
 // ---- Dying with friends around: return to town, or rise beside a living friend.

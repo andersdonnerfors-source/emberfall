@@ -16,8 +16,8 @@ function refreshTitle(){if(state==='title')openSelect()}
 function renderSelect(){const el=$('heroList');el.innerHTML='';const hs=SEL.heroes;
   if(!hs.length)el.innerHTML='<div class="selempty">No heroes yet.<br>The fire is lit and waiting.<br><br>Create your first hero to begin.</div>';
   hs.forEach((h,i)=>{const d=h.data.p,c=CLASSES[d.cls],spec=d.spec&&TAL[d.cls].specs[d.spec],row=document.createElement('div');row.className='herocard'+(i===SEL.idx?' on':'');
-    row.innerHTML=`<div class="hc-ic">${c.icon}</div><div class="hc-tx"><b>${escapeHtml(d.name)}</b><span>Level ${d.level||1} ${c.name}${spec?' · '+spec.name:''}</span><small>📍 ${escapeHtml(heroLoc(h.data))}</small></div>`;
-    row.onclick=()=>{SEL.idx=i;sfx('click');renderSelect()};row.ondblclick=()=>playSelected();el.appendChild(row)});
+    row.innerHTML=`<div class="hc-ic"></div><div class="hc-tx"><b>${escapeHtml(d.name)}</b><span>Level ${d.level||1} ${c.name}${spec?' · '+spec.name:''}</span><small>📍 ${escapeHtml(heroLoc(h.data))}</small></div>`;
+    row.firstChild.appendChild(portraitEl(selHero(i),40));row.onclick=()=>{SEL.idx=i;sfx('click');renderSelect()};row.ondblclick=()=>playSelected();el.appendChild(row)});
   const full=hs.length>=MAX_HEROES;$('btnNew').disabled=full;$('btnNew').title=full?`You can have ${MAX_HEROES} heroes. Delete one to make room.`:'';
   $('btnPlay').disabled=!hs.length;$('btnDel').disabled=!hs.length;$('selCount').textContent=`${hs.length} / ${MAX_HEROES}`;
   $('btnImport').classList.toggle('hidden',!(Account.mode==='online'&&allSaves().heroes.length&&hs.length<MAX_HEROES))}
