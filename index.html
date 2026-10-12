@@ -49,15 +49,15 @@ h2{margin:0 0 10px;color:var(--gold);font-weight:normal;letter-spacing:.05em}
 .frrow{display:flex;align-items:center;gap:10px;padding:7px 4px}.frtx{flex:1;display:flex;flex-direction:column;min-width:0}.frtx b{font-weight:normal;font-size:16px}.frtx small{color:var(--muted);font-size:12px}
 .frrow button{background:var(--field);color:var(--text);border:1px solid var(--edge);border-radius:6px;cursor:pointer;font-family:inherit;padding:4px 12px;min-height:var(--tap)}.frrow button:hover{border-color:var(--accent)}.frrow button.ghost{background:none}.frrow button:disabled{opacity:.4;cursor:default}
 .dot{width:10px;height:10px;border-radius:50%;background:#555;flex:none}.dot.on{background:#6fe06a;box-shadow:0 0 8px #6fe06a}
-.badge{display:inline-block;min-width:16px;padding:0 5px;border-radius:9px;background:#c84a3a;color:#fff;font:bold 11px/16px system-ui,sans-serif;text-align:center;margin-left:4px}
+.badge{display:inline-block;min-width:16px;padding:0 5px;border-radius:9px;background:#c84a3a;color:#fff;font:bold 12px/16px system-ui,sans-serif;text-align:center;margin-left:4px}
 #namePick{position:fixed;inset:0;z-index:41;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center}
 #npName{width:100%;box-sizing:border-box;padding:10px;min-height:var(--tap);background:var(--field);color:var(--text);border:1px solid var(--edge);border-radius:6px;font-family:inherit;font-size:16px}
 #netAsks{position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:45;display:flex;flex-direction:column;gap:8px;align-items:center}
 .netask{padding:12px 16px;text-align:center;min-width:280px;max-width:90vw}.netask .row{display:flex;gap:8px;justify-content:center;margin-top:10px}.netask .btn{min-width:0;margin:0;padding:7px 18px;font-size:15px}
 #party{position:absolute;left:14px;top:176px;width:210px;display:flex;flex-direction:column;gap:6px;pointer-events:auto}
-.pm{display:flex;align-items:center;gap:8px;background:var(--panel);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);border:1px solid var(--line);border-radius:var(--r);padding:5px 8px;box-shadow:var(--shadow)}.pm.dead{opacity:.5}.pm .pmb{flex:1;min-width:0}
+.pm{display:flex;align-items:center;gap:8px;background:var(--panel);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);border:1px solid var(--line);border-radius:var(--r);padding:5px 52px 5px 8px;min-height:54px;position:relative;box-shadow:var(--shadow)}.pm.dead{opacity:.5}.pm .pmb{flex:1;min-width:0}
 .pmn{display:flex;align-items:center;gap:6px;font-size:13px}.pmn span{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pmn small{color:var(--muted);font-size:var(--fs-s)}
-.pmn button{background:var(--field);border:1px solid var(--edge);color:var(--text);border-radius:6px;cursor:pointer;font-size:14px;min-width:var(--tap);min-height:var(--tap);margin:-12px -4px -12px 0;padding:0}.pmn button:hover{border-color:var(--accent)}
+.pmn button{background:var(--field);border:1px solid var(--edge);color:var(--text);border-radius:6px;cursor:pointer;font-size:14px;position:absolute;right:4px;top:50%;transform:translateY(-50%);width:var(--tap);height:var(--tap);padding:0}.pmn button:hover{border-color:var(--accent)}
 .pm .bar{height:6px;margin-top:4px}
 #confirm{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center}
 .cfbox{width:min(420px,92vw);padding:20px 22px}.cfbox p{line-height:1.5}.cfbox .row{display:flex;gap:8px;margin-top:14px;justify-content:flex-end}.cfbox .btn{min-width:0}
@@ -181,7 +181,7 @@ h2{margin:0 0 10px;color:var(--gold);font-weight:normal;letter-spacing:.05em}
 #tip,.g-tip{position:fixed;z-index:40;pointer-events:none;background:rgba(10,12,16,.92);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);border:1px solid rgba(255,255,255,.14);border-radius:8px;padding:8px 12px;font-size:13px;max-width:290px;line-height:1.45}
 #tip .tn{font-size:15px}
 #tip .ts{color:var(--muted);font-size:12px;margin-bottom:4px}
-#worldmap{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:26;padding:14px 16px;max-width:96vw;max-height:96vh;overflow:auto}#wmap{display:block;width:min(640px,88vw,78vh);height:auto;border:1px solid var(--edge);border-radius:6px}#mini{cursor:pointer}
+#worldmap{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:26;padding:14px 16px;max-width:96vw;max-height:96vh;overflow:auto}#wmap{display:block;width:calc(min(640px,88vw,68vh)/var(--ui));height:auto;border:1px solid var(--edge);border-radius:6px}#mini{cursor:pointer}
 #loot{position:fixed;right:230px;top:50%;transform:translateY(-50%);z-index:24;width:280px;padding:12px 14px}
 #loot h2{font-size:18px}.lrow2{display:flex;align-items:center;gap:10px;padding:6px 8px;border:1px solid var(--edge);border-radius:6px;margin-bottom:5px;min-height:var(--tap);cursor:pointer;font-size:14px;background:var(--panel);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur)}.lrow2:hover{border-color:var(--accent)}.li{font-size:20px;width:24px;text-align:center}
 
@@ -194,9 +194,15 @@ h2{margin:0 0 10px;color:var(--gold);font-weight:normal;letter-spacing:.05em}
 #dGoal{color:#cfe0a0;font-size:14px;margin-bottom:6px}
 #death h1,#pause h1{color:#d84a3a;font-size:56px;margin:0 0 8px;font-weight:normal;letter-spacing:.06em}
 #pause h1{color:var(--gold)}
+#pause{-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}#pause .btn{background:rgba(10,12,16,.82)}#pause .btn.primary{background:rgba(60,50,25,.9)}
 /* windows use Inter (Cinzel stays on title, banners and story screens) */
 #inv h2,#tal h2,#shop h2,#prof h2,#loot h2,#worldmap h2,#friends h2,#settings h2,#howto h2,#namePick h2,#confirm h2,#dialog h3,.branch h3,#pause h1{font-family:var(--ui-font);font-weight:600}
 #pause h1{font-size:40px}
+/* target frame keeps clear of the player frame and minimap at any UI size; below 900 px it drops under the top row */
+#tframe{width:clamp(200px,calc((100vw - 640px*var(--ui))/var(--ui)),300px)}#tframe.boss{width:clamp(240px,calc((100vw - 640px*var(--ui))/var(--ui)),460px)}
+@media (max-width:900px){#tframe,#tframe.boss{top:128px;left:14px;transform:none;width:min(280px,calc((100vw - 10px)/var(--ui) - 228px))}#party{top:204px}}
+/* action bar slots shrink so the bar fits the screen at large UI sizes */
+.slot{width:clamp(36px,calc((100vw/var(--ui) - 94px)/10),56px);height:clamp(36px,calc((100vw/var(--ui) - 94px)/10),56px)}
 /* UI size (Settings): zoom scales layout and hit-testing together */
 #hud>*,#inv,#tal,#shop,#prof,#loot,#worldmap,#dialog,#friends,#toasts,#netAsks,#settings>.panel,#howto>.panel,.cfbox{zoom:var(--ui)}
 #settings>.panel,#howto>.panel,.cfbox{max-width:calc(100%/var(--ui))}
