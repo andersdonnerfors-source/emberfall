@@ -95,6 +95,9 @@ function touchMenu(v){const m=$('tmenu');m.classList.toggle('hidden',v===undefin
   const up=lost=>e=>{stickUp(e);atkUp(e);slotUp(e,lost);holdEnd(e)};addEventListener('pointerup',up(false));addEventListener('pointercancel',up(true));
   addEventListener('keydown',e=>{if(Touch.on&&!/^(INPUT|TEXTAREA)$/.test(e.target.tagName||''))touchShow(false)},true);addEventListener('blur',touchReset);document.addEventListener('visibilitychange',touchReset);addEventListener('orientationchange',touchReset);if(screen.orientation)screen.orientation.addEventListener('change',touchReset);
   addEventListener('click',e=>{if(performance.now()<(Touch.noClick||0)){Touch.noClick=0;e.stopPropagation();e.preventDefault()}},true);
+  // iOS pinch and double-tap zoom: the HUD outside the canvas would zoom the whole page. Block it, but keep scrolling in panels (one finger).
+  for(const t of['gesturestart','gesturechange','gestureend'])addEventListener(t,e=>e.preventDefault(),{passive:false});
+  addEventListener('touchmove',e=>{if(e.touches.length>1)e.preventDefault()},{passive:false});
   // Phones fire a fake hover on every tap and never a leave, so hover tooltips would stick: on touch only a hold (holdStart) shows a tooltip.
   addEventListener('mouseenter',e=>{if(Touch.lastType==='touch')e.stopPropagation()},true);addEventListener('mouseover',e=>{if(Touch.lastType==='touch')e.stopPropagation()},true);
   addEventListener('contextmenu',e=>{if(Touch.lastType==='touch'){e.preventDefault();e.stopPropagation()}},true);
